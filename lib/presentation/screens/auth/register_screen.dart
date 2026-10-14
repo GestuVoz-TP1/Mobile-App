@@ -8,8 +8,8 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 
 /// Registro de la cuenta del padre o tutor (HU018, mockup 2).
-/// D2: solo correo y contrasena (modelo PADRE_TUTOR). El consentimiento se
-/// registra al crear cada perfil infantil (D3).
+/// Solo correo y contrasena (modelo PADRE_TUTOR). El consentimiento se
+/// registra al crear cada perfil infantil.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 

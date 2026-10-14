@@ -317,7 +317,7 @@ class _PictogramRow extends StatelessWidget {
                         ),
                         if (p.isCustom) ...[
                           const SizedBox(width: 6),
-                          const DemoBadge(text: 'PERSONAL'),
+                          const TagBadge('PERSONAL'),
                         ],
                       ],
                     ),

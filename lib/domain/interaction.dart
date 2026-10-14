@@ -3,7 +3,7 @@
 ///
 /// Cada mensaje comunicado por el nino (pictograma tocado o gesto reconocido)
 /// se registra en INTERACCION (RF-13). Solo se registra si el perfil tiene un
-/// consentimiento vigente (D4).
+/// consentimiento vigente.
 /// -------------------------------------------------------------------------
 library;
 
@@ -25,7 +25,8 @@ class Interaction {
   final int profileId;
   final int pictogramId;
 
-  /// Solo en interacciones por gesto (FK opcionales, ver TRAZABILIDAD.md).
+  /// Solo en interacciones por gesto (FK opcionales: una interaccion por
+  /// pictograma no tiene gesto).
   final int? gestureId;
   final int? intentionId;
 

@@ -1,11 +1,9 @@
-/// Gestos DEMO (D10).
+/// Gestos iniciales.
 ///
-/// IMPORTANTE: NO son el repertorio oficial del proyecto. Los documentos aun no
-/// definen el conjunto de gestos; estos cuatro existen solo para probar el
-/// flujo completo de reconocimiento (camara -> gesto -> intencion ->
-/// pictograma -> voz -> interaccion) con el reconocedor DEMO.
+/// Los documentos aun no definen el repertorio oficial de gestos. Estos
+/// cuatro permiten usar el flujo completo de reconocimiento (camara -> gesto
+/// -> intencion -> pictograma -> voz -> interaccion) mientras tanto.
 ///
-/// - `clase_reconocimiento` usa el prefijo `demo_`.
 /// - `instrucciones` inicia vacio y es editable por el tutor.
 /// - Cada gesto se enlaza a un pictograma semilla existente ([pictogramKey]),
 ///   cuya frase es el mensaje de la intencion.
@@ -17,7 +15,6 @@ library;
 
 class SeedGesture {
   final String name;
-  final String description;
   final String visual;
   final String recognitionClass;
   final String intentionName;
@@ -25,7 +22,6 @@ class SeedGesture {
 
   const SeedGesture({
     required this.name,
-    required this.description,
     required this.visual,
     required this.recognitionClass,
     required this.intentionName,
@@ -33,39 +29,33 @@ class SeedGesture {
   });
 }
 
-const String kDemoLabel = 'DEMO';
-
-const List<SeedGesture> kDemoGestures = [
+const List<SeedGesture> kSeedGestures = [
   SeedGesture(
     name: 'Hola',
-    description: 'Gesto DEMO (no oficial) para probar el reconocimiento.',
     visual: '👋',
-    recognitionClass: 'demo_hola',
-    intentionName: 'Saludar (DEMO)',
+    recognitionClass: 'gesto_hola',
+    intentionName: 'Saludar',
     pictogramKey: 'r_hola',
   ),
   SeedGesture(
     name: 'Agua',
-    description: 'Gesto DEMO (no oficial) para probar el reconocimiento.',
     visual: '💧',
-    recognitionClass: 'demo_agua',
-    intentionName: 'Pedir agua (DEMO)',
+    recognitionClass: 'gesto_agua',
+    intentionName: 'Pedir agua',
     pictogramKey: 'b_agua',
   ),
   SeedGesture(
     name: 'Ayuda',
-    description: 'Gesto DEMO (no oficial) para probar el reconocimiento.',
     visual: '🆘',
-    recognitionClass: 'demo_ayuda',
-    intentionName: 'Pedir ayuda (DEMO)',
+    recognitionClass: 'gesto_ayuda',
+    intentionName: 'Pedir ayuda',
     pictogramKey: 'b_ayuda',
   ),
   SeedGesture(
     name: 'Parar',
-    description: 'Gesto DEMO (no oficial) para probar el reconocimiento.',
     visual: '✋',
-    recognitionClass: 'demo_parar',
-    intentionName: 'Pedir que pare (DEMO)',
+    recognitionClass: 'gesto_parar',
+    intentionName: 'Pedir que pare',
     pictogramKey: 'r_parar',
   ),
 ];

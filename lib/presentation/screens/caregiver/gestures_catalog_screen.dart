@@ -7,7 +7,7 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 
 /// Gestos que reconoce la aplicacion (HU003) con su referencia visual,
-/// intencion y mensaje. Las instrucciones son editables (D10).
+/// intencion y mensaje. Las instrucciones son editables.
 class GesturesCatalogScreen extends StatefulWidget {
   const GesturesCatalogScreen({super.key});
 
@@ -66,18 +66,9 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
               return const EmptyState(
                   emoji: '✋', title: 'Aún no hay gestos definidos');
             }
-            final anyDemo = items.any((e) => e.$1.isDemo);
             return ListView(
               padding: const EdgeInsets.all(Insets.md),
               children: [
-                if (anyDemo) ...[
-                  const StatusNote(
-                    'Los gestos marcados como DEMO sirven solo para probar el '
-                    'flujo. No son el repertorio oficial del proyecto.',
-                    kind: NoteKind.warning,
-                  ),
-                  const SizedBox(height: Insets.md),
-                ],
                 for (final (g, intention) in items)
                   Padding(
                     padding: const EdgeInsets.only(bottom: Insets.sm),
@@ -106,21 +97,10 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Flexible(
-                                            child: Text(g.name,
-                                                style: const TextStyle(
-                                                    fontSize: 19,
-                                                    fontWeight:
-                                                        FontWeight.w800)),
-                                          ),
-                                          if (g.isDemo) ...[
-                                            const SizedBox(width: 6),
-                                            const DemoBadge(),
-                                          ],
-                                        ],
-                                      ),
+                                      Text(g.name,
+                                          style: const TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.w800)),
                                       if (intention != null)
                                         Text(
                                             'Mensaje: “${intention.message}”',

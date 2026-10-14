@@ -11,7 +11,7 @@ import 'communicator_screen.dart';
 
 /// Experiencia del nino (mockup 5): Inicio · Hablar · Gestos.
 /// Interfaz sencilla, sin opciones administrativas. Para salir se pide la
-/// contrasena del tutor (D1).
+/// contrasena del tutor.
 class ChildShell extends StatefulWidget {
   const ChildShell({super.key});
 

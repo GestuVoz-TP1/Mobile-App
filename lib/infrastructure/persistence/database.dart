@@ -6,14 +6,19 @@ import '../seed/pictogram_seed.dart';
 
 /// Base de datos local SQLite de GestuVoz (OB2, RT-06).
 ///
-/// El esquema sigue el diagrama fisico de OB2 (Fig. 6). Los unicos cambios
-/// estan justificados en `docs/TRAZABILIDAD.md`.
+/// El esquema sigue el diagrama fisico de OB2 (Fig. 6). Cambios respecto al
+/// diagrama: contrasena local en PADRE_TUTOR (hasta integrar Firebase), FK
+/// opcionales PICTOGRAMA.id_intencion e INTERACCION.id_gesto/id_intencion,
+/// y columnas `emoji`, `orden`, `instrucciones` y `voz_activada`.
 class GestuVozDatabase {
   GestuVozDatabase._(this.db);
   final Database db;
 
   static const fileName = 'gestuvoz.db';
-  static const schemaVersion = 1;
+
+  /// v1: esquema inicial. v2: textos de gestos iniciales sin etiquetas de
+  /// prueba (clases `gesto_*`).
+  static const schemaVersion = 2;
 
   /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
   /// en las pruebas (`inMemoryDatabasePath`).
@@ -31,6 +36,9 @@ class GestuVozDatabase {
         onCreate: (db, _) async {
           await _createSchema(db);
           await _seed(db);
+        },
+        onUpgrade: (db, oldVersion, _) async {
+          if (oldVersion < 2) await _migrateToV2(db);
         },
       ),
     );
@@ -143,7 +151,7 @@ class GestuVozDatabase {
   }
 
   /// Carga los datos iniciales: categorias y pictogramas existentes del
-  /// prototipo (SEED) y los gestos DEMO con su intencion (D10).
+  /// prototipo y los gestos iniciales con su intencion.
   static Future<void> _seed(Database db) async {
     await db.transaction((txn) async {
       final catIdByKey = <String, int>{};
@@ -167,10 +175,10 @@ class GestuVozDatabase {
           'id_intencion': null,
         });
       }
-      for (final g in kDemoGestures) {
+      for (final g in kSeedGestures) {
         final gestureId = await txn.insert('gesto', {
           'nombre': g.name,
-          'descripcion': g.description,
+          'descripcion': null,
           'representacion_visual': g.visual,
           'clase_reconocimiento': g.recognitionClass,
           'estado_disponibilidad': 'disponible',
@@ -182,13 +190,45 @@ class GestuVozDatabase {
             .speech;
         final intentionId = await txn.insert('intencion_comunicativa', {
           'nombre': g.intentionName,
-          'descripcion': 'Intención DEMO asociada a un gesto DEMO.',
+          'descripcion': null,
           'mensaje_asociado': message,
           'id_gesto': gestureId,
         });
         await txn.update('pictograma', {'id_intencion': intentionId},
             where: 'id_pictograma = ?', whereArgs: [pictoId]);
       }
+    });
+  }
+
+  /// v2: quita las etiquetas de prueba de los gestos iniciales en bases ya
+  /// creadas con v1. No borra datos del usuario.
+  static Future<void> _migrateToV2(Database db) async {
+    await db.transaction((txn) async {
+      for (final g in kSeedGestures) {
+        final oldClass = g.recognitionClass.replaceFirst('gesto_', 'demo_');
+        final rows = await txn.query('gesto',
+            columns: ['id_gesto'],
+            where: 'clase_reconocimiento = ?',
+            whereArgs: [oldClass]);
+        if (rows.isEmpty) continue;
+        final id = rows.first['id_gesto'] as int;
+        await txn.update(
+            'gesto',
+            {
+              'clase_reconocimiento': g.recognitionClass,
+              'descripcion': null,
+            },
+            where: 'id_gesto = ?',
+            whereArgs: [id]);
+        await txn.update(
+            'intencion_comunicativa',
+            {'nombre': g.intentionName, 'descripcion': null},
+            where: 'id_gesto = ?',
+            whereArgs: [id]);
+      }
+      await txn.rawUpdate(
+          "UPDATE interaccion SET detalle = 'Gesto reconocido' "
+          "WHERE detalle LIKE 'Gesto reconocido (%'");
     });
   }
 }

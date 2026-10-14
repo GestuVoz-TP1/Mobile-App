@@ -11,7 +11,7 @@ import 'application/reporting_service.dart';
 import 'application/settings_service.dart';
 import 'domain/ml.dart';
 import 'infrastructure/camera/camera_service.dart';
-import 'infrastructure/ml/mock_gesture_recognition_service.dart';
+import 'infrastructure/ml/test_mode_gesture_recognition_service.dart';
 import 'infrastructure/persistence/csv_report_exporter.dart';
 import 'infrastructure/persistence/database.dart';
 import 'infrastructure/persistence/legacy_cleanup.dart';
@@ -32,7 +32,7 @@ class Di {
   List<SingleChildWidget> get providers => _providers;
 
   static Future<Di> build() async {
-    // D11: fotos del antiguo modulo de expresion facial.
+    // Fotos del antiguo modulo de expresion facial.
     await removeLegacyTrainingImages();
 
     final db = await GestuVozDatabase.open();
@@ -46,10 +46,11 @@ class Di {
     final voiceRepo = SqliteVoiceConfigurationRepository(db);
     final consentRepo = SqliteConsentRepository(db);
 
-    // Reconocimiento de gestos: DEMO mientras no exista el modelo entrenado.
-    // Para el modelo real: TensorFlowLiteGestureRecognitionService().
+    // Reconocimiento de gestos: reconocedor de prueba mientras no exista el
+    // modelo entrenado. Para el modelo real:
+    // TensorFlowLiteGestureRecognitionService().
     final GestureRecognitionService recognizer =
-        MockGestureRecognitionService();
+        TestModeGestureRecognitionService();
 
     final tts = TtsService();
     final camera = CameraService();

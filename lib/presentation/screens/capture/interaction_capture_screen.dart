@@ -10,7 +10,7 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 
-/// "Usar mis gestos" (D7):
+/// "Usar mis gestos":
 /// 1. Preparacion: gestos habilitados con su representacion e instrucciones.
 /// 2. "Comenzar" -> camara con "Buscando tus manos..." (mockup 7).
 /// 3. Reconocido (mockup 8) o no reconocido (mockup 9).
@@ -68,7 +68,7 @@ class _GestureRecognitionScreenState extends State<GestureRecognitionScreen>
         _CameraIssue(controller: c, onUsePictograms: widget.onUsePictograms),
       GesturePhase.startingCamera ||
       GesturePhase.capturing ||
-      GesturePhase.simulating ||
+      GesturePhase.choosingTestResult ||
       GesturePhase.analyzing =>
         _CameraStage(controller: c),
       GesturePhase.recognized => _Recognized(controller: c),
@@ -100,14 +100,6 @@ class _Preparation extends StatelessWidget {
                         TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
                 const Text('Puedes hacer uno de estos gestos',
                     style: TextStyle(fontSize: 18, color: AppColors.inkSoft)),
-                if (controller.isSimulated) ...[
-                  const SizedBox(height: Insets.sm),
-                  const StatusNote(
-                    'Modo demostración: el reconocimiento es simulado. Aún no '
-                    'existe el modelo entrenado.',
-                    kind: NoteKind.warning,
-                  ),
-                ],
                 const SizedBox(height: Insets.md),
                 for (final g in gestures) _GestureCard(gesture: g),
                 const SizedBox(height: Insets.sm),
@@ -173,19 +165,9 @@ class _GestureCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(gesture.name,
-                            style: const TextStyle(
-                                fontSize: 22, fontWeight: FontWeight.w800)),
-                      ),
-                      if (gesture.isDemo) ...[
-                        const SizedBox(width: 6),
-                        const DemoBadge(),
-                      ],
-                    ],
-                  ),
+                  Text(gesture.name,
+                      style: const TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.w800)),
                   for (var i = 0; i < steps.length; i++)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
@@ -203,7 +185,7 @@ class _GestureCard extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Camara (mockup 7) + selector DEMO
+// 2. Camara (mockup 7)
 // ---------------------------------------------------------------------------
 class _CameraStage extends StatelessWidget {
   final CaptureController controller;
@@ -318,8 +300,8 @@ class _CameraStage extends StatelessWidget {
                 ),
               ),
             ),
-            if (phase == GesturePhase.simulating)
-              _DemoSelector(controller: controller)
+            if (phase == GesturePhase.choosingTestResult)
+              _TestResultPanel(controller: controller)
             else
               const Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -348,11 +330,12 @@ class _CameraStage extends StatelessWidget {
   }
 }
 
-/// D7: selector "DEMO — resultado simulado". Solo existe con el reconocedor
-/// DEMO; no muestra porcentajes.
-class _DemoSelector extends StatelessWidget {
+/// Modo de prueba: solo aparece en compilaciones de desarrollo mientras no
+/// existe el modelo entrenado. Permite elegir el resultado del intento. No
+/// muestra porcentajes.
+class _TestResultPanel extends StatelessWidget {
   final CaptureController controller;
-  const _DemoSelector({required this.controller});
+  const _TestResultPanel({required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -361,27 +344,15 @@ class _DemoSelector extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(Insets.md, 0, Insets.md, Insets.md),
       padding: const EdgeInsets.all(Insets.md),
       decoration: BoxDecoration(
-        color: AppColors.amberSoft,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(Radii.card),
-        border: Border.all(color: AppColors.yellowAccent, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Row(
-            children: [
-              Icon(Icons.science_outlined, color: AppColors.amberInk),
-              SizedBox(width: 6),
-              Text('DEMO — resultado simulado',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      color: AppColors.amberInk)),
-            ],
-          ),
-          const Text('Elige qué resultado devolverá el reconocimiento.',
-              style: TextStyle(color: AppColors.amberInk)),
+          const Text('¿Qué gesto hiciste?',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
           const SizedBox(height: Insets.sm),
           Wrap(
             spacing: Insets.sm,
@@ -389,17 +360,17 @@ class _DemoSelector extends StatelessWidget {
             children: [
               for (final g in controller.enabledGestures)
                 ActionChip(
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColors.primarySoft,
                   avatar: Text(g.visualRepresentation ?? '✋'),
                   label: Text(g.name),
                   onPressed: () =>
-                      controller.chooseSimulatedOutcome(g.recognitionClass),
+                      controller.chooseTestResult(g.recognitionClass),
                 ),
               ActionChip(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.bg,
                 avatar: const Icon(Icons.help_outline_rounded, size: 18),
                 label: const Text('No reconocido'),
-                onPressed: () => controller.chooseSimulatedOutcome(null),
+                onPressed: () => controller.chooseTestResult(null),
               ),
             ],
           ),
@@ -422,7 +393,7 @@ class _Recognized extends StatelessWidget {
     final style = CategoryStyle.of(o.pictogram.categoryId);
     final confidence = controller.recognizerInfo.isRealModel
         ? o.result.confidence
-        : null; // en DEMO no se muestran porcentajes
+        : null; // sin modelo real no se muestran porcentajes
     return SafeArea(
       child: Column(
         children: [
@@ -452,10 +423,6 @@ class _Recognized extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (controller.isSimulated) ...[
-                  const SizedBox(height: Insets.sm),
-                  const Center(child: DemoBadge(text: 'DEMO — resultado simulado')),
-                ],
                 const SizedBox(height: Insets.lg),
                 Center(
                   child: Container(

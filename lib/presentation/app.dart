@@ -52,7 +52,7 @@ class _Router extends StatelessWidget {
     if (!s.isLoggedIn) return const WelcomeScreen();
     // HU023: sin perfil activo se elige o se crea el primero.
     if (s.activeProfile == null) return const ProfilesScreen(isRoot: true);
-    // D3: el consentimiento se registra al crear el perfil.
+    // El consentimiento se registra al crear el perfil.
     if (s.consent == null) return const ConsentScreen(onboarding: true);
     return switch (s.mode) {
       AppMode.child => const ChildShell(),

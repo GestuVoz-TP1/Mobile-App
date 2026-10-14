@@ -54,7 +54,7 @@ class SessionController extends ChangeNotifier {
   Consent? _consent;
   Consent? get consent => _consent;
 
-  /// D4: con consentimiento vigente se registran interacciones y se habilita
+  /// Con consentimiento vigente se registran interacciones y se habilita
   /// la camara de gestos.
   bool get consentAllowsProcessing => _consent?.allowsProcessing ?? false;
 
@@ -162,7 +162,7 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// HU025 / D5.
+  /// HU025.
   Future<void> deleteProfile(ChildProfile p) async {
     await _profiles.delete(p.id!);
     if (_active?.id == p.id) {
@@ -240,7 +240,7 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// D1: salir del modo nino pide la contrasena del tutor (sin PIN).
+  /// Salir del modo nino pide la contrasena del tutor (sin PIN).
   /// Solo verifica; el cambio de pantalla lo hace [leaveChildMode] una vez
   /// cerrado el dialogo.
   Future<bool> verifyTutorPassword(String password) async {

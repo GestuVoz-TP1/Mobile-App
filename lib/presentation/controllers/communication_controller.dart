@@ -9,8 +9,8 @@ import 'session_controller.dart';
 /// Estado del tablero del nino (E2).
 ///
 /// El nino elige UN pictograma: se muestra en "Mi mensaje" (mockup 6), se
-/// reproduce por voz y se registra la interaccion (si hay consentimiento,
-/// D4). No se componen frases con varios pictogramas.
+/// reproduce por voz y se registra la interaccion (si hay consentimiento).
+/// No se componen frases con varios pictogramas.
 class CommunicationController extends ChangeNotifier {
   CommunicationController({
     required CommunicationService communication,

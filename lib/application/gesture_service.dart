@@ -30,8 +30,9 @@ class GestureService {
 
   RecognizerInfo get recognizerInfo => _recognizer.info;
 
-  /// true si el reconocedor actual es DEMO (resultado simulado).
-  bool get isSimulated => _recognizer is SimulatedGestureRecognition;
+  /// true si el reconocedor actual admite el modo de prueba (no es un
+  /// modelo entrenado).
+  bool get supportsTestOutcome => _recognizer is TestOutcomeRecognition;
 
   Future<void> ensureLoaded() async {
     if (!_recognizer.isLoaded) await _recognizer.load();
@@ -52,15 +53,15 @@ class GestureService {
         .toList();
   }
 
-  /// Instrucciones editables (D10).
+  /// Instrucciones editables por el tutor.
   Future<void> updateInstructions(int gestureId, String? text) =>
       _gestures.updateInstructions(gestureId, text);
 
-  /// Solo para el reconocedor DEMO: fija el resultado del siguiente intento.
-  void setSimulatedOutcome(String? recognitionClass) {
+  /// Modo de prueba: fija el resultado del siguiente intento.
+  void setTestOutcome(String? recognitionClass) {
     final r = _recognizer;
-    if (r is SimulatedGestureRecognition) {
-      (r as SimulatedGestureRecognition).setSimulatedOutcome(recognitionClass);
+    if (r is TestOutcomeRecognition) {
+      (r as TestOutcomeRecognition).setTestOutcome(recognitionClass);
     }
   }
 

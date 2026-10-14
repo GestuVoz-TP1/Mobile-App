@@ -35,7 +35,7 @@ abstract final class Availability {
 /// PICTOGRAMA. [message] es la frase que se reproduce por voz.
 ///
 /// Un pictograma personalizado (HU012) siempre tiene [image]; los
-/// pictogramas semilla se representan con [emoji] (D6).
+/// pictogramas semilla se representan con [emoji].
 class Pictogram {
   final int? id;
   final String name;

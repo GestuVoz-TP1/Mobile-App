@@ -1,9 +1,9 @@
 /// Datos iniciales (SEED) de SQLite.
 ///
 /// Son los pictogramas y categorias que ya tenia el prototipo (espanol,
-/// contexto Lima), representados con emojis para funcionar 100 % offline
-/// (D6). Se insertan una sola vez al crear la base de datos. Un perfil nuevo
-/// los tiene todos seleccionados (D9); el tutor puede ocultarlos sin
+/// contexto Lima), representados con emojis para funcionar 100 % offline.
+/// Se insertan una sola vez al crear la base de datos. Un perfil nuevo
+/// los tiene todos seleccionados; el tutor puede ocultarlos sin
 /// eliminarlos del catalogo (HU015).
 library;
 
@@ -16,7 +16,7 @@ class SeedCategory {
 }
 
 /// Pictograma semilla. [key] es un identificador estable del seed (no se
-/// guarda en la base de datos; sirve para enlazar los gestos DEMO).
+/// guarda en la base de datos; sirve para enlazar los gestos iniciales).
 class SeedPictogram {
   final String key;
   final String label;

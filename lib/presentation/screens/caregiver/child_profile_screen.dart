@@ -249,15 +249,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
                           value: _prefs.enabledGestureIds.contains(g.id),
                           secondary: Text(g.visualRepresentation ?? '✋',
                               style: const TextStyle(fontSize: 26)),
-                          title: Row(
-                            children: [
-                              Flexible(child: Text(g.name)),
-                              if (g.isDemo) ...[
-                                const SizedBox(width: 6),
-                                const DemoBadge(),
-                              ],
-                            ],
-                          ),
+                          title: Text(g.name),
                           onChanged: (on) {
                             final ids = {..._prefs.enabledGestureIds};
                             on == true ? ids.add(g.id) : ids.remove(g.id);

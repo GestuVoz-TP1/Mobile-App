@@ -15,8 +15,8 @@ class DomainException implements Exception {
 }
 
 /// Value object 0..1 para la confianza que reporta un modelo de
-/// reconocimiento. Solo lo produce un modelo real; la implementacion DEMO no
-/// inventa valores de confianza.
+/// reconocimiento. Solo lo produce un modelo real; nunca se inventan valores
+/// de confianza.
 class Confidence {
   final double value;
   const Confidence._(this.value);

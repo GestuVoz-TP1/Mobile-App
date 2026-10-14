@@ -74,11 +74,54 @@ void main() {
     expect(rows.length, kSeedPictograms.length);
     expect(kSeedPictograms.length, 127);
     final gestures = await app.db.db.query('gesto');
-    expect(gestures.length, kDemoGestures.length);
+    expect(gestures.length, kSeedGestures.length);
     expect(gestures.every((g) => (g['clase_reconocimiento'] as String)
-        .startsWith('demo_')), isTrue);
+        .startsWith('gesto_')), isTrue);
     expect(gestures.every((g) => g['instrucciones'] == null), isTrue);
     await app.db.close();
+  });
+
+  test('Migración v1 → v2: limpia etiquetas de prueba sin perder datos',
+      () async {
+    final (app, _, profileId) = await withProfile();
+    final db = app.db.db;
+    // Base como la creaba v1: clases demo_* y textos con "(DEMO)".
+    for (final g in kSeedGestures) {
+      final old = g.recognitionClass.replaceFirst('gesto_', 'demo_');
+      await db.update('gesto', {'clase_reconocimiento': old},
+          where: 'clase_reconocimiento = ?', whereArgs: [g.recognitionClass]);
+    }
+    await db.rawUpdate("UPDATE intencion_comunicativa "
+        "SET nombre = nombre || ' (DEMO)'");
+    final picto = (await app.communication.buildBoard(profileId))
+        .byCategory
+        .values
+        .expand((l) => l)
+        .first;
+    await db.insert('interaccion', {
+      'fecha_hora': DateTime.now().toIso8601String(),
+      'detalle': 'Gesto reconocido (DEMO — resultado simulado)',
+      'id_pictograma': picto.id,
+      'id_perfil': profileId,
+    });
+    await db.execute('PRAGMA user_version = 1');
+    await app.db.close();
+
+    final reopened = await _App.open(path);
+    final rdb = reopened.db.db;
+    final classes = (await rdb.query('gesto'))
+        .map((r) => r['clase_reconocimiento'] as String)
+        .toList();
+    expect(classes.every((c) => c.startsWith('gesto_')), isTrue);
+    final intents = (await rdb.query('intencion_comunicativa'))
+        .map((r) => r['nombre'] as String);
+    expect(intents.any((n) => n.contains('DEMO')), isFalse);
+    final detail = (await rdb.query('interaccion')).single['detalle'];
+    expect(detail, 'Gesto reconocido');
+    // El perfil del usuario sigue ahí.
+    expect((await reopened.profiles.byId(profileId))?.child.name,
+        'Valentina López');
+    await reopened.db.close();
   });
 
   test('HU018/HU019: registro y login con correo; credenciales inválidas',

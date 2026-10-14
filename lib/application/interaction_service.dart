@@ -5,7 +5,7 @@ import '../domain/interaction.dart';
 
 /// Servicio de aplicacion: registro de interacciones (RF-13).
 ///
-/// D4: solo registra si el perfil tiene un consentimiento vigente.
+/// Solo registra si el perfil tiene un consentimiento vigente.
 class InteractionService {
   InteractionService(this._interactions, this._consents);
   final InteractionRepository _interactions;
@@ -27,14 +27,11 @@ class InteractionService {
     required Gesture gesture,
     required CommunicativeIntention intention,
     required Pictogram pictogram,
-    required bool simulated,
   }) =>
       _record(
         Interaction(
           at: DateTime.now(),
-          detail: simulated
-              ? 'Gesto reconocido (DEMO — resultado simulado)'
-              : 'Gesto reconocido',
+          detail: 'Gesto reconocido',
           profileId: profileId,
           pictogramId: pictogram.id!,
           gestureId: gesture.id,

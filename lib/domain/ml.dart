@@ -5,7 +5,7 @@
 /// ejecutado con TensorFlow Lite sobre SECUENCIAS de imagenes (RF-01).
 ///
 ///   GestureRecognitionService
-///     ├─ MockGestureRecognitionService            (DEMO, esta etapa)
+///     ├─ TestModeGestureRecognitionService        (mientras no exista el modelo)
 ///     └─ TensorFlowLiteGestureRecognitionService  (cuando exista el .tflite)
 ///
 /// Las imagenes se procesan solo en memoria y nunca se guardan (RNF-02).
@@ -42,7 +42,7 @@ class GestureSequence {
 class RecognizerInfo {
   final String name;
 
-  /// true solo si es un modelo entrenado real. El DEMO es false.
+  /// true solo si es un modelo entrenado real.
   final bool isRealModel;
   final String notes;
 
@@ -58,8 +58,8 @@ class GestureRecognitionResult {
   /// `clase_reconocimiento` del gesto reconocido; null = no reconocido.
   final String? recognitionClass;
 
-  /// Confianza del modelo. Solo un modelo real la informa; en DEMO es null
-  /// (no se inventan porcentajes).
+  /// Confianza del modelo. Solo un modelo real la informa (no se inventan
+  /// porcentajes).
   final Confidence? confidence;
 
   final int latencyMs;
@@ -93,10 +93,11 @@ abstract interface class GestureRecognitionService {
   Future<void> dispose();
 }
 
-/// Capacidad exclusiva de un reconocedor DEMO: el resultado lo elige quien
-/// prueba la app mediante el selector "DEMO — resultado simulado" (D7).
-/// Un modelo real NO implementa esta interfaz.
-abstract interface class SimulatedGestureRecognition {
-  /// [recognitionClass] null = simular "No reconocido".
-  void setSimulatedOutcome(String? recognitionClass);
+/// Modo de prueba del reconocedor que se usa mientras no existe el modelo
+/// entrenado: quien prueba la app elige el resultado del siguiente intento.
+/// Solo se ofrece en compilaciones de desarrollo. Un modelo real NO
+/// implementa esta interfaz.
+abstract interface class TestOutcomeRecognition {
+  /// [recognitionClass] null = "No reconocido".
+  void setTestOutcome(String? recognitionClass);
 }

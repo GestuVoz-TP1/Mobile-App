@@ -22,8 +22,8 @@ class Gesture {
   final String recognitionClass;
   final String availability;
 
-  /// Indicaciones para realizar el gesto. Editable; puede estar vacio si no
-  /// existe informacion oficial (D10).
+  /// Indicaciones para realizar el gesto. Editables por el tutor; pueden
+  /// estar vacias.
   final String? instructions;
 
   const Gesture({
@@ -35,9 +35,6 @@ class Gesture {
     required this.availability,
     this.instructions,
   });
-
-  /// Los gestos DEMO usan clases `demo_*` (D10).
-  bool get isDemo => recognitionClass.startsWith('demo_');
 
   bool get hasInstructions =>
       instructions != null && instructions!.trim().isNotEmpty;

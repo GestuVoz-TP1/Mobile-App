@@ -55,7 +55,7 @@ class Child {
 
   int get age => ageAt(birthDate, DateTime.now());
 
-  /// Iniciales para el avatar (D6: el modelo no contempla avatar).
+  /// Iniciales para el avatar (el modelo no contempla avatar).
   String get initials {
     final parts =
         name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
@@ -199,10 +199,10 @@ abstract interface class ChildProfileRepository {
   Future<ChildProfile?> byId(int profileId);
 
   /// Crea NINO + PERFIL_NINO + datos iniciales del perfil (configuracion de
-  /// voz y pictogramas semilla seleccionados, D9) en una sola transaccion.
+  /// voz y pictogramas semilla seleccionados) en una sola transaccion.
   Future<ChildProfile> create(ChildProfile profile);
   Future<void> update(ChildProfile profile);
 
-  /// D5: borra en cascada los datos exclusivos del perfil.
+  /// Borra en cascada los datos exclusivos del perfil.
   Future<void> delete(int profileId);
 }

@@ -11,7 +11,7 @@ import '../../widgets/common.dart';
 /// - HU027: otorgar / no otorgar el consentimiento.
 /// - HU028: retirar el consentimiento (con confirmacion).
 ///
-/// [onboarding] = se muestra justo despues de crear el perfil (D3).
+/// [onboarding] = se muestra justo despues de crear el perfil.
 class ConsentScreen extends StatefulWidget {
   final bool onboarding;
   const ConsentScreen({super.key, this.onboarding = false});

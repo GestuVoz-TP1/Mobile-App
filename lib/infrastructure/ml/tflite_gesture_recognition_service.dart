@@ -6,7 +6,7 @@ import '../../domain/ml.dart';
 ///
 /// ESTADO: NO IMPLEMENTADO. Todavia no existe el archivo `.tflite` entrenado,
 /// por lo que esta clase no esta registrada en `di.dart` y la app usa
-/// [MockGestureRecognitionService].
+/// [TestModeGestureRecognitionService].
 ///
 /// Pasos para activarla en una etapa posterior:
 ///   1. Agregar la dependencia `tflite_flutter` y el modelo en
@@ -20,7 +20,7 @@ import '../../domain/ml.dart';
 ///      `GestureRecognitionResult.notRecognized()` (HU001 / HU006, criterio 2).
 ///   4. Registrar `RecognizerInfo(isRealModel: true)` y la latencia
 ///      (objetivo OB2: <= 200 ms).
-///   5. En `di.dart`, reemplazar `MockGestureRecognitionService()` por esta
+///   5. En `di.dart`, reemplazar `TestModeGestureRecognitionService()` por esta
 ///      clase. Las clases de GESTO.clase_reconocimiento deben coincidir con
 ///      las etiquetas del modelo.
 class TensorFlowLiteGestureRecognitionService

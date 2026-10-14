@@ -127,7 +127,7 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         'voz_activada': v.voiceEnabled ? 1 : 0,
         'id_perfil': profileId,
       });
-      // D9: el perfil nuevo inicia con los pictogramas semilla seleccionados
+      // El perfil nuevo inicia con los pictogramas semilla seleccionados
       // (los semilla son los que no tienen imagen propia).
       await txn.rawInsert('''
         INSERT INTO perfil_pictograma (id_pictograma, id_perfil, orden)
@@ -187,7 +187,7 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         WHERE pp.id_perfil = ? AND p.imagen IS NOT NULL''', [profileId]))
           .map((r) => r['id_pictograma'] as int)
           .toList();
-      // Datos exclusivos del perfil (D5). Interacciones, configuracion de voz,
+      // Datos exclusivos del perfil. Interacciones, configuracion de voz,
       // consentimiento y seleccion de pictogramas se borran por cascada.
       await txn.delete('interaccion',
           where: 'id_perfil = ?', whereArgs: [profileId]);

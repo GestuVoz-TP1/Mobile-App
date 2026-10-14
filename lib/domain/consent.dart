@@ -44,7 +44,7 @@ class Consent {
     this.withdrawnAt,
   });
 
-  /// D4: solo con consentimiento vigente se registran interacciones y se
+  /// Solo con consentimiento vigente se registran interacciones y se
   /// habilita la camara de gestos.
   bool get allowsProcessing => state == ConsentState.granted;
 }

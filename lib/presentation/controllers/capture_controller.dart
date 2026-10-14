@@ -8,7 +8,7 @@ import '../../infrastructure/camera/camera_service.dart';
 import '../../infrastructure/tts/tts_service.dart';
 import 'session_controller.dart';
 
-/// Etapas de la pantalla "Usar mis gestos" (D7):
+/// Etapas de la pantalla "Usar mis gestos":
 /// preparacion -> camara ("Buscando tus manos...") -> reconocido / no
 /// reconocido.
 enum GesturePhase {
@@ -18,7 +18,7 @@ enum GesturePhase {
   startingCamera,
   cameraIssue,
   capturing,
-  simulating,
+  choosingTestResult,
   analyzing,
   recognized,
   notRecognized,
@@ -64,7 +64,9 @@ class CaptureController extends ChangeNotifier {
   bool _voiceFailed = false;
   bool get voiceFailed => _voiceFailed;
 
-  bool get isSimulated => _gestures.isSimulated;
+  /// Modo de prueba: solo en compilaciones de desarrollo y solo mientras el
+  /// reconocedor no sea un modelo entrenado.
+  bool get testModeAvailable => kDebugMode && _gestures.supportsTestOutcome;
   RecognizerInfo get recognizerInfo => _gestures.recognizerInfo;
 
   GestureSequence _lastSequence = const GestureSequence([]);
@@ -86,7 +88,7 @@ class CaptureController extends ChangeNotifier {
       if (!profile.preferences.gesturesEnabled) {
         _reason = GestureUnavailableReason.disabled; // HU004
       } else if (!_session.consentAllowsProcessing) {
-        _reason = GestureUnavailableReason.noConsent; // D4
+        _reason = GestureUnavailableReason.noConsent; // sin consentimiento
       } else {
         _enabled = await _gestures.enabledFor(profile);
         if (_enabled.isEmpty) _reason = GestureUnavailableReason.noGestures;
@@ -129,17 +131,17 @@ class CaptureController extends ChangeNotifier {
     // descarta el intento.
     if (_disposed || _phase != GesturePhase.capturing) return;
     _lastSequence = seq;
-    if (isSimulated) {
-      // D7: el resultado lo elige quien prueba ("DEMO — resultado simulado").
-      _set(GesturePhase.simulating);
+    if (testModeAvailable) {
+      // Modo de prueba: quien prueba elige el resultado del intento.
+      _set(GesturePhase.choosingTestResult);
     } else {
       await _recognize();
     }
   }
 
-  /// Selector DEMO: [recognitionClass] null = "No reconocido".
-  Future<void> chooseSimulatedOutcome(String? recognitionClass) async {
-    _gestures.setSimulatedOutcome(recognitionClass);
+  /// Modo de prueba: [recognitionClass] null = "No reconocido".
+  Future<void> chooseTestResult(String? recognitionClass) async {
+    _gestures.setTestOutcome(recognitionClass);
     await _recognize();
   }
 
@@ -170,7 +172,6 @@ class CaptureController extends ChangeNotifier {
       gesture: out.gesture,
       intention: out.intention,
       pictogram: out.pictogram,
-      simulated: isSimulated,
     );
   }
 

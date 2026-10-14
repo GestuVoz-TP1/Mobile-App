@@ -1,26 +1,25 @@
 import '../../domain/ml.dart';
 
-/// Reconocedor DEMO.
+/// Reconocedor que se usa mientras no existe el modelo entrenado.
 ///
 /// NO es un modelo de Machine Learning y NO analiza las imagenes. Recibe la
 /// secuencia capturada por la camara (para ejercitar el flujo real) y devuelve
-/// el resultado que elige quien prueba la app en el selector
-/// "DEMO — resultado simulado" (D7). Nunca informa porcentajes de confianza.
+/// el resultado elegido en el modo de prueba, que solo aparece en
+/// compilaciones de desarrollo. Sin un resultado elegido devuelve
+/// "no reconocido". Nunca informa porcentajes de confianza.
 ///
 /// Se reemplazara por [TensorFlowLiteGestureRecognitionService] cuando exista
 /// el modelo MobileNet + LSTM entrenado (OB2, seccion 8).
-class MockGestureRecognitionService
-    implements GestureRecognitionService, SimulatedGestureRecognition {
+class TestModeGestureRecognitionService
+    implements GestureRecognitionService, TestOutcomeRecognition {
   bool _loaded = false;
   String? _nextOutcome;
-  bool _outcomeSet = false;
 
   @override
   RecognizerInfo get info => const RecognizerInfo(
-        name: 'Reconocimiento simulado (DEMO)',
+        name: 'Reconocedor de prueba',
         isRealModel: false,
-        notes: 'No existe todavía el modelo TensorFlow Lite entrenado. '
-            'El resultado lo selecciona quien prueba la aplicación.',
+        notes: 'No existe todavía el modelo TensorFlow Lite entrenado.',
       );
 
   @override
@@ -30,19 +29,16 @@ class MockGestureRecognitionService
   Future<void> load() async => _loaded = true;
 
   @override
-  void setSimulatedOutcome(String? recognitionClass) {
-    _nextOutcome = recognitionClass;
-    _outcomeSet = true;
-  }
+  void setTestOutcome(String? recognitionClass) =>
+      _nextOutcome = recognitionClass;
 
   @override
   Future<GestureRecognitionResult> recognize(
     GestureSequence sequence, {
     required List<String> candidateClasses,
   }) async {
-    final outcome = _outcomeSet ? _nextOutcome : null;
+    final outcome = _nextOutcome;
     _nextOutcome = null;
-    _outcomeSet = false;
     if (sequence.isEmpty ||
         outcome == null ||
         !candidateClasses.contains(outcome)) {

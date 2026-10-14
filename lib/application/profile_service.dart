@@ -72,7 +72,7 @@ class ProfileService {
     return updated;
   }
 
-  /// HU025 / D5.
+  /// HU025.
   Future<void> delete(int profileId) => _profiles.delete(profileId);
 
   static String? _clean(String? v) =>

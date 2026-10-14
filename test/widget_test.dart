@@ -9,7 +9,7 @@ import 'package:gestuvoz/domain/gesture.dart';
 import 'package:gestuvoz/domain/interaction.dart';
 import 'package:gestuvoz/domain/ml.dart';
 import 'package:gestuvoz/domain/reporting.dart';
-import 'package:gestuvoz/infrastructure/ml/mock_gesture_recognition_service.dart';
+import 'package:gestuvoz/infrastructure/ml/test_mode_gesture_recognition_service.dart';
 import 'package:gestuvoz/presentation/theme.dart';
 import 'package:gestuvoz/presentation/widgets/common.dart';
 import 'package:gestuvoz/presentation/widgets/picto_tile.dart';
@@ -64,19 +64,19 @@ void main() {
       expect(p.name, 'Quiero mi osito');
     });
 
-    test('Gesto DEMO e instrucciones por pasos', () {
+    test('Instrucciones del gesto por pasos', () {
       const g = Gesture(
           id: 1,
           name: 'Hola',
-          recognitionClass: 'demo_hola',
+          recognitionClass: 'gesto_hola',
           availability: 'disponible',
           instructions: '  Levanta tu mano \n\n Muévela ');
-      expect(g.isDemo, isTrue);
+      expect(g.hasInstructions, isTrue);
       expect(g.instructionSteps, ['Levanta tu mano', 'Muévela']);
     });
   });
 
-  group('Reconocimiento DEMO (sin porcentajes inventados)', () {
+  group('Reconocedor de prueba (sin porcentajes inventados)', () {
     const seq = GestureSequence([]);
     final frame = GestureSequence([
       GestureFrame(
@@ -84,26 +84,32 @@ void main() {
     ]);
 
     test('No es un modelo real', () {
-      expect(MockGestureRecognitionService().info.isRealModel, isFalse);
+      expect(TestModeGestureRecognitionService().info.isRealModel, isFalse);
+    });
+
+    test('Sin resultado elegido no reconoce nada', () async {
+      final m = TestModeGestureRecognitionService();
+      expect((await m.recognize(frame, candidateClasses: ['gesto_agua']))
+          .recognized, isFalse);
     });
 
     test('Devuelve el resultado elegido y nunca una confianza', () async {
-      final m = MockGestureRecognitionService()
-        ..setSimulatedOutcome('demo_agua');
-      final r = await m.recognize(frame, candidateClasses: ['demo_agua']);
-      expect(r.recognitionClass, 'demo_agua');
+      final m = TestModeGestureRecognitionService()
+        ..setTestOutcome('gesto_agua');
+      final r = await m.recognize(frame, candidateClasses: ['gesto_agua']);
+      expect(r.recognitionClass, 'gesto_agua');
       expect(r.confidence, isNull);
     });
 
     test('"No reconocido", secuencia vacía o clase no habilitada', () async {
-      final m = MockGestureRecognitionService()..setSimulatedOutcome(null);
-      expect((await m.recognize(frame, candidateClasses: ['demo_agua']))
+      final m = TestModeGestureRecognitionService()..setTestOutcome(null);
+      expect((await m.recognize(frame, candidateClasses: ['gesto_agua']))
           .recognized, isFalse);
-      m.setSimulatedOutcome('demo_agua');
-      expect((await m.recognize(seq, candidateClasses: ['demo_agua']))
+      m.setTestOutcome('gesto_agua');
+      expect((await m.recognize(seq, candidateClasses: ['gesto_agua']))
           .recognized, isFalse);
-      m.setSimulatedOutcome('demo_hola');
-      expect((await m.recognize(frame, candidateClasses: ['demo_agua']))
+      m.setTestOutcome('gesto_hola');
+      expect((await m.recognize(frame, candidateClasses: ['gesto_agua']))
           .recognized, isFalse);
     });
   });

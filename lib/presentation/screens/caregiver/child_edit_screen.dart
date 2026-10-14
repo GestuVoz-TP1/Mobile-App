@@ -73,7 +73,7 @@ class _ChildEditScreenState extends State<ChildEditScreen> {
     try {
       if (_isNew) {
         await session.createProfile(form);
-        // Vuelve a la raiz: el router muestra el consentimiento (D3).
+        // Vuelve a la raiz: el router muestra el consentimiento.
         if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
       } else {
         await session.updateProfile(widget.profile!, form);

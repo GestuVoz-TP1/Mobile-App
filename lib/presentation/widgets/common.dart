@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Avatar con las iniciales del nino (D6: el modelo no tiene avatar).
+/// Avatar con las iniciales del nino (el modelo no tiene avatar).
 class InitialsAvatar extends StatelessWidget {
   final String initials;
   final double radius;
@@ -83,10 +83,10 @@ class StatusNote extends StatelessWidget {
   }
 }
 
-/// Etiqueta "DEMO" para contenido no oficial (D7, D10).
-class DemoBadge extends StatelessWidget {
+/// Etiqueta corta (p. ej. "PERSONAL" en pictogramas personalizados).
+class TagBadge extends StatelessWidget {
   final String text;
-  const DemoBadge({super.key, this.text = 'DEMO'});
+  const TagBadge(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) => Container(

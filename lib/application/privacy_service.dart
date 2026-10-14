@@ -16,7 +16,7 @@ class PrivacyService {
         registeredAt: DateTime.now(),
       ));
 
-  /// HU028: registra el retiro. No borra datos existentes (D4).
+  /// HU028: registra el retiro. No borra datos existentes.
   Future<Consent> withdraw(int profileId) async {
     final current = await _consents.forProfile(profileId);
     if (current == null || current.state != ConsentState.granted) {
@@ -30,7 +30,7 @@ class PrivacyService {
     ));
   }
 
-  /// D4: con consentimiento vigente se registran interacciones y se habilita
+  /// Con consentimiento vigente se registran interacciones y se habilita
   /// la camara de gestos.
   Future<bool> allowsProcessing(int profileId) async =>
       (await _consents.forProfile(profileId))?.allowsProcessing ?? false;

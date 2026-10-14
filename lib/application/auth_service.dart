@@ -1,6 +1,6 @@
 import '../domain/auth.dart';
 
-/// Datos del registro (HU018). D2: solo correo y contrasena.
+/// Datos del registro (HU018): solo correo y contrasena.
 class RegistrationForm {
   final String email;
   final String password;
@@ -63,7 +63,7 @@ class AuthService {
     return acc;
   }
 
-  /// D1: salir del modo nino pide la contrasena del tutor.
+  /// Salir del modo nino pide la contrasena del tutor.
   Future<bool> verifyPassword(int tutorId, String password) async {
     final acc = await _accounts.findById(tutorId);
     return acc != null && _hasher.verify(password, acc.password);
