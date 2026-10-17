@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
@@ -21,10 +23,16 @@ abstract final class SyncOp {
 /// carga util se arma al enviar, con el estado mas reciente del dato.
 abstract final class SyncLog {
   static const _uuid = Uuid();
+  static final _changes = StreamController<void>.broadcast();
 
   static String newId() => _uuid.v4();
 
   static String now() => DateTime.now().toUtc().toIso8601String();
+
+  /// Avisa que hay cambios locales por enviar (el servicio de sincronizacion
+  /// los envia unos segundos despues).
+  static Stream<void> get changes => _changes.stream;
+  static void notify() => _changes.add(null);
 
   /// Marca un dato como pendiente de enviar (crear o actualizar).
   static Future<void> upsert(
@@ -33,6 +41,7 @@ abstract final class SyncLog {
       INSERT OR IGNORE INTO sync_pendiente
         (entidad, id_local, id_remoto, operacion, creado_en)
       VALUES (?, ?, '', ?, ?)''', [entity, localId, SyncOp.upsert, now()]);
+    notify();
   }
 
   /// Marca un dato como pendiente de eliminar en el backend. Descarta los
@@ -51,6 +60,7 @@ abstract final class SyncLog {
       INSERT OR IGNORE INTO sync_pendiente
         (entidad, id_local, id_remoto, operacion, creado_en)
       VALUES (?, 0, ?, ?, ?)''', [entity, remoteId, SyncOp.delete, now()]);
+    notify();
   }
 
   /// Registra que el perfil cambio (datos del nino o preferencias, incluidos

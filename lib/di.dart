@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -16,7 +17,9 @@ import 'infrastructure/persistence/csv_report_exporter.dart';
 import 'infrastructure/persistence/database.dart';
 import 'infrastructure/persistence/legacy_cleanup.dart';
 import 'infrastructure/persistence/repositories.dart';
+import 'infrastructure/remote/api_client.dart';
 import 'infrastructure/remote/firebase_auth_gateway.dart';
+import 'infrastructure/sync/sync_service.dart';
 import 'infrastructure/security/secret_hasher_impl.dart';
 import 'infrastructure/tts/tts_service.dart';
 import 'presentation/controllers/capture_controller.dart';
@@ -57,9 +60,15 @@ class Di {
     final camera = CameraService();
 
     // --- Servicios de aplicacion ---
-    // Acceso con Firebase Authentication (OB2 RT-04).
-    final auth =
-        AuthService(authRepo, Sha256SecretHasher(), FirebaseAuthGateway());
+    // Acceso con Firebase Authentication (OB2 RT-04) y sincronizacion con el
+    // backend Django por HTTPS/REST (OB2 RF-11).
+    final firebaseAuth = FirebaseAuthGateway();
+    final auth = AuthService(authRepo, Sha256SecretHasher(), firebaseAuth);
+    final sync = SyncService(
+      db,
+      ApiClient(token: firebaseAuth.idToken),
+      connectivity: Connectivity(),
+    );
     final profiles = ProfileService(profileRepo, gestureRepo);
     final privacy = PrivacyService(consentRepo);
     final settings = SettingsService(voiceRepo);
@@ -75,7 +84,16 @@ class Di {
       privacy: privacy,
       settings: settings,
       tts: tts,
-    );
+    )
+      ..afterSignIn = (account) async {
+        try {
+          // Nuevo telefono o reinstalacion: recupera los datos del tutor.
+          await sync.pullAll(account.id!);
+        } finally {
+          sync.start(account.id!);
+        }
+      }
+      ..afterSignOut = sync.stop;
     await session.bootstrap();
 
     final communicationCtrl = CommunicationController(
@@ -98,6 +116,7 @@ class Di {
       Provider<GestureService>.value(value: gestures),
       Provider<ReportingService>.value(value: reporting),
       Provider<CameraService>.value(value: camera),
+      Provider<SyncService>.value(value: sync),
       ChangeNotifierProvider<SessionController>.value(value: session),
       ChangeNotifierProvider<CommunicationController>.value(
           value: communicationCtrl),

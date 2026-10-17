@@ -582,6 +582,7 @@ class SqliteInteractionRepository implements InteractionRepository {
       'uuid': SyncLog.newId(),
       'sincronizada': 0,
     });
+    SyncLog.notify();
     return Interaction(
       id: id,
       at: i.at,
