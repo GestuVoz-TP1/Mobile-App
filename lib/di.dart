@@ -16,6 +16,7 @@ import 'infrastructure/persistence/csv_report_exporter.dart';
 import 'infrastructure/persistence/database.dart';
 import 'infrastructure/persistence/legacy_cleanup.dart';
 import 'infrastructure/persistence/repositories.dart';
+import 'infrastructure/remote/firebase_auth_gateway.dart';
 import 'infrastructure/security/secret_hasher_impl.dart';
 import 'infrastructure/tts/tts_service.dart';
 import 'presentation/controllers/capture_controller.dart';
@@ -56,7 +57,9 @@ class Di {
     final camera = CameraService();
 
     // --- Servicios de aplicacion ---
-    final auth = AuthService(authRepo, Sha256SecretHasher());
+    // Acceso con Firebase Authentication (OB2 RT-04).
+    final auth =
+        AuthService(authRepo, Sha256SecretHasher(), FirebaseAuthGateway());
     final profiles = ProfileService(profileRepo, gestureRepo);
     final privacy = PrivacyService(consentRepo);
     final settings = SettingsService(voiceRepo);

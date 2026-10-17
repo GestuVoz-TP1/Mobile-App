@@ -46,23 +46,26 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// HU020: la recuperacion por correo requiere un servicio remoto (Firebase
-  /// Authentication), fuera del alcance de esta etapa. Se valida el dato
-  /// (criterio 2) y se informa que aun no esta disponible.
+  /// HU020: envia el correo de restablecimiento de Firebase Authentication.
+  /// Criterio 2: valida el correo antes de continuar.
   Future<void> _recover() async {
+    final session = context.read<SessionController>();
     final email = await showTextInputDialog(
       context,
       title: 'Recuperar contraseña',
+      message: 'Te enviaremos un enlace para crear una nueva contraseña.',
       label: 'Correo electrónico',
       initialValue: _email.text,
-      confirmLabel: 'Continuar',
+      confirmLabel: 'Enviar',
       keyboardType: TextInputType.emailAddress,
       validate: (v) async {
         try {
-          Email(v);
+          await session.sendPasswordReset(v);
           return null;
         } on DomainException catch (e) {
-          return e.message; // HU020, criterio 2
+          return e.message;
+        } catch (_) {
+          return 'No se pudo enviar el correo. Revisa tu conexión.';
         }
       },
     );
@@ -70,11 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
     await showDialog<void>(
       context: context,
       builder: (c2) => AlertDialog(
-        title: const Text('Aún no disponible'),
-        content: const Text(
-            'La recuperación de contraseña por correo estará disponible '
-            'cuando se integre el servicio de autenticación en línea. En esta '
-            'versión la cuenta se guarda solo en este dispositivo.'),
+        title: const Text('Revisa tu correo'),
+        content: Text(
+            'Si existe una cuenta con $email, recibirás un enlace para '
+            'restablecer tu contraseña. Revisa también la carpeta de spam.'),
         actions: [
           FilledButton(
               onPressed: () => Navigator.pop(c2),
