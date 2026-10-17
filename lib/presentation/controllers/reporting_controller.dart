@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show DateTimeRange;
 
 import '../../application/reporting_service.dart';
+import '../../domain/auth.dart' show DomainException;
 import '../../domain/interaction.dart';
 import '../../domain/reporting.dart';
 import 'session_controller.dart';
@@ -75,9 +76,13 @@ class ReportingController extends ChangeNotifier {
     notifyListeners();
     try {
       final (from, to) = _bounds();
-      _records = await _service.records(profile.id!, from: from, to: to);
-      _summary = _service.summarize(_records);
+      _records =
+          await _service.historyRecords(profile.id!, from: from, to: to);
+      _summary =
+          await _service.historySummary(profile.id!, from: from, to: to);
       _week = await _service.weekSummary(profile.id!);
+    } on DomainException catch (e) {
+      _error = e.message; // p. ej. sin conexion con el servidor (RNF-05)
     } catch (_) {
       _error = 'No se pudo cargar el historial.';
     } finally {
@@ -92,7 +97,11 @@ class ReportingController extends ChangeNotifier {
     await refresh();
   }
 
-  Future<InteractionRecord?> detail(int id) => _service.detail(id);
+  Future<InteractionRecord?> detail(InteractionRecord record) async {
+    final profile = _session.activeProfile;
+    if (profile == null) return null;
+    return _service.detail(profile.id!, record);
+  }
 
   Future<void> exportCsv() async {
     final profile = _session.activeProfile;

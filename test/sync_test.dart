@@ -10,6 +10,7 @@ import 'package:gestuvoz/domain/auth.dart';
 import 'package:gestuvoz/infrastructure/persistence/database.dart';
 import 'package:gestuvoz/infrastructure/persistence/repositories.dart';
 import 'package:gestuvoz/infrastructure/remote/api_client.dart';
+import 'package:gestuvoz/infrastructure/remote/remote_history_source.dart';
 import 'package:gestuvoz/infrastructure/sync/sync_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -261,6 +262,78 @@ void main() {
     expect(voz.single['velocidad'], 0.6);
     // La descarga no genera envíos.
     expect(await env.count('SELECT COUNT(*) FROM sync_pendiente'), 0);
+    await env.sync.stop();
+    await env.db.close();
+  });
+
+  test('Historial y reportes desde el backend', () async {
+    final env = await _Env.open(path);
+    final profileId = await newProfile(env);
+    await env.privacy.decide(profileId, granted: true);
+    await env.sync.pushPending();
+    final uuid = (await env.db.db.query('perfil_nino')).first['uuid'];
+    final gesture = (await env.db.db.query('gesto', limit: 1)).first;
+    final gestureId = gesture['id_gesto'] as int;
+    env.backend.getResponses.addAll({
+      'perfiles/$uuid/interacciones': [
+        {
+          'id_interaccion': 'i-1',
+          'fecha_hora': '2026-10-15T15:00:00+00:00',
+          'detalle': null,
+          'id_pictograma': 'base-1',
+          'id_gesto': 'gesto-$gestureId',
+          'id_intencion': null,
+        },
+        {
+          'id_interaccion': 'i-2',
+          'fecha_hora': '2026-10-15T14:00:00+00:00',
+          'detalle': null,
+          'id_pictograma': 'no-existe',
+          'id_gesto': null,
+          'id_intencion': null,
+        },
+      ],
+      'perfiles/$uuid/reportes': {
+        'total_interacciones': 2,
+        'interacciones_por_gesto': 1,
+        'interacciones_por_pictograma': 1,
+        'intenciones_distintas': 0,
+        'actividad_semanal': [
+          for (var d = 0; d < 7; d++) {'fecha': '', 'cantidad': d == 5 ? 2 : 0}
+        ],
+        'datos_suficientes_para_frecuencias': false,
+        'mas_frecuentes': [],
+      },
+    });
+    final history = RemoteHistorySource(
+      env.db,
+      ApiClient(
+        token: ({bool forceRefresh = false}) async => 'token',
+        baseUrl: 'http://backend.test/api/v1/',
+        client: env.backend.client,
+      ),
+    );
+    final records = await history.records(profileId,
+        from: DateTime(2026, 10, 9), to: DateTime(2026, 10, 16));
+    final query = env.backend.requests.last.url.queryParameters;
+    expect(query, {'desde': '2026-10-09', 'hasta': '2026-10-15'});
+    expect(records.length, 2);
+    expect(records.first.pictogramName,
+        (await env.db.db.query('pictograma', where: 'id_pictograma = 1'))
+            .first['nombre']);
+    expect(records.first.gestureName, gesture['nombre']);
+    expect(records.last.pictogramName, 'Pictograma eliminado');
+
+    final summary = await history.summary(profileId);
+    expect(summary.totalInteractions, 2);
+    expect(summary.weekly[5], 2);
+
+    // HU033: registro que ya no existe en el backend.
+    expect(await history.detail(profileId, records.first), isNull);
+
+    env.backend.offline = true;
+    await expectLater(history.records(profileId),
+        throwsA(isA<DomainException>()));
     await env.sync.stop();
     await env.db.close();
   });

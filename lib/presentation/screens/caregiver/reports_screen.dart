@@ -334,7 +334,7 @@ class _RecordTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(Radii.card),
         child: InkWell(
           borderRadius: BorderRadius.circular(Radii.card),
-          onTap: () => showInteractionDetail(context, i.id!),
+          onTap: () => showInteractionDetail(context, record),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -391,12 +391,13 @@ class _RecordTile extends StatelessWidget {
 }
 
 /// HU033: detalle de una interaccion (fecha, hora y recurso utilizado).
-Future<void> showInteractionDetail(BuildContext context, int id) {
+Future<void> showInteractionDetail(
+    BuildContext context, InteractionRecord record) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     builder: (ctx) => FutureBuilder<InteractionRecord?>(
-      future: context.read<ReportingController>().detail(id),
+      future: context.read<ReportingController>().detail(record),
       builder: (ctx, snap) {
         Widget child;
         if (snap.connectionState != ConnectionState.done) {

@@ -553,6 +553,7 @@ class SqliteInteractionRepository implements InteractionRepository {
   InteractionRecord _map(Map<String, Object?> r) => InteractionRecord(
         interaction: Interaction(
           id: r['id_interaccion'] as int,
+          remoteId: r['uuid'] as String?,
           at: _parse(r['fecha_hora']),
           detail: r['detalle'] as String?,
           profileId: r['id_perfil'] as int,

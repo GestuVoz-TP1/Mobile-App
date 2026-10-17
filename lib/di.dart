@@ -19,6 +19,7 @@ import 'infrastructure/persistence/legacy_cleanup.dart';
 import 'infrastructure/persistence/repositories.dart';
 import 'infrastructure/remote/api_client.dart';
 import 'infrastructure/remote/firebase_auth_gateway.dart';
+import 'infrastructure/remote/remote_history_source.dart';
 import 'infrastructure/sync/sync_service.dart';
 import 'infrastructure/security/secret_hasher_impl.dart';
 import 'infrastructure/tts/tts_service.dart';
@@ -64,18 +65,20 @@ class Di {
     // backend Django por HTTPS/REST (OB2 RF-11).
     final firebaseAuth = FirebaseAuthGateway();
     final auth = AuthService(authRepo, Sha256SecretHasher(), firebaseAuth);
-    final sync = SyncService(
-      db,
-      ApiClient(token: firebaseAuth.idToken),
-      connectivity: Connectivity(),
-    );
+    final api = ApiClient(token: firebaseAuth.idToken);
+    final sync = SyncService(db, api, connectivity: Connectivity());
     final profiles = ProfileService(profileRepo, gestureRepo);
     final privacy = PrivacyService(consentRepo);
     final settings = SettingsService(voiceRepo);
     final communication = CommunicationService(pictoRepo);
     final interactions = InteractionService(interactionRepo, consentRepo);
     final gestures = GestureService(recognizer, gestureRepo, pictoRepo);
-    final reporting = ReportingService(interactionRepo, CsvReportExporter());
+    // Historial y reportes generados por el backend (OB2).
+    final reporting = ReportingService(
+      interactionRepo,
+      CsvReportExporter(),
+      history: RemoteHistorySource(db, api, beforeQuery: sync.pushPending),
+    );
 
     // --- Controladores de presentacion ---
     final session = SessionController(
