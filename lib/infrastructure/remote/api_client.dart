@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -66,18 +67,37 @@ class ApiClient {
   Future<dynamic> post(String path, Object body) =>
       _send('POST', path, body: body);
 
-  Future<void> delete(String path) => _send('DELETE', path);
+  Future<dynamic> delete(String path) => _send('DELETE', path);
+
+  /// Envia un archivo (bytes) en el cuerpo, por ejemplo una imagen.
+  Future<dynamic> putBytes(String path, Uint8List bytes,
+          {Map<String, String>? query}) =>
+      _send('PUT', path, body: bytes, query: query);
+
+  /// Descarga un archivo; null si no existe (404).
+  Future<Uint8List?> getBytes(String path) async {
+    try {
+      return await _send('GET', path, raw: true) as Uint8List;
+    } on ApiException catch (e) {
+      if (e.status == 404) return null;
+      rethrow;
+    }
+  }
 
   Future<dynamic> _send(
     String method,
     String path, {
     Object? body,
     Map<String, String>? query,
+    bool raw = false,
   }) async {
     var response = await _request(method, path, body, query, refresh: false);
     if (response.statusCode == 401) {
       // Token vencido: se renueva una vez.
       response = await _request(method, path, body, query, refresh: true);
+    }
+    if (raw && response.statusCode >= 200 && response.statusCode < 300) {
+      return response.bodyBytes;
     }
     final text = utf8.decode(response.bodyBytes);
     final decoded = text.isEmpty ? null : jsonDecode(text);
@@ -108,7 +128,10 @@ class ApiClient {
     final request = http.Request(method, uri)
       ..headers['Authorization'] = 'Bearer $token'
       ..headers['Accept'] = 'application/json';
-    if (body != null) {
+    if (body is Uint8List) {
+      request.headers['Content-Type'] = 'application/octet-stream';
+      request.bodyBytes = body;
+    } else if (body != null) {
       request.headers['Content-Type'] = 'application/json; charset=utf-8';
       request.body = jsonEncode(body);
     }

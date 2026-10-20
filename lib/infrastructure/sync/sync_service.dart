@@ -344,19 +344,46 @@ class SyncService {
       LIMIT 1''', [pictogramId, _tutorId]);
     if (candidates.isEmpty) return _Outcome.keep;
     final p = rows.first;
+    final query = {'id_perfil': candidates.first['uuid'] as String};
     await _api.put(
       'pictogramas/${p['uuid']}',
       {
         'nombre': p['nombre'],
         'mensaje': p['mensaje'],
         'id_categoria': p['id_categoria'],
-        // Cloud Storage aun no esta activo: la imagen queda en el telefono.
-        'referencia_imagen': null,
         'actualizado_en': p['actualizado_en'],
       },
-      query: {'id_perfil': candidates.first['uuid'] as String},
+      query: query,
     );
+    await _pushImage(pictogramId, p, query);
     return _Outcome.done;
+  }
+
+  /// Sube la imagen nueva a Cloud Storage, o la quita si se elimino.
+  Future<void> _pushImage(int pictogramId, Map<String, Object?> p,
+      Map<String, String> query) async {
+    final image = p['imagen'] as Uint8List?;
+    final ref = p['imagen_ref'] as String?;
+    final path = 'pictogramas/${p['uuid']}/imagen';
+    String? newRef;
+    if (image != null && ref == null) {
+      try {
+        final r = await _api.putBytes(path, image, query: query);
+        newRef = (r as Map<String, dynamic>)['referencia_imagen'] as String?;
+      } on ApiException catch (e) {
+        // Imagen no valida o muy grande: queda solo en el telefono.
+        if (e.status != 400 && e.status != 413) rethrow;
+        debugPrint('Imagen no enviada: $e');
+        return;
+      }
+    } else if (image == null && ref != null) {
+      await _api.delete(path);
+    } else {
+      return;
+    }
+    await _sql.update('pictograma', {'imagen_ref': newRef},
+        where: 'id_pictograma = ? AND imagen IS ?',
+        whereArgs: [pictogramId, image]);
   }
 
   /// Interacciones registradas sin conexion, por lotes de hasta 500.
@@ -429,9 +456,11 @@ class SyncService {
         await _getOrNull('perfiles/$uuid/configuracion-voz'),
       );
     }
+    final downloads = <(int, String)>[];
     await _sql.transaction((txn) async {
       for (final p in pictograms.cast<Map<String, dynamic>>()) {
-        await _mergePictogram(txn, p);
+        final d = await _mergePictogram(txn, p);
+        if (d != null) downloads.add(d);
       }
       for (final p in profiles.cast<Map<String, dynamic>>()) {
         final profileId = await _mergeProfile(txn, tutorId, p);
@@ -441,6 +470,21 @@ class SyncService {
         if (voice != null) await _mergeVoice(txn, profileId, voice);
       }
     });
+    await _downloadImages(downloads);
+  }
+
+  /// Descarga las imagenes de Cloud Storage que el telefono no tiene.
+  Future<void> _downloadImages(List<(int, String)> downloads) async {
+    for (final (localId, ref) in downloads) {
+      final rows = await _sql.query('pictograma',
+          columns: ['uuid'], where: 'id_pictograma = ?', whereArgs: [localId]);
+      if (rows.isEmpty) continue;
+      final bytes =
+          await _api.getBytes('pictogramas/${rows.first['uuid']}/imagen');
+      if (bytes == null) continue;
+      await _sql.update('pictograma', {'imagen': bytes, 'imagen_ref': ref},
+          where: 'id_pictograma = ?', whereArgs: [localId]);
+    }
   }
 
   Future<Map<String, dynamic>?> _getOrNull(String path) async {
@@ -466,9 +510,12 @@ class SyncService {
               whereArgs: [entity, SyncOp.upsert, localId]))
           .isNotEmpty;
 
-  Future<void> _mergePictogram(Transaction txn, Map<String, dynamic> p) async {
+  /// Devuelve la imagen que falta descargar (id local, referencia), si hay.
+  Future<(int, String)?> _mergePictogram(
+      Transaction txn, Map<String, dynamic> p) async {
     final rows = await txn.query('pictograma',
         where: 'uuid = ?', whereArgs: [p['id_pictograma']]);
+    final remoteRef = p['referencia_imagen'] as String?;
     final values = {
       'nombre': p['nombre'],
       'mensaje': p['mensaje'],
@@ -476,24 +523,41 @@ class SyncService {
       'actualizado_en': p['actualizado_en'],
     };
     if (rows.isEmpty) {
-      await txn.insert('pictograma', {
+      final id = await txn.insert('pictograma', {
         ...values,
         'uuid': p['id_pictograma'],
-        // La imagen aun no se sincroniza (Cloud Storage pendiente).
+        // La imagen se descarga despues; mientras tanto se muestra un icono.
         'imagen': null,
+        'imagen_ref': null,
         'emoji': '🖼️',
         'id_intencion': null,
       });
-      return;
+      return remoteRef == null ? null : (id, remoteRef);
     }
     final local = rows.first;
     final localId = local['id_pictograma'] as int;
-    if (await _hasPending(txn, SyncEntity.pictogram, localId)) return;
+    if (await _hasPending(txn, SyncEntity.pictogram, localId)) return null;
     if (_remoteIsNewer(p['actualizado_en'], local['actualizado_en'])) {
       await txn.update('pictograma', values,
           where: 'id_pictograma = ?', whereArgs: [localId]);
     }
+    final localRef = local['imagen_ref'] as String?;
+    if (remoteRef != null && remoteRef != localRef) return (localId, remoteRef);
+    if (remoteRef == null && localRef != null) {
+      // La imagen se quito desde otro telefono.
+      await txn.update(
+          'pictograma',
+          {
+            'imagen': null,
+            'imagen_ref': null,
+            if (local['emoji'] == null) 'emoji': '🖼️',
+          },
+          where: 'id_pictograma = ?',
+          whereArgs: [localId]);
+    }
+    return null;
   }
+
 
   Future<int?> _localPictogram(Transaction txn, String remoteId) async {
     final base = RemoteIds.localFromKey(remoteId, 'base');

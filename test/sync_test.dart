@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gestuvoz/application/communication_service.dart';
@@ -21,6 +22,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 class FakeBackend {
   final requests = <http.Request>[];
   final getResponses = <String, Object?>{};
+  final fileResponses = <String, List<int>>{};
+  var _uploads = 0;
   bool offline = false;
 
   late final client = MockClient((request) async {
@@ -29,6 +32,10 @@ class FakeBackend {
     final path = request.url.path.replaceFirst('/api/v1/', '');
     switch (request.method) {
       case 'GET':
+        if (fileResponses.containsKey(path)) {
+          return http.Response.bytes(fileResponses[path]!, 200,
+              headers: {'content-type': 'image/png'});
+        }
         if (!getResponses.containsKey(path)) {
           return http.Response(
               jsonEncode({'error': {'codigo': 'no_encontrado'}}), 404);
@@ -38,6 +45,10 @@ class FakeBackend {
             headers: {'content-type': 'application/json; charset=utf-8'});
       case 'DELETE':
         return http.Response('', 204);
+      case 'PUT' when path.endsWith('/imagen'):
+        _uploads++;
+        return http.Response(
+            jsonEncode({'referencia_imagen': 'ref-$_uploads'}), 200);
       default:
         return http.Response(jsonEncode({'ok': true}), 200);
     }
@@ -334,6 +345,89 @@ void main() {
     env.backend.offline = true;
     await expectLater(history.records(profileId),
         throwsA(isA<DomainException>()));
+    await env.sync.stop();
+    await env.db.close();
+  });
+
+  test('Las imágenes de los pictogramas propios se suben a Cloud Storage',
+      () async {
+    final env = await _Env.open(path);
+    final profileId = await newProfile(env);
+    await env.privacy.decide(profileId, granted: true);
+    final image = Uint8List.fromList(List.generate(64, (i) => i));
+    final picto = await env.communication.addCustom(
+        profileId: profileId,
+        name: 'Mi osito',
+        message: 'Quiero mi osito',
+        categoryId: 2,
+        image: image);
+    await env.sync.pushPending();
+
+    final uuid = (await env.db.db.query('pictograma',
+            where: 'id_pictograma = ?', whereArgs: [picto.id]))
+        .first['uuid'];
+    expect(env.backend.sent,
+        containsAllInOrder(['PUT pictogramas/$uuid', 'PUT pictogramas/$uuid/imagen']));
+    final upload = env.backend.requests
+        .lastWhere((r) => r.url.path.endsWith('/imagen'));
+    expect(upload.bodyBytes, image);
+    expect(upload.url.queryParameters['id_perfil'], isNotNull);
+    Future<Object?> ref() async => (await env.db.db.query('pictograma',
+            where: 'id_pictograma = ?', whereArgs: [picto.id]))
+        .first['imagen_ref'];
+    expect(await ref(), 'ref-1');
+
+    // Cambiar solo el mensaje no vuelve a subir la imagen.
+    final stored = (await env.communication.catalog(profileId))
+        .map((e) => e.pictogram)
+        .firstWhere((p) => p.id == picto.id);
+    await env.communication.updatePictogram(stored,
+        name: 'Mi osito', message: 'Dame mi osito', categoryId: 2, image: image);
+    await env.sync.pushPending();
+    expect(env.backend.sent.where((s) => s.endsWith('/imagen')).length, 1);
+
+    // Una imagen nueva sí se sube.
+    await env.communication.updatePictogram(stored,
+        name: 'Mi osito',
+        message: 'Dame mi osito',
+        categoryId: 2,
+        image: Uint8List.fromList([9, 9, 9]));
+    await env.sync.pushPending();
+    expect(env.backend.sent.where((s) => s.endsWith('/imagen')).length, 2);
+    expect(await ref(), 'ref-2');
+    await env.sync.stop();
+    await env.db.close();
+  });
+
+  test('Teléfono nuevo: la descarga trae las imágenes de los pictogramas',
+      () async {
+    final backend = FakeBackend()
+      ..getResponses.addAll({
+        'pictogramas': [
+          {
+            'id_pictograma': 'p-osito',
+            'nombre': 'Mi osito',
+            'mensaje': 'Quiero mi osito',
+            'id_categoria': 2,
+            'referencia_imagen': 'pictogramas/uid-tutor/p-osito/abc',
+            'actualizado_en': '2026-10-10T10:00:00+00:00',
+          }
+        ],
+        'perfiles': [],
+      })
+      ..fileResponses['pictogramas/p-osito/imagen'] = [1, 2, 3];
+    final env = await _Env.open(path, backend: backend);
+    await env.sync.pullAll(env.tutorId);
+    final row = (await env.db.db
+            .query('pictograma', where: 'uuid = ?', whereArgs: ['p-osito']))
+        .first;
+    expect(row['imagen'], [1, 2, 3]);
+    expect(row['imagen_ref'], 'pictogramas/uid-tutor/p-osito/abc');
+    // Una segunda descarga no repite la imagen.
+    backend.requests.clear();
+    await env.sync.pullAll(env.tutorId);
+    expect(
+        backend.requests.where((r) => r.url.path.endsWith('/imagen')), isEmpty);
     await env.sync.stop();
     await env.db.close();
   });
