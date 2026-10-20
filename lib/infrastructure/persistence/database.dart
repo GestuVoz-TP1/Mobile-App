@@ -21,7 +21,7 @@ class GestuVozDatabase {
   /// prueba (clases `gesto_*`). v3: sincronizacion con el backend
   /// (identificadores remotos, fecha de cambio, cola de pendientes y UID de
   /// Firebase del tutor).
-  static const schemaVersion = 4;
+  static const schemaVersion = 5;
 
   /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
   /// en las pruebas (`inMemoryDatabasePath`).
@@ -41,11 +41,15 @@ class GestuVozDatabase {
           await _seed(db);
           await _migrateToV3(db);
           await _migrateToV4(db);
+          await _migrateCustomOwner(db);
         },
         onUpgrade: (db, oldVersion, _) async {
           if (oldVersion < 2) await _migrateToV2(db);
-          if (oldVersion < 3) await _migrateToV3(db);
-          if (oldVersion < 4) await _migrateToV4(db);
+          // Idempotentes: tambien completan una base creada por la rama del
+          // prototipo sin conexion, que usa otra numeracion de versiones.
+          await _migrateToV3(db);
+          await _migrateToV4(db);
+          await _migrateCustomOwner(db);
         },
       ),
     );
@@ -318,6 +322,23 @@ class GestuVozDatabase {
       await txn.update('pictograma', {'actualizado_en': now},
           where: 'actualizado_en IS NULL AND imagen IS NOT NULL');
     });
+  }
+
+  /// Dueño de cada pictograma personalizado: solo aparece en el catálogo del
+  /// perfil que lo creó (no en otros perfiles ni en otras cuentas del mismo
+  /// teléfono). Idempotente.
+  static Future<void> _migrateCustomOwner(Database db) async {
+    final cols = await db.rawQuery('PRAGMA table_info(pictograma)');
+    if (!cols.any((c) => c['name'] == 'id_perfil_propietario')) {
+      await db.execute(
+          'ALTER TABLE pictograma ADD COLUMN id_perfil_propietario INTEGER');
+    }
+    // Los que ya existian quedan a cargo del primer perfil que los usa.
+    await db.rawUpdate('''
+      UPDATE pictograma SET id_perfil_propietario = (
+        SELECT MIN(pp.id_perfil) FROM perfil_pictograma pp
+        WHERE pp.id_pictograma = pictograma.id_pictograma)
+      WHERE id_perfil_propietario IS NULL AND uuid IS NOT NULL''');
   }
 
   /// v4: ruta en Cloud Storage de la imagen guardada en el telefono

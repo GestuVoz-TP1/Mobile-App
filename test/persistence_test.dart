@@ -277,6 +277,45 @@ void main() {
     await app.db.close();
   });
 
+  test('Un pictograma propio solo aparece en el perfil que lo creó',
+      () async {
+    final (app, tutorId, profileId) = await withProfile();
+    final sibling = await app.profiles.create(
+        tutorId, ProfileForm(name: 'Luis', birthDate: DateTime(2018, 1, 1)));
+    final otherTutor = await app.auth.register(const RegistrationForm(
+        email: 'jose@email.com',
+        password: 'secreta123',
+        passwordConfirm: 'secreta123'));
+    final stranger = await app.profiles.create(otherTutor.id!,
+        ProfileForm(name: 'Ana', birthDate: DateTime(2017, 3, 3)));
+    final cat = (await app.communication.categories()).first.id;
+    final mine = await app.communication.addCustom(
+        profileId: profileId,
+        name: 'Mi osito',
+        message: 'Quiero mi osito',
+        categoryId: cat,
+        image: Uint8List.fromList([7]));
+
+    Future<bool> visibleIn(int id) async =>
+        (await app.communication.catalog(id))
+            .any((e) => e.pictogram.id == mine.id);
+    expect(await visibleIn(profileId), isTrue);
+    expect(await visibleIn(sibling.id!), isFalse);
+    expect(await visibleIn(stranger.id!), isFalse);
+
+    // Ocultarlo del tablero no lo quita del catálogo de su perfil.
+    await app.communication.setSelected(profileId, mine.id!, false);
+    expect(await visibleIn(profileId), isTrue);
+    // Al eliminar el perfil se elimina también, aunque estuviera oculto.
+    await app.profiles.delete(profileId);
+    expect(
+        (await app.db.db.query('pictograma',
+                where: 'id_pictograma = ?', whereArgs: [mine.id]))
+            .isEmpty,
+        isTrue);
+    await app.db.close();
+  });
+
   test('HU017: valores de voz fuera de rango se rechazan', () async {
     final (app, _, profileId) = await withProfile();
     final v = await app.voice.voiceFor(profileId);

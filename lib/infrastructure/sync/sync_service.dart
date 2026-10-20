@@ -469,6 +469,17 @@ class SyncService {
         if (consent != null) await _mergeConsent(txn, profileId, consent);
         if (voice != null) await _mergeVoice(txn, profileId, voice);
       }
+      // Pictogramas descargados: a cargo del perfil que los usa o, si
+      // ninguno los usa, del primer perfil del tutor.
+      await txn.rawUpdate('''
+        UPDATE pictograma SET id_perfil_propietario = COALESCE(
+          (SELECT MIN(pp.id_perfil) FROM perfil_pictograma pp
+           JOIN perfil_nino pn ON pn.id_perfil = pp.id_perfil
+           WHERE pp.id_pictograma = pictograma.id_pictograma
+             AND pn.id_tutor = ?),
+          (SELECT MIN(id_perfil) FROM perfil_nino WHERE id_tutor = ?))
+        WHERE id_perfil_propietario IS NULL AND uuid IS NOT NULL''',
+          [tutorId, tutorId]);
     });
     await _downloadImages(downloads);
   }

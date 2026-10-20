@@ -257,8 +257,11 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
       // Pictogramas personalizados que usaba este perfil.
       final customs = (await txn.rawQuery('''
         SELECT p.id_pictograma FROM pictograma p
-        JOIN perfil_pictograma pp ON pp.id_pictograma = p.id_pictograma
-        WHERE pp.id_perfil = ? AND p.imagen IS NOT NULL''', [profileId]))
+        LEFT JOIN perfil_pictograma pp
+          ON pp.id_pictograma = p.id_pictograma AND pp.id_perfil = ?
+        WHERE p.id_perfil_propietario = ?
+           OR (pp.id_perfil IS NOT NULL AND p.imagen IS NOT NULL)''',
+              [profileId, profileId]))
           .map((r) => r['id_pictograma'] as int)
           .toList();
       // Datos exclusivos del perfil. Interacciones, configuracion de voz,
@@ -268,6 +271,12 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
       await txn.delete('perfil_nino',
           where: 'id_perfil = ?', whereArgs: [profileId]);
       await txn.delete('nino', where: 'id_nino = ?', whereArgs: [childId]);
+      // Los que siguen en uso por otros perfiles pasan a uno de ellos.
+      await txn.rawUpdate('''
+        UPDATE pictograma SET id_perfil_propietario = (
+          SELECT MIN(pp.id_perfil) FROM perfil_pictograma pp
+          WHERE pp.id_pictograma = pictograma.id_pictograma)
+        WHERE id_perfil_propietario = ?''', [profileId]);
       // Personalizados: solo si ningun otro perfil los usa ni los referencia.
       for (final id in customs) {
         final inUse = Sqflite.firstIntValue(await txn.rawQuery('''
@@ -326,7 +335,9 @@ class SqlitePictogramRepository implements PictogramRepository {
       SELECT p.*, pp.orden FROM pictograma p
       LEFT JOIN perfil_pictograma pp
         ON pp.id_pictograma = p.id_pictograma AND pp.id_perfil = ?
-      ORDER BY pp.orden IS NULL, pp.orden, p.id_pictograma''', [profileId]);
+      WHERE p.id_perfil_propietario IS NULL OR p.id_perfil_propietario = ?
+      ORDER BY pp.orden IS NULL, pp.orden, p.id_pictograma''',
+        [profileId, profileId]);
     return rows
         .map((r) => ProfilePictogram(
               pictogram: _map(r),
@@ -371,6 +382,7 @@ class SqlitePictogramRepository implements PictogramRepository {
         'emoji': null,
         'id_categoria': p.categoryId,
         'id_intencion': null,
+        'id_perfil_propietario': profileId,
         'uuid': SyncLog.newId(),
         'actualizado_en': SyncLog.now(),
       });
