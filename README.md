@@ -219,7 +219,8 @@ empieza con todos los pictogramas iniciales visibles.
 Para la sincronización, cada registro tiene un identificador remoto (`uuid`) y
 una fecha de última modificación (`actualizado_en`). Los cambios pendientes
 de envío se guardan en `sync_pendiente`, y las interacciones se marcan con
-`sincronizada`.
+`sincronizada`. En los pictogramas propios, `imagen_ref` guarda la ruta de la imagen
+en Cloud Storage; si está vacía, la imagen aún no se ha subido.
 
 ---
 
@@ -236,8 +237,10 @@ de envío se guardan en `sync_pendiente`, y las interacciones se marcan con
   perfil; solo la decisión de consentimiento.
 - **Sin conexión:** el panel del tutor muestra cuántos cambios están
   pendientes y permite reintentar.
-- **Imágenes propias:** por ahora se quedan en el dispositivo (Cloud Storage
-  se habilitará más adelante).
+- **Imágenes propias:** se suben a Cloud Storage (a través del backend) al
+  sincronizar, solo si el perfil tiene el consentimiento otorgado, y se
+  descargan al iniciar sesión en otro teléfono. El backend acepta JPG, PNG o
+  WebP de hasta 500 KB; la app ya reduce la imagen a 768 px al elegirla.
 
 ### Ejecutar con el backend local
 
@@ -324,11 +327,10 @@ flutter test
 
 ## Alcance de esta versión
 
-Incluye la aplicación móvil conectada al backend Django (Cloud Firestore) y a
-Firebase Authentication. Se integrarán en una etapa posterior:
+Incluye la aplicación móvil conectada al backend Django desplegado en Render
+(Cloud Firestore y Cloud Storage) y a Firebase Authentication. Se integrará en
+una etapa posterior:
 
-- Cloud Storage para las imágenes de los pictogramas propios
-- Despliegue del backend en la nube
 - Modelo entrenado de reconocimiento de gestos (MobileNet + LSTM)
 
 ---
