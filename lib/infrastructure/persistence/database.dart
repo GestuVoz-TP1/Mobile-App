@@ -21,7 +21,7 @@ class GestuVozDatabase {
   /// prueba (clases `gesto_*`). v3: sincronizacion con el backend
   /// (identificadores remotos, fecha de cambio, cola de pendientes y UID de
   /// Firebase del tutor).
-  static const schemaVersion = 3;
+  static const schemaVersion = 4;
 
   /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
   /// en las pruebas (`inMemoryDatabasePath`).
@@ -40,10 +40,12 @@ class GestuVozDatabase {
           await _createSchema(db);
           await _seed(db);
           await _migrateToV3(db);
+          await _migrateToV4(db);
         },
         onUpgrade: (db, oldVersion, _) async {
           if (oldVersion < 2) await _migrateToV2(db);
           if (oldVersion < 3) await _migrateToV3(db);
+          if (oldVersion < 4) await _migrateToV4(db);
         },
       ),
     );
@@ -316,5 +318,13 @@ class GestuVozDatabase {
       await txn.update('pictograma', {'actualizado_en': now},
           where: 'actualizado_en IS NULL AND imagen IS NOT NULL');
     });
+  }
+
+  /// v4: ruta en Cloud Storage de la imagen guardada en el telefono
+  /// (`referencia_imagen`). Nula si la imagen aun no se sube o no se descarga.
+  static Future<void> _migrateToV4(Database db) async {
+    final cols = await db.rawQuery('PRAGMA table_info(pictograma)');
+    if (cols.any((c) => c['name'] == 'imagen_ref')) return;
+    await db.execute('ALTER TABLE pictograma ADD COLUMN imagen_ref TEXT');
   }
 }

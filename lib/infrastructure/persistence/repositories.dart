@@ -17,6 +17,15 @@ import 'database.dart';
 /// que existe SQLite.
 
 String _date(DateTime d) => d.toIso8601String();
+
+bool _sameBytes(Uint8List? a, Uint8List? b) {
+  if (identical(a, b)) return true;
+  if (a == null || b == null || a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
 DateTime _parse(Object? v) => DateTime.parse(v as String);
 
 // --------------------------------------------------------------------------
@@ -387,6 +396,10 @@ class SqlitePictogramRepository implements PictogramRepository {
   @override
   Future<void> update(Pictogram p) async {
     await _db.db.transaction((txn) async {
+      final before = await txn.query('pictograma',
+          columns: ['imagen'], where: 'id_pictograma = ?', whereArgs: [p.id]);
+      final imageChanged = before.isNotEmpty &&
+          !_sameBytes(before.first['imagen'] as Uint8List?, p.image);
       await txn.update(
         'pictograma',
         {
@@ -395,6 +408,8 @@ class SqlitePictogramRepository implements PictogramRepository {
           'mensaje': p.message,
           'id_categoria': p.categoryId,
           if (p.isCustom) 'actualizado_en': SyncLog.now(),
+          // La imagen nueva se vuelve a subir a Cloud Storage.
+          if (imageChanged) 'imagen_ref': null,
         },
         where: 'id_pictograma = ?',
         whereArgs: [p.id],
