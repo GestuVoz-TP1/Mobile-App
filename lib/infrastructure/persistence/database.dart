@@ -17,8 +17,9 @@ class GestuVozDatabase {
   static const fileName = 'gestuvoz.db';
 
   /// v1: esquema inicial. v2: textos de gestos iniciales sin etiquetas de
-  /// prueba (clases `gesto_*`).
-  static const schemaVersion = 2;
+  /// prueba (clases `gesto_*`). v3: perfil propietario de los pictogramas
+  /// personalizados.
+  static const schemaVersion = 3;
 
   /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
   /// en las pruebas (`inMemoryDatabasePath`).
@@ -36,9 +37,11 @@ class GestuVozDatabase {
         onCreate: (db, _) async {
           await _createSchema(db);
           await _seed(db);
+          await _migrateCustomOwner(db);
         },
         onUpgrade: (db, oldVersion, _) async {
           if (oldVersion < 2) await _migrateToV2(db);
+          await _migrateCustomOwner(db);
         },
       ),
     );
@@ -202,6 +205,23 @@ class GestuVozDatabase {
 
   /// v2: quita las etiquetas de prueba de los gestos iniciales en bases ya
   /// creadas con v1. No borra datos del usuario.
+  /// Dueño de cada pictograma personalizado: solo aparece en el catálogo del
+  /// perfil que lo creó (no en otros perfiles ni en otras cuentas del mismo
+  /// teléfono). Idempotente.
+  static Future<void> _migrateCustomOwner(Database db) async {
+    final cols = await db.rawQuery('PRAGMA table_info(pictograma)');
+    if (!cols.any((c) => c['name'] == 'id_perfil_propietario')) {
+      await db.execute(
+          'ALTER TABLE pictograma ADD COLUMN id_perfil_propietario INTEGER');
+    }
+    // Los que ya existian quedan a cargo del primer perfil que los usa.
+    await db.rawUpdate('''
+      UPDATE pictograma SET id_perfil_propietario = (
+        SELECT MIN(pp.id_perfil) FROM perfil_pictograma pp
+        WHERE pp.id_pictograma = pictograma.id_pictograma)
+      WHERE id_perfil_propietario IS NULL AND imagen IS NOT NULL''');
+  }
+
   static Future<void> _migrateToV2(Database db) async {
     await db.transaction((txn) async {
       for (final g in kSeedGestures) {
