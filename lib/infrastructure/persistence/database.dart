@@ -24,7 +24,8 @@ class GestuVozDatabase {
   /// prueba (clases `gesto_*`). v3: sincronizacion con el backend
   /// (identificadores remotos, fecha de cambio, cola de pendientes y UID de
   /// Firebase del tutor). v6: gestos que reconoce el modelo entrenado.
-  static const schemaVersion = 6;
+  /// v7: instrucciones sugeridas y emoji con la forma de la mano.
+  static const schemaVersion = 7;
 
   /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
   /// en las pruebas (`inMemoryDatabasePath`).
@@ -54,6 +55,7 @@ class GestuVozDatabase {
           await _migrateToV4(db);
           await _migrateCustomOwner(db);
           await _migrateModelGestures(db);
+          await _migrateGestureGuides(db);
         },
       ),
     );
@@ -197,7 +199,7 @@ class GestuVozDatabase {
           'representacion_visual': g.visual,
           'clase_reconocimiento': g.recognitionClass,
           'estado_disponibilidad': 'disponible',
-          'instrucciones': null,
+          'instrucciones': g.instructions,
         });
         final pictoId = pictoIdByKey[g.pictogramKey]!;
         final message = kSeedPictograms
@@ -388,7 +390,7 @@ class GestuVozDatabase {
           'representacion_visual': g.visual,
           'clase_reconocimiento': g.recognitionClass,
           'estado_disponibilidad': 'disponible',
-          'instrucciones': null,
+          'instrucciones': g.instructions,
         });
         final intentionId = await txn.insert('intencion_comunicativa', {
           'id_intencion': await freeId(
@@ -421,6 +423,22 @@ class GestuVozDatabase {
             'perfil_nino', {'preferencias_comunicacion': jsonEncode(prefs)},
             where: 'id_perfil = ?', whereArgs: [id]);
         await SyncLog.touchProfile(txn, id);
+      }
+    });
+  }
+
+  /// v7: emoji con la forma de la mano y, si el tutor aun no escribio
+  /// instrucciones, los pasos sugeridos. Idempotente.
+  static Future<void> _migrateGestureGuides(Database db) async {
+    await db.transaction((txn) async {
+      for (final g in kSeedGestures) {
+        await txn.update('gesto', {'representacion_visual': g.visual},
+            where: 'clase_reconocimiento = ?', whereArgs: [g.recognitionClass]);
+        if (g.instructions == null) continue;
+        await txn.update('gesto', {'instrucciones': g.instructions},
+            where: "clase_reconocimiento = ? AND "
+                "(instrucciones IS NULL OR TRIM(instrucciones) = '')",
+            whereArgs: [g.recognitionClass]);
       }
     });
   }

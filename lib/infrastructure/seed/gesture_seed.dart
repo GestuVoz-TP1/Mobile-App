@@ -7,7 +7,9 @@
 /// reconoce. El orden importa: define los identificadores `gesto-<id>` y
 /// `intencion-<id>` que comparte el backend.
 ///
-/// - `instrucciones` inicia vacio y es editable por el tutor.
+/// - `instrucciones`: pasos sugeridos (una linea por paso), editables por el
+///   tutor. Describen la forma de la mano con la que se entreno el modelo.
+/// - `visual`: emoji con la forma de la mano del gesto.
 /// - Cada gesto se enlaza a un pictograma semilla existente ([pictogramKey]),
 ///   cuya frase es el mensaje de la intencion.
 ///
@@ -22,6 +24,7 @@ class SeedGesture {
   final String recognitionClass;
   final String intentionName;
   final String pictogramKey;
+  final String? instructions;
 
   const SeedGesture({
     required this.name,
@@ -29,16 +32,22 @@ class SeedGesture {
     required this.recognitionClass,
     required this.intentionName,
     required this.pictogramKey,
+    this.instructions,
   });
 }
+
+const _hold = 'Mantén el gesto quieto unos 3 segundos.';
 
 const List<SeedGesture> kSeedGestures = [
   SeedGesture(
     name: 'Hola',
-    visual: '👋',
+    visual: '🖐️',
     recognitionClass: 'gesto_hola',
     intentionName: 'Saludar',
     pictogramKey: 'r_hola',
+    instructions: 'Muestra la mano abierta a la cámara.\n'
+        'Separa bien los dedos.\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'Agua',
@@ -49,10 +58,13 @@ const List<SeedGesture> kSeedGestures = [
   ),
   SeedGesture(
     name: 'Ayuda',
-    visual: '🆘',
+    visual: '☝️',
     recognitionClass: 'gesto_ayuda',
     intentionName: 'Pedir ayuda',
     pictogramKey: 'b_ayuda',
+    instructions: 'Levanta solo el dedo índice.\n'
+        'Dobla los otros dedos.\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'Parar',
@@ -60,6 +72,9 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_parar',
     intentionName: 'Pedir que pare',
     pictogramKey: 'r_parar',
+    instructions: 'Levanta la mano con la palma hacia la cámara.\n'
+        'Junta los dedos, como diciendo «alto».\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'Sí',
@@ -67,6 +82,9 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_si',
     intentionName: 'Decir que sí',
     pictogramKey: 'r_si',
+    instructions: 'Cierra la mano.\n'
+        'Levanta el pulgar hacia arriba.\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'No',
@@ -74,6 +92,9 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_no',
     intentionName: 'Decir que no',
     pictogramKey: 'r_no',
+    instructions: 'Cierra la mano.\n'
+        'Apunta el pulgar hacia abajo.\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'Por favor',
@@ -81,6 +102,9 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_porfavor',
     intentionName: 'Pedir por favor',
     pictogramKey: 'r_porfavor',
+    instructions: 'Junta las palmas de las dos manos.\n'
+        'Los dedos miran hacia arriba, frente al pecho.\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'Terminé',
@@ -88,6 +112,9 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_termine',
     intentionName: 'Avisar que terminó',
     pictogramKey: 'r_termine',
+    instructions: 'Cruza los brazos frente al pecho formando una X.\n'
+        'Las manos quedan abiertas.\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'Silencio',
@@ -95,6 +122,8 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_silencio',
     intentionName: 'Pedir silencio',
     pictogramKey: 'b_silencio',
+    instructions: 'Pon el dedo índice sobre los labios.\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'Descanso',
@@ -102,6 +131,10 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_descanso',
     intentionName: 'Pedir un descanso',
     pictogramKey: 'b_descanso',
+    instructions: 'Pon una mano plana y horizontal.\n'
+        'Con la otra mano, toca su palma con la punta de los dedos: '
+        'forma una T.\n'
+        '$_hold',
   ),
   SeedGesture(
     name: 'Abrazo',
@@ -109,5 +142,8 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_abrazo',
     intentionName: 'Pedir un abrazo',
     pictogramKey: 'b_abrazo',
+    instructions: 'Junta las dos manos formando un corazón.\n'
+        'Los pulgares abajo y los dedos curvos arriba.\n'
+        '$_hold',
   ),
 ];

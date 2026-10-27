@@ -77,7 +77,7 @@ void main() {
     expect(gestures.length, kSeedGestures.length);
     expect(gestures.every((g) => (g['clase_reconocimiento'] as String)
         .startsWith('gesto_')), isTrue);
-    expect(gestures.every((g) => g['instrucciones'] == null), isTrue);
+    expect(gestures.where((g) => g['instrucciones'] == null).length, 1);
     await app.db.close();
   });
 
@@ -165,6 +165,11 @@ void main() {
               where: 'id_intencion = ?', whereArgs: [i['id_intencion']]),
           hasLength(1));
     }
+    // v7: emoji con la forma de la mano e instrucciones sugeridas.
+    final ayuda = gestos.firstWhere(
+        (g) => g['clase_reconocimiento'] == 'gesto_ayuda');
+    expect(ayuda['representacion_visual'], '☝️');
+    expect(ayuda['instrucciones'], contains('dedo índice'));
     final prefs = (await reopened.profiles.byId(profileId))!.preferences;
     expect(prefs.enabledGestureIds,
         List.generate(kSeedGestures.length, (i) => i + 1));

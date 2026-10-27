@@ -73,7 +73,7 @@ void main() {
   });
 
   test('Fuera de la imagen el recorte es negro', () {
-    final img = UprightImage(_frame(4, 4, 0, (_, __) => 200));
+    final img = UprightImage(_frame(4, 4, 0, (_, _) => 200));
     final crop = img.squareCrop(2, 2, 8, 8);
     expect(crop.length, 8 * 8 * 3);
     expect(crop[0], 0); // esquina superior izquierda, fuera
@@ -83,7 +83,7 @@ void main() {
   test('El detector de palmas usa 2016 anclas y decodifica la caja', () {
     final d = PalmDecoder();
     expect(d.anchorCount, 2016);
-    final img = UprightImage(_frame(300, 200, 0, (_, __) => 0));
+    final img = UprightImage(_frame(300, 200, 0, (_, _) => 0));
     final reg = Float32List(2016 * 18);
     final scores = Float32List(2016)..fillRange(0, 2016, -10);
     // Ancla 0: celda (0, 0) de la capa de paso 8 -> centro (4, 4) en 192 px.
