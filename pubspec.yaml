@@ -29,6 +29,7 @@ dependencies:
   http: ^1.6.0
   uuid: ^4.6.0
   connectivity_plus: ^7.3.2
+  tflite_flutter: ^0.12.1
 
 dev_dependencies:
   flutter_test:
@@ -41,6 +42,7 @@ flutter:
 
   assets:
     - assets/fonts/
+    - assets/models/
 
   fonts:
     - family: Baloo2

@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
 import '../seed/gesture_seed.dart';
 import '../seed/pictogram_seed.dart';
+import '../sync/sync_log.dart';
 
 /// Base de datos local SQLite de GestuVoz (OB2, RT-06).
 ///
@@ -20,8 +23,8 @@ class GestuVozDatabase {
   /// v1: esquema inicial. v2: textos de gestos iniciales sin etiquetas de
   /// prueba (clases `gesto_*`). v3: sincronizacion con el backend
   /// (identificadores remotos, fecha de cambio, cola de pendientes y UID de
-  /// Firebase del tutor).
-  static const schemaVersion = 5;
+  /// Firebase del tutor). v6: gestos que reconoce el modelo entrenado.
+  static const schemaVersion = 6;
 
   /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
   /// en las pruebas (`inMemoryDatabasePath`).
@@ -50,6 +53,7 @@ class GestuVozDatabase {
           await _migrateToV3(db);
           await _migrateToV4(db);
           await _migrateCustomOwner(db);
+          await _migrateModelGestures(db);
         },
       ),
     );
@@ -347,5 +351,77 @@ class GestuVozDatabase {
     final cols = await db.rawQuery('PRAGMA table_info(pictograma)');
     if (cols.any((c) => c['name'] == 'imagen_ref')) return;
     await db.execute('ALTER TABLE pictograma ADD COLUMN imagen_ref TEXT');
+  }
+
+  /// v6: agrega los gestos de [kSeedGestures] que falten (los que reconoce
+  /// el modelo entrenado), con su intencion y su pictograma, y los habilita
+  /// en los perfiles existentes. Idempotente.
+  static Future<void> _migrateModelGestures(Database db) async {
+    await db.transaction((txn) async {
+      final added = <int>[];
+      Future<int?> freeId(String table, String column, int id) async =>
+          (await txn.query(table, where: '$column = ?', whereArgs: [id]))
+                  .isEmpty
+              ? id
+              : null;
+      for (final (index, g) in kSeedGestures.indexed) {
+        final exists = await txn.query('gesto',
+            columns: ['id_gesto'],
+            where: 'clase_reconocimiento = ?',
+            whereArgs: [g.recognitionClass]);
+        if (exists.isNotEmpty) continue;
+        final picto = kSeedPictograms.firstWhere((s) => s.key == g.pictogramKey);
+        final pictoRows = await txn.query('pictograma',
+            columns: ['id_pictograma'],
+            where: 'nombre = ? AND mensaje = ? AND uuid IS NULL '
+                'AND id_intencion IS NULL',
+            whereArgs: [picto.label, picto.speech],
+            orderBy: 'id_pictograma',
+            limit: 1);
+        if (pictoRows.isEmpty) continue;
+        // Mismo identificador que en una instalacion nueva (orden de la
+        // semilla), porque el backend lo usa como `gesto-<id>`.
+        final gestureId = await txn.insert('gesto', {
+          'id_gesto': await freeId('gesto', 'id_gesto', index + 1),
+          'nombre': g.name,
+          'descripcion': null,
+          'representacion_visual': g.visual,
+          'clase_reconocimiento': g.recognitionClass,
+          'estado_disponibilidad': 'disponible',
+          'instrucciones': null,
+        });
+        final intentionId = await txn.insert('intencion_comunicativa', {
+          'id_intencion': await freeId(
+              'intencion_comunicativa', 'id_intencion', index + 1),
+          'nombre': g.intentionName,
+          'descripcion': null,
+          'mensaje_asociado': picto.speech,
+          'id_gesto': gestureId,
+        });
+        await txn.update('pictograma', {'id_intencion': intentionId},
+            where: 'id_pictograma = ?',
+            whereArgs: [pictoRows.first['id_pictograma']]);
+        added.add(gestureId);
+      }
+      if (added.isEmpty) return;
+      final profiles = await txn.query('perfil_nino',
+          columns: ['id_perfil', 'preferencias_comunicacion']);
+      for (final r in profiles) {
+        final raw = r['preferencias_comunicacion'] as String?;
+        final prefs = raw == null
+            ? <String, dynamic>{}
+            : jsonDecode(raw) as Map<String, dynamic>;
+        final enabled = ((prefs['gestos_habilitados'] as List?) ?? const [])
+            .map((e) => (e as num).toInt())
+            .toSet()
+          ..addAll(added);
+        prefs['gestos_habilitados'] = enabled.toList()..sort();
+        final id = r['id_perfil'] as int;
+        await txn.update(
+            'perfil_nino', {'preferencias_comunicacion': jsonEncode(prefs)},
+            where: 'id_perfil = ?', whereArgs: [id]);
+        await SyncLog.touchProfile(txn, id);
+      }
+    });
   }
 }

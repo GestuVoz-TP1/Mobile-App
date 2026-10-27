@@ -1,8 +1,11 @@
 /// Gestos iniciales.
 ///
-/// Los documentos aun no definen el repertorio oficial de gestos. Estos
-/// cuatro permiten usar el flujo completo de reconocimiento (camara -> gesto
-/// -> intencion -> pictograma -> voz -> interaccion) mientras tanto.
+/// Los cuatro primeros son los gestos iniciales del prototipo. Los siguientes
+/// son los que reconoce el modelo entrenado con HaGRIDv2 (repositorio ML,
+/// `config/gestos.json`, pendiente de validacion por el especialista). Agua
+/// no tiene todavia datos de entrenamiento, por lo que el modelo no la
+/// reconoce. El orden importa: define los identificadores `gesto-<id>` y
+/// `intencion-<id>` que comparte el backend.
 ///
 /// - `instrucciones` inicia vacio y es editable por el tutor.
 /// - Cada gesto se enlaza a un pictograma semilla existente ([pictogramKey]),
@@ -57,5 +60,54 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_parar',
     intentionName: 'Pedir que pare',
     pictogramKey: 'r_parar',
+  ),
+  SeedGesture(
+    name: 'Sí',
+    visual: '👍',
+    recognitionClass: 'gesto_si',
+    intentionName: 'Decir que sí',
+    pictogramKey: 'r_si',
+  ),
+  SeedGesture(
+    name: 'No',
+    visual: '👎',
+    recognitionClass: 'gesto_no',
+    intentionName: 'Decir que no',
+    pictogramKey: 'r_no',
+  ),
+  SeedGesture(
+    name: 'Por favor',
+    visual: '🙏',
+    recognitionClass: 'gesto_porfavor',
+    intentionName: 'Pedir por favor',
+    pictogramKey: 'r_porfavor',
+  ),
+  SeedGesture(
+    name: 'Terminé',
+    visual: '🙅',
+    recognitionClass: 'gesto_termine',
+    intentionName: 'Avisar que terminó',
+    pictogramKey: 'r_termine',
+  ),
+  SeedGesture(
+    name: 'Silencio',
+    visual: '🤫',
+    recognitionClass: 'gesto_silencio',
+    intentionName: 'Pedir silencio',
+    pictogramKey: 'b_silencio',
+  ),
+  SeedGesture(
+    name: 'Descanso',
+    visual: '⏸️',
+    recognitionClass: 'gesto_descanso',
+    intentionName: 'Pedir un descanso',
+    pictogramKey: 'b_descanso',
+  ),
+  SeedGesture(
+    name: 'Abrazo',
+    visual: '🫶',
+    recognitionClass: 'gesto_abrazo',
+    intentionName: 'Pedir un abrazo',
+    pictogramKey: 'b_abrazo',
   ),
 ];

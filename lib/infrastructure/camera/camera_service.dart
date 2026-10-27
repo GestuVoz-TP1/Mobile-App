@@ -109,18 +109,27 @@ class CameraService {
     final done = Completer<void>();
     var lastAt = DateTime.fromMillisecondsSinceEpoch(0);
     final step = maxDuration ~/ frameCount;
+    final rotation = _cameras[_index].sensorOrientation;
     try {
       await c.startImageStream((CameraImage img) {
         final now = DateTime.now();
         if (done.isCompleted || now.difference(lastAt) < step) return;
         lastAt = now;
-        // Plano de luminancia (Y) copiado en memoria; el modelo real hara su
-        // propio preprocesamiento (OB2, 8.2).
+        // Planos YUV copiados en memoria; el reconocedor hace su propio
+        // preprocesamiento (OB2, 8.2).
+        final p = img.planes;
+        final color = p.length >= 3;
         frames.add(GestureFrame(
-          bytes: Uint8List.fromList(img.planes.first.bytes),
+          bytes: Uint8List.fromList(p[0].bytes),
           width: img.width,
           height: img.height,
           capturedAt: now,
+          uPlane: color ? Uint8List.fromList(p[1].bytes) : null,
+          vPlane: color ? Uint8List.fromList(p[2].bytes) : null,
+          yRowStride: p[0].bytesPerRow,
+          uvRowStride: color ? p[1].bytesPerRow : 0,
+          uvPixelStride: color ? (p[1].bytesPerPixel ?? 1) : 1,
+          rotation: rotation,
         ));
         if (frames.length >= frameCount) done.complete();
       });

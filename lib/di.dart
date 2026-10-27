@@ -12,7 +12,7 @@ import 'application/reporting_service.dart';
 import 'application/settings_service.dart';
 import 'domain/ml.dart';
 import 'infrastructure/camera/camera_service.dart';
-import 'infrastructure/ml/test_mode_gesture_recognition_service.dart';
+import 'infrastructure/ml/tflite_gesture_recognition_service.dart';
 import 'infrastructure/persistence/csv_report_exporter.dart';
 import 'infrastructure/persistence/database.dart';
 import 'infrastructure/persistence/legacy_cleanup.dart';
@@ -51,11 +51,11 @@ class Di {
     final voiceRepo = SqliteVoiceConfigurationRepository(db);
     final consentRepo = SqliteConsentRepository(db);
 
-    // Reconocimiento de gestos: reconocedor de prueba mientras no exista el
-    // modelo entrenado. Para el modelo real:
-    // TensorFlowLiteGestureRecognitionService().
+    // Reconocimiento de gestos: modelo MobileNet + LSTM en el dispositivo.
+    // Para volver al reconocedor de prueba:
+    // TestModeGestureRecognitionService().
     final GestureRecognitionService recognizer =
-        TestModeGestureRecognitionService();
+        TensorFlowLiteGestureRecognitionService();
 
     final tts = TtsService();
     final camera = CameraService();

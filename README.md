@@ -131,30 +131,49 @@ Cámara ─► secuencia de imágenes (solo en memoria)
 
 Las imágenes de la cámara **nunca se guardan** ni salen del dispositivo.
 
-### Estado del modelo
+### Modelo de reconocimiento
 
-El modelo previsto es **MobileNet + LSTM** ejecutado con **TensorFlow Lite**
-en el dispositivo. La integración está preparada en
-`lib/infrastructure/ml/tflite_gesture_recognition_service.dart`, que incluye
-los pasos para activarla cuando exista el archivo `.tflite` entrenado.
+La app usa el modelo **MobileNet + LSTM** con **TensorFlow Lite**, en el
+dispositivo (`lib/infrastructure/ml/`). Por cada fotograma de la secuencia:
 
-Mientras tanto, la app usa `TestModeGestureRecognitionService`:
+1. El detector de palmas de MediaPipe (`palm_detection_lite.tflite`) ubica
+   las manos.
+2. Se recorta la mano (o las dos manos) y MobileNetV3
+   (`gestos_fotograma.tflite`) extrae sus características.
+3. Con los 16 fotogramas, el LSTM (`gestos_secuencia.tflite`) decide el
+   gesto o "ninguno".
 
-- **En compilación de desarrollo** (`flutter run`): después de la captura
-  aparece el panel **"¿Qué gesto hiciste?"**, donde quien prueba la app elige
-  el gesto (o "No reconocido"). Así se puede recorrer el flujo completo.
-- **En compilación de lanzamiento** (`--release`): ese panel no existe y todo
-  intento termina en "No reconocido" hasta integrar el modelo.
+El resultado solo se acepta con una confianza de al menos 85 % y si el gesto
+está habilitado en el perfil; si no, se muestra "No reconocido".
 
-La app nunca muestra porcentajes de coincidencia si no hay un modelo real.
+Los modelos están en `assets/models/` y se entrenan en el repositorio
+[ML](https://github.com/GestuVoz-TP1/ML) con
+[HaGRIDv2](https://github.com/hukenovs/hagrid) (CC BY-SA 4.0). Se
+probaron con imágenes de HaGRIDv2 que no se usaron para entrenar; **falta
+validarlos con videos propios y medir la latencia en el teléfono**.
 
-### Gestos iniciales
+`TestModeGestureRecognitionService` (el reconocedor de prueba, sin modelo)
+sigue disponible para pruebas: se activa en `lib/di.dart`.
 
-Hola 👋 · Agua 💧 · Ayuda 🆘 · Parar ✋. Cada uno está asociado a una intención
-y a un pictograma del tablero. Sus instrucciones se escriben desde
-**Ajustes → Gestos disponibles**. Para cargar el repertorio definitivo se
-reemplaza `lib/infrastructure/seed/gesture_seed.dart` con las clases que
-devuelva el modelo; el resto de la app no cambia.
+### Gestos
+
+| Gesto | Mensaje | Lo reconoce el modelo |
+|-------|---------|:---------------------:|
+| Hola 👋 | Hola | Sí |
+| Agua 💧 | Quiero agua | No (sin datos de entrenamiento) |
+| Ayuda 🆘 | Necesito ayuda | Sí |
+| Parar ✋ | Para, por favor | Sí |
+| Sí 👍 | Sí | Sí |
+| No 👎 | No | Sí |
+| Por favor 🙏 | Por favor | Sí |
+| Terminé 🙅 | Ya terminé | Sí |
+| Silencio 🤫 | Quiero silencio | Sí |
+| Descanso ⏸️ | Necesito un descanso | Sí |
+| Abrazo 🫶 | Quiero un abrazo | Sí |
+
+Cada gesto está asociado a una intención y a un pictograma del tablero. Sus
+instrucciones se escriben desde **Ajustes → Gestos disponibles**. El
+repertorio está pendiente de validación por el especialista.
 
 ---
 
@@ -319,6 +338,8 @@ flutter test
   eliminación de perfiles y migración de versiones de la base.
 - `test/widget_test.dart`: reglas de dominio, reconocimiento de gestos,
   resúmenes del historial y componentes de la interfaz.
+- `test/hand_detection_test.dart`: lectura de los fotogramas de la cámara
+  (giro y color) y decodificación del detector de palmas.
 - `test/sync_test.dart`: sincronización con un backend simulado (sin
   conexión, consentimiento, orden y formato de envío, eliminación, descarga
   en un teléfono nuevo) y consulta del historial y los reportes.
@@ -328,10 +349,11 @@ flutter test
 ## Alcance de esta versión
 
 Incluye la aplicación móvil conectada al backend Django desplegado en Render
-(Cloud Firestore y Cloud Storage) y a Firebase Authentication. Se integrará en
-una etapa posterior:
+(Cloud Firestore y Cloud Storage), Firebase Authentication y el modelo de
+reconocimiento de gestos en el dispositivo. Queda pendiente:
 
-- Modelo entrenado de reconocimiento de gestos (MobileNet + LSTM)
+- Validar el modelo con videos propios y medir la latencia en el teléfono.
+- Gestos con movimiento (Agua, Me duele, Comer, Beber).
 
 ---
 
