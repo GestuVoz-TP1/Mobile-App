@@ -8,6 +8,7 @@ import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/sync_status_banner.dart';
 import 'child_profile_screen.dart';
 import 'consent_screen.dart';
 import 'profiles_screen.dart';
@@ -80,6 +81,7 @@ class _HomeTab extends StatelessWidget {
         Text('Acompañemos a $firstName',
             style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
         const SizedBox(height: Insets.md),
+        const SyncStatusBanner(),
         _ActiveProfileCard(
           profile: profile,
           onTap: () => _go(context, const ProfilesScreen()),

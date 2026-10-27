@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../application/auth_service.dart';
@@ -65,10 +67,42 @@ class SessionController extends ChangeNotifier {
   bool get highContrast =>
       _active?.preferences.highContrast ?? false;
 
+  /// Se ejecuta tras iniciar sesion (descarga de datos del backend). Un
+  /// error aqui no impide entrar: los datos locales siguen disponibles.
+  Future<void> Function(Account account)? afterSignIn;
+
+  /// Se ejecuta al cerrar sesion.
+  Future<void> Function()? afterSignOut;
+
   Future<void> bootstrap() async {
     await _tts.init();
+    // Sesion guardada de Firebase: no requiere conexion.
+    final restored = await _auth.restoreSession();
+    if (restored != null) {
+      _account = restored;
+      await _loadProfiles();
+      _runAfterSignIn(restored, wait: false);
+    }
     _ready = true;
     notifyListeners();
+  }
+
+  Future<void> _runAfterSignIn(Account account, {required bool wait}) async {
+    final hook = afterSignIn;
+    if (hook == null) return;
+    Future<void> run() async {
+      try {
+        await hook(account);
+        if (_account?.id == account.id) {
+          await _loadProfiles();
+          notifyListeners();
+        }
+      } catch (e) {
+        debugPrint('Sincronizacion inicial no completada: $e');
+      }
+    }
+
+    wait ? await run() : unawaited(run());
   }
 
   // --- Acceso (E4) -------------------------------------------------------
@@ -78,18 +112,29 @@ class SessionController extends ChangeNotifier {
     _account = await _auth.register(form);
     await _loadProfiles();
     notifyListeners();
+    await _runAfterSignIn(_account!, wait: true);
   }
 
-  /// HU019.
+  /// HU019. Recupera del backend los perfiles y la configuracion del tutor.
   Future<void> login(String email, String password) async {
-    _account = await _auth.login(email, password);
+    final account = await _auth.login(email, password);
+    await _runAfterSignIn(account, wait: true);
+    _account = account;
     await _loadProfiles();
     notifyListeners();
   }
 
+  /// HU020.
+  Future<void> sendPasswordReset(String email) =>
+      _auth.sendPasswordReset(email);
+
+  bool get usesRemoteAuth => _auth.usesRemoteAuth;
+
   /// HU026: termina la sesion y vuelve a la pantalla de acceso.
   Future<void> logout() async {
     await _tts.stop();
+    await _auth.logout();
+    await afterSignOut?.call();
     _account = null;
     _profileList = const [];
     _active = null;

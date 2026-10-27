@@ -9,6 +9,7 @@ import '../../domain/consent.dart';
 import '../../domain/gesture.dart';
 import '../../domain/interaction.dart';
 import '../../domain/settings.dart';
+import '../sync/sync_log.dart';
 import 'database.dart';
 
 /// Implementaciones de los puertos de repositorio sobre SQLite
@@ -16,6 +17,15 @@ import 'database.dart';
 /// que existe SQLite.
 
 String _date(DateTime d) => d.toIso8601String();
+
+bool _sameBytes(Uint8List? a, Uint8List? b) {
+  if (identical(a, b)) return true;
+  if (a == null || b == null || a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
 DateTime _parse(Object? v) => DateTime.parse(v as String);
 
 // --------------------------------------------------------------------------
@@ -58,6 +68,53 @@ class SqliteAuthRepository implements AuthRepository {
       'contrasena_sal': a.password.salt,
     });
     return a.withId(id);
+  }
+
+  @override
+  Future<Account?> findByRemoteUid(String uid) async {
+    final rows = await _db.db.query('padre_tutor',
+        where: 'firebase_uid = ?', whereArgs: [uid], limit: 1);
+    return rows.isEmpty ? null : _map(rows.first);
+  }
+
+  @override
+  Future<Account> linkRemote({
+    required String uid,
+    required Email email,
+    required SecretHash password,
+  }) async {
+    return _db.db.transaction((txn) async {
+      final values = {
+        'correo_electronico': email.value,
+        'estado_acceso': AccessState.active,
+        'contrasena_hash': password.hash,
+        'contrasena_sal': password.salt,
+        'firebase_uid': uid,
+      };
+      // Primero por UID; si no, por correo (cuenta local previa del mismo
+      // tutor en este telefono).
+      var rows = await txn.query('padre_tutor',
+          columns: ['id_tutor'], where: 'firebase_uid = ?', whereArgs: [uid]);
+      if (rows.isEmpty) {
+        rows = await txn.query('padre_tutor',
+            columns: ['id_tutor'],
+            where: 'correo_electronico = ?',
+            whereArgs: [email.value]);
+      }
+      final int id;
+      if (rows.isEmpty) {
+        id = await txn.insert('padre_tutor', values);
+      } else {
+        id = rows.first['id_tutor'] as int;
+        await txn.update('padre_tutor', values,
+            where: 'id_tutor = ?', whereArgs: [id]);
+      }
+      return Account(
+        id: id,
+        email: email,
+        password: password,
+      );
+    });
   }
 }
 
@@ -105,10 +162,12 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
   @override
   Future<ChildProfile> create(ChildProfile profile) async {
     return _db.db.transaction((txn) async {
+      final now = SyncLog.now();
       final childId = await txn.insert('nino', {
         'nombre': profile.child.name,
         'fecha_nacimiento': _date(profile.child.birthDate),
         'genero': profile.child.gender,
+        'uuid': SyncLog.newId(),
       });
       final profileId = await txn.insert('perfil_nino', {
         'nivel_apoyo': profile.supportLevel,
@@ -116,6 +175,8 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         'estado_perfil': profile.state,
         'id_tutor': profile.tutorId,
         'id_nino': childId,
+        'uuid': SyncLog.newId(),
+        'actualizado_en': now,
       });
       // CONFIGURACION_VOZ inicial (1:1 con el perfil).
       const v = VoiceConfiguration(profileId: 0);
@@ -126,13 +187,16 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         'volumen': v.volume,
         'voz_activada': v.voiceEnabled ? 1 : 0,
         'id_perfil': profileId,
+        'actualizado_en': now,
       });
       // El perfil nuevo inicia con los pictogramas semilla seleccionados
-      // (los semilla son los que no tienen imagen propia).
+      // (los semilla son los que no tienen identificador remoto).
       await txn.rawInsert('''
         INSERT INTO perfil_pictograma (id_pictograma, id_perfil, orden)
         SELECT id_pictograma, ?, id_pictograma FROM pictograma
-        WHERE imagen IS NULL''', [profileId]);
+        WHERE uuid IS NULL''', [profileId]);
+      await SyncLog.upsert(txn, SyncEntity.profile, profileId);
+      await SyncLog.upsert(txn, SyncEntity.voice, profileId);
       return profile.copyWith(
         id: profileId,
         child: Child(
@@ -168,6 +232,7 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         where: 'id_perfil = ?',
         whereArgs: [profile.id],
       );
+      await SyncLog.touchProfile(txn, profile.id!);
     });
   }
 
@@ -175,11 +240,20 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
   Future<void> delete(int profileId) async {
     await _db.db.transaction((txn) async {
       final rows = await txn.query('perfil_nino',
-          columns: ['id_nino'],
+          columns: ['id_nino', 'uuid'],
           where: 'id_perfil = ?',
           whereArgs: [profileId]);
       if (rows.isEmpty) return;
       final childId = rows.first['id_nino'] as int;
+      // HU025: tambien se elimina en la nube. Se descartan los envios
+      // pendientes de este perfil.
+      for (final entity in [SyncEntity.consent, SyncEntity.voice]) {
+        await txn.delete('sync_pendiente',
+            where: 'entidad = ? AND id_local = ?',
+            whereArgs: [entity, profileId]);
+      }
+      await SyncLog.delete(txn, SyncEntity.profile,
+          localId: profileId, remoteId: rows.first['uuid'] as String?);
       // Pictogramas personalizados que usaba este perfil.
       final customs = (await txn.rawQuery('''
         SELECT p.id_pictograma FROM pictograma p
@@ -210,8 +284,15 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
                + (SELECT COUNT(*) FROM interaccion WHERE id_pictograma = ?)''',
             [id, id]))!;
         if (inUse == 0) {
+          final uuid = (await txn.query('pictograma',
+                  columns: ['uuid'],
+                  where: 'id_pictograma = ?',
+                  whereArgs: [id]))
+              .first['uuid'] as String?;
           await txn.delete('pictograma',
               where: 'id_pictograma = ?', whereArgs: [id]);
+          await SyncLog.delete(txn, SyncEntity.pictogram,
+              localId: id, remoteId: uuid);
         }
       }
     });
@@ -302,6 +383,8 @@ class SqlitePictogramRepository implements PictogramRepository {
         'id_categoria': p.categoryId,
         'id_intencion': null,
         'id_perfil_propietario': profileId,
+        'uuid': SyncLog.newId(),
+        'actualizado_en': SyncLog.now(),
       });
       final next = Sqflite.firstIntValue(await txn.rawQuery(
               'SELECT COALESCE(MAX(orden), 0) + 1 FROM perfil_pictograma '
@@ -310,6 +393,8 @@ class SqlitePictogramRepository implements PictogramRepository {
           1;
       await txn.insert('perfil_pictograma',
           {'id_pictograma': id, 'id_perfil': profileId, 'orden': next});
+      await SyncLog.upsert(txn, SyncEntity.pictogram, id);
+      await SyncLog.touchProfile(txn, profileId);
       return Pictogram(
         id: id,
         name: p.name,
@@ -322,32 +407,46 @@ class SqlitePictogramRepository implements PictogramRepository {
 
   @override
   Future<void> update(Pictogram p) async {
-    await _db.db.update(
-      'pictograma',
-      {
-        'nombre': p.name,
-        'imagen': p.image,
-        'mensaje': p.message,
-        'id_categoria': p.categoryId,
-      },
-      where: 'id_pictograma = ?',
-      whereArgs: [p.id],
-    );
+    await _db.db.transaction((txn) async {
+      final before = await txn.query('pictograma',
+          columns: ['imagen'], where: 'id_pictograma = ?', whereArgs: [p.id]);
+      final imageChanged = before.isNotEmpty &&
+          !_sameBytes(before.first['imagen'] as Uint8List?, p.image);
+      await txn.update(
+        'pictograma',
+        {
+          'nombre': p.name,
+          'imagen': p.image,
+          'mensaje': p.message,
+          'id_categoria': p.categoryId,
+          if (p.isCustom) 'actualizado_en': SyncLog.now(),
+          // La imagen nueva se vuelve a subir a Cloud Storage.
+          if (imageChanged) 'imagen_ref': null,
+        },
+        where: 'id_pictograma = ?',
+        whereArgs: [p.id],
+      );
+      // Los pictogramas iniciales son un catalogo fijo y no se sincronizan.
+      if (p.isCustom) await SyncLog.upsert(txn, SyncEntity.pictogram, p.id!);
+    });
   }
 
   @override
   Future<void> setSelected(int profileId, int pictogramId, bool selected) async {
-    if (!selected) {
-      await _db.db.delete('perfil_pictograma',
-          where: 'id_perfil = ? AND id_pictograma = ?',
-          whereArgs: [profileId, pictogramId]);
-      return;
-    }
-    await _db.db.rawInsert('''
-      INSERT OR IGNORE INTO perfil_pictograma (id_pictograma, id_perfil, orden)
-      VALUES (?, ?, (SELECT COALESCE(MAX(orden), 0) + 1
-                     FROM perfil_pictograma WHERE id_perfil = ?))''',
-        [pictogramId, profileId, profileId]);
+    await _db.db.transaction((txn) async {
+      if (!selected) {
+        await txn.delete('perfil_pictograma',
+            where: 'id_perfil = ? AND id_pictograma = ?',
+            whereArgs: [profileId, pictogramId]);
+      } else {
+        await txn.rawInsert('''
+          INSERT OR IGNORE INTO perfil_pictograma (id_pictograma, id_perfil, orden)
+          VALUES (?, ?, (SELECT COALESCE(MAX(orden), 0) + 1
+                         FROM perfil_pictograma WHERE id_perfil = ?))''',
+            [pictogramId, profileId, profileId]);
+      }
+      await SyncLog.touchProfile(txn, profileId);
+    });
   }
 
   @override
@@ -358,6 +457,7 @@ class SqlitePictogramRepository implements PictogramRepository {
             where: 'id_perfil = ? AND id_pictograma = ?',
             whereArgs: [profileId, orderedPictogramIds[i]]);
       }
+      await SyncLog.touchProfile(txn, profileId);
     });
   }
 
@@ -368,10 +468,25 @@ class SqlitePictogramRepository implements PictogramRepository {
           'SELECT COUNT(*) FROM interaccion WHERE id_pictograma = ?',
           [pictogramId]))!;
       if (used > 0) return false;
-      final n = await txn.delete('pictograma',
+      final rows = await txn.query('pictograma',
+          columns: ['uuid'],
           where: 'id_pictograma = ? AND imagen IS NOT NULL',
           whereArgs: [pictogramId]);
-      return n > 0;
+      if (rows.isEmpty) return false;
+      final profiles = (await txn.query('perfil_pictograma',
+              columns: ['id_perfil'],
+              where: 'id_pictograma = ?',
+              whereArgs: [pictogramId]))
+          .map((r) => r['id_perfil'] as int)
+          .toList();
+      await txn.delete('pictograma',
+          where: 'id_pictograma = ?', whereArgs: [pictogramId]);
+      await SyncLog.delete(txn, SyncEntity.pictogram,
+          localId: pictogramId, remoteId: rows.first['uuid'] as String?);
+      for (final profileId in profiles) {
+        await SyncLog.touchProfile(txn, profileId);
+      }
+      return true;
     });
   }
 }
@@ -465,6 +580,7 @@ class SqliteInteractionRepository implements InteractionRepository {
   InteractionRecord _map(Map<String, Object?> r) => InteractionRecord(
         interaction: Interaction(
           id: r['id_interaccion'] as int,
+          remoteId: r['uuid'] as String?,
           at: _parse(r['fecha_hora']),
           detail: r['detalle'] as String?,
           profileId: r['id_perfil'] as int,
@@ -490,7 +606,11 @@ class SqliteInteractionRepository implements InteractionRepository {
       'id_pictograma': i.pictogramId,
       'id_gesto': i.gestureId,
       'id_perfil': i.profileId,
+      // Se envia al backend en lote; queda pendiente si no hay conexion.
+      'uuid': SyncLog.newId(),
+      'sincronizada': 0,
     });
+    SyncLog.notify();
     return Interaction(
       id: id,
       at: i.at,
@@ -559,18 +679,22 @@ class SqliteVoiceConfigurationRepository
 
   @override
   Future<void> save(VoiceConfiguration c) async {
-    await _db.db.insert(
-      'configuracion_voz',
-      {
-        'idioma': c.language,
-        'tipo_voz': c.voiceType,
-        'velocidad': c.rate,
-        'volumen': c.volume,
-        'voz_activada': c.voiceEnabled ? 1 : 0,
-        'id_perfil': c.profileId,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db.db.transaction((txn) async {
+      await txn.insert(
+        'configuracion_voz',
+        {
+          'idioma': c.language,
+          'tipo_voz': c.voiceType,
+          'velocidad': c.rate,
+          'volumen': c.volume,
+          'voz_activada': c.voiceEnabled ? 1 : 0,
+          'id_perfil': c.profileId,
+          'actualizado_en': SyncLog.now(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await SyncLog.upsert(txn, SyncEntity.voice, c.profileId);
+    });
   }
 }
 
@@ -603,10 +727,14 @@ class SqliteConsentRepository implements ConsentRepository {
       'fecha_registro': _date(c.registeredAt),
       'fecha_retiro': c.withdrawnAt == null ? null : _date(c.withdrawnAt!),
       'id_perfil': c.profileId,
+      'actualizado_en': SyncLog.now(),
     };
-    final updated = await _db.db.update('consentimiento', values,
-        where: 'id_perfil = ?', whereArgs: [c.profileId]);
-    if (updated == 0) await _db.db.insert('consentimiento', values);
+    await _db.db.transaction((txn) async {
+      final updated = await txn.update('consentimiento', values,
+          where: 'id_perfil = ?', whereArgs: [c.profileId]);
+      if (updated == 0) await txn.insert('consentimiento', values);
+      await SyncLog.upsert(txn, SyncEntity.consent, c.profileId);
+    });
     return (await forProfile(c.profileId))!;
   }
 }

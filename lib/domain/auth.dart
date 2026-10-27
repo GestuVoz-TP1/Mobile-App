@@ -69,6 +69,40 @@ abstract interface class AuthRepository {
   Future<Account?> findByEmail(Email email);
   Future<Account?> findById(int id);
   Future<Account> insert(Account account);
+
+  /// Tutor local vinculado al usuario de Firebase Authentication.
+  Future<Account?> findByRemoteUid(String uid);
+
+  /// Crea o actualiza el tutor local que corresponde a un usuario de
+  /// Firebase. Guarda el hash de la contrasena para poder verificarla sin
+  /// conexion (salir del modo nino).
+  Future<Account> linkRemote({
+    required String uid,
+    required Email email,
+    required SecretHash password,
+  });
+}
+
+/// Usuario autenticado en el servicio remoto (Firebase Authentication).
+class RemoteUser {
+  final String uid;
+  final String email;
+  const RemoteUser({required this.uid, required this.email});
+}
+
+/// Puerto hacia el servicio de autenticacion remoto (OB2 RT-04).
+abstract interface class RemoteAuthGateway {
+  /// Usuario con sesion guardada en el dispositivo (funciona sin conexion).
+  RemoteUser? get currentUser;
+  Future<RemoteUser> register(String email, String password);
+  Future<RemoteUser> signIn(String email, String password);
+  Future<void> signOut();
+
+  /// HU020: envia el correo para restablecer la contrasena.
+  Future<void> sendPasswordReset(String email);
+
+  /// Token para llamar al backend; null si no hay sesion.
+  Future<String?> idToken({bool forceRefresh = false});
 }
 
 /// Servicio de infraestructura para derivar y verificar hashes.

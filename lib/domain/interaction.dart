@@ -30,8 +30,12 @@ class Interaction {
   final int? gestureId;
   final int? intentionId;
 
+  /// Identificador en el backend (documento de `interacciones`).
+  final String? remoteId;
+
   const Interaction({
     this.id,
+    this.remoteId,
     required this.at,
     this.detail,
     required this.profileId,

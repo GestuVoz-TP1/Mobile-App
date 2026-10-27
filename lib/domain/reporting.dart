@@ -96,6 +96,20 @@ class ReportBuilder {
   }
 }
 
+/// Puerto: de donde se obtiene el historial y su resumen (E6).
+/// Local (SQLite) o remoto (backend, OB2 "Generacion de reportes").
+abstract interface class HistorySource {
+  /// HU030 / HU032: interacciones del periodo [from, to).
+  Future<List<InteractionRecord>> records(int profileId,
+      {DateTime? from, DateTime? to});
+
+  /// HU031 y resumen del periodo [from, to).
+  Future<UsageSummary> summary(int profileId, {DateTime? from, DateTime? to});
+
+  /// HU033: detalle de una interaccion; null si ya no esta disponible.
+  Future<InteractionRecord?> detail(int profileId, InteractionRecord record);
+}
+
 /// Puerto: exporta el historial a un archivo (CSV para Excel).
 abstract interface class ReportExporter {
   Future<String> exportCsv(String profileName, List<InteractionRecord> records);
