@@ -36,8 +36,6 @@ class SeedGesture {
   });
 }
 
-const _hold = 'Mantén el gesto quieto unos 3 segundos.';
-
 const List<SeedGesture> kSeedGestures = [
   SeedGesture(
     name: 'Hola',
@@ -46,8 +44,7 @@ const List<SeedGesture> kSeedGestures = [
     intentionName: 'Saludar',
     pictogramKey: 'r_hola',
     instructions: 'Muestra la mano abierta a la cámara.\n'
-        'Separa bien los dedos.\n'
-        '$_hold',
+        'Separa bien los dedos.',
   ),
   SeedGesture(
     name: 'Agua',
@@ -63,8 +60,7 @@ const List<SeedGesture> kSeedGestures = [
     intentionName: 'Pedir ayuda',
     pictogramKey: 'b_ayuda',
     instructions: 'Levanta solo el dedo índice.\n'
-        'Dobla los otros dedos.\n'
-        '$_hold',
+        'Dobla los otros dedos.',
   ),
   SeedGesture(
     name: 'Parar',
@@ -73,8 +69,7 @@ const List<SeedGesture> kSeedGestures = [
     intentionName: 'Pedir que pare',
     pictogramKey: 'r_parar',
     instructions: 'Levanta la mano con la palma hacia la cámara.\n'
-        'Junta los dedos, como diciendo «alto».\n'
-        '$_hold',
+        'Junta los dedos, como diciendo «alto».',
   ),
   SeedGesture(
     name: 'Sí',
@@ -83,8 +78,7 @@ const List<SeedGesture> kSeedGestures = [
     intentionName: 'Decir que sí',
     pictogramKey: 'r_si',
     instructions: 'Cierra la mano.\n'
-        'Levanta el pulgar hacia arriba.\n'
-        '$_hold',
+        'Levanta el pulgar hacia arriba.',
   ),
   SeedGesture(
     name: 'No',
@@ -93,8 +87,7 @@ const List<SeedGesture> kSeedGestures = [
     intentionName: 'Decir que no',
     pictogramKey: 'r_no',
     instructions: 'Cierra la mano.\n'
-        'Apunta el pulgar hacia abajo.\n'
-        '$_hold',
+        'Apunta el pulgar hacia abajo.',
   ),
   SeedGesture(
     name: 'Por favor',
@@ -103,8 +96,7 @@ const List<SeedGesture> kSeedGestures = [
     intentionName: 'Pedir por favor',
     pictogramKey: 'r_porfavor',
     instructions: 'Junta las palmas de las dos manos.\n'
-        'Los dedos miran hacia arriba, frente al pecho.\n'
-        '$_hold',
+        'Los dedos miran hacia arriba, frente al pecho.',
   ),
   SeedGesture(
     name: 'Terminé',
@@ -113,8 +105,7 @@ const List<SeedGesture> kSeedGestures = [
     intentionName: 'Avisar que terminó',
     pictogramKey: 'r_termine',
     instructions: 'Cruza los brazos frente al pecho formando una X.\n'
-        'Las manos quedan abiertas.\n'
-        '$_hold',
+        'Las manos quedan abiertas.',
   ),
   SeedGesture(
     name: 'Silencio',
@@ -122,8 +113,7 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_silencio',
     intentionName: 'Pedir silencio',
     pictogramKey: 'b_silencio',
-    instructions: 'Pon el dedo índice sobre los labios.\n'
-        '$_hold',
+    instructions: 'Pon el dedo índice sobre los labios.',
   ),
   SeedGesture(
     name: 'Descanso',
@@ -133,8 +123,7 @@ const List<SeedGesture> kSeedGestures = [
     pictogramKey: 'b_descanso',
     instructions: 'Pon una mano plana y horizontal.\n'
         'Con la otra mano, toca su palma con la punta de los dedos: '
-        'forma una T.\n'
-        '$_hold',
+        'forma una T.',
   ),
   SeedGesture(
     name: 'Abrazo',
@@ -143,7 +132,6 @@ const List<SeedGesture> kSeedGestures = [
     intentionName: 'Pedir un abrazo',
     pictogramKey: 'b_abrazo',
     instructions: 'Junta las dos manos formando un corazón.\n'
-        'Los pulgares abajo y los dedos curvos arriba.\n'
-        '$_hold',
+        'Los pulgares abajo y los dedos curvos arriba.',
   ),
 ];

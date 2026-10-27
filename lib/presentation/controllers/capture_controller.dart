@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../application/gesture_service.dart';
@@ -72,6 +74,16 @@ class CaptureController extends ChangeNotifier {
   GestureSequence _lastSequence = const GestureSequence([]);
   bool _disposed = false;
 
+  /// Tiempo maximo de busqueda en el reconocimiento continuo.
+  static const searchTimeout = Duration(seconds: 10);
+  Completer<GestureOutcome?>? _search;
+
+  /// Termina la busqueda continua en curso, si la hay.
+  void _stopSearch() {
+    final s = _search;
+    if (s != null && !s.isCompleted) s.complete(null);
+  }
+
   void _set(GesturePhase p) {
     _phase = p;
     if (!_disposed) notifyListeners();
@@ -126,6 +138,9 @@ class CaptureController extends ChangeNotifier {
   Future<void> _capture() async {
     _outcome = null;
     _set(GesturePhase.capturing);
+    if (!testModeAvailable && _gestures.supportsContinuous) {
+      return _captureContinuous();
+    }
     final seq = await camera.captureSequence();
     // Si la camara se libero durante la captura (app en segundo plano), se
     // descarta el intento.
@@ -145,9 +160,40 @@ class CaptureController extends ChangeNotifier {
     await _recognize();
   }
 
+  /// Reconocimiento continuo: analiza cada fotograma al llegar y termina
+  /// apenas reconoce un gesto, o tras [searchTimeout] sin reconocer nada.
+  /// El nino no tiene que acertar el momento ni quedarse quieto.
+  Future<void> _captureContinuous() async {
+    _gestures.resetContinuous();
+    final search = _search = Completer<GestureOutcome?>();
+    final timer = Timer(searchTimeout, _stopSearch);
+    var busy = false;
+    final started = await camera.startFrames((frame) async {
+      // Mientras se analiza un fotograma, los que llegan se descartan.
+      if (busy || search.isCompleted) return;
+      busy = true;
+      try {
+        final out = await _gestures.addFrame(frame, _enabled);
+        if (out != null && !search.isCompleted) search.complete(out);
+      } catch (e) {
+        debugPrint('Error al reconocer el fotograma: $e');
+      } finally {
+        busy = false;
+      }
+    });
+    if (!started) _stopSearch();
+    final out = await search.future;
+    timer.cancel();
+    _search = null;
+    await camera.stopFrames();
+    // Si la camara se libero durante la busqueda (app en segundo plano), se
+    // descarta el intento.
+    if (_disposed || _phase != GesturePhase.capturing) return;
+    await _finish(out);
+  }
+
   Future<void> _recognize() async {
     _set(GesturePhase.analyzing);
-    final profile = _session.activeProfile;
     GestureOutcome? out;
     try {
       out = await _gestures.recognize(_lastSequence, _enabled);
@@ -155,6 +201,11 @@ class CaptureController extends ChangeNotifier {
       out = null;
     }
     _lastSequence = const GestureSequence([]); // no se conservan imagenes
+    await _finish(out);
+  }
+
+  Future<void> _finish(GestureOutcome? out) async {
+    final profile = _session.activeProfile;
     if (_disposed) return;
     if (out == null || profile == null) {
       _set(GesturePhase.notRecognized); // HU001/HU006 criterio 2
@@ -185,12 +236,14 @@ class CaptureController extends ChangeNotifier {
 
   /// Vuelve a la preparacion (p. ej. tras un problema de camara).
   void backToPreparation() {
+    _stopSearch();
     _outcome = null;
     _set(GesturePhase.preparation);
   }
 
   /// Libera la camara (al salir o al pasar la app a segundo plano).
   Future<void> releaseCamera() async {
+    _stopSearch();
     await camera.dispose();
     if (_phase == GesturePhase.capturing ||
         _phase == GesturePhase.startingCamera) {
@@ -199,6 +252,7 @@ class CaptureController extends ChangeNotifier {
   }
 
   Future<void> close() async {
+    _stopSearch();
     await camera.dispose();
     _outcome = null;
     _lastSequence = const GestureSequence([]);
@@ -208,6 +262,7 @@ class CaptureController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _stopSearch();
     camera.dispose();
     super.dispose();
   }

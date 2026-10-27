@@ -18,7 +18,7 @@ import 'hand_detection.dart';
 /// GESTO.clase_reconocimiento. Las imagenes solo se procesan en memoria
 /// (RNF-02).
 class TensorFlowLiteGestureRecognitionService
-    implements GestureRecognitionService {
+    implements GestureRecognitionService, ContinuousGestureRecognition {
   TensorFlowLiteGestureRecognitionService({
     this.modelDir = 'assets/models',
     this.minConfidence = 0.85,
@@ -41,6 +41,12 @@ class TensorFlowLiteGestureRecognitionService
   int _featureOutput = 0;
   int _featureSize = 0;
   int _palmBoxOutput = 0;
+
+  /// Reconocimiento continuo: caracteristicas de los ultimos fotogramas y la
+  /// decision anterior (se pide la misma dos veces seguidas para no
+  /// responder por un instante ambiguo).
+  final List<Float32List> _window = [];
+  String? _previous;
 
   @override
   RecognizerInfo get info => const RecognizerInfo(
@@ -98,6 +104,54 @@ class TensorFlowLiteGestureRecognitionService
       await Future<void>.delayed(Duration.zero);
     }
 
+    final (label, confidence) = _decide(features, candidateClasses);
+    final latency = watch.elapsedMilliseconds;
+    if (label == null) {
+      return GestureRecognitionResult.notRecognized(latencyMs: latency);
+    }
+    return GestureRecognitionResult(
+      recognitionClass: label,
+      confidence: Confidence(confidence),
+      latencyMs: latency,
+    );
+  }
+
+  @override
+  void reset() {
+    _window.clear();
+    _previous = null;
+  }
+
+  @override
+  Future<GestureRecognitionResult?> addFrame(
+    GestureFrame frame, {
+    required List<String> candidateClasses,
+  }) async {
+    // Latencia: desde que llega el fotograma hasta la decision (OB2).
+    final watch = Stopwatch()..start();
+    await load();
+    _window.add(_frameFeatures(frame));
+    if (_window.length > _sequenceLength) _window.removeAt(0);
+    if (_window.length < _sequenceLength) return null;
+    final features = Float32List(_sequenceLength * _featureSize);
+    for (var t = 0; t < _sequenceLength; t++) {
+      features.setAll(t * _featureSize, _window[t]);
+    }
+    final (label, confidence) = _decide(features, candidateClasses);
+    final stable = label != null && label == _previous;
+    _previous = label;
+    if (!stable) return null;
+    reset();
+    return GestureRecognitionResult(
+      recognitionClass: label,
+      confidence: Confidence(confidence),
+      latencyMs: watch.elapsedMilliseconds,
+    );
+  }
+
+  /// LSTM sobre 16 fotogramas: la clase si supera [minConfidence], no es
+  /// "ninguno" y esta entre [candidates]; si no, null.
+  (String?, double) _decide(Float32List features, List<String> candidates) {
     final probs = Float32List(_labels.length);
     _sequence!.run(features.buffer.asUint8List(), probs.buffer.asUint8List());
     var best = 0;
@@ -105,17 +159,12 @@ class TensorFlowLiteGestureRecognitionService
       if (probs[i] > probs[best]) best = i;
     }
     final label = _labels[best];
-    final latency = watch.elapsedMilliseconds;
     if (label == _noGesture ||
         probs[best] < minConfidence ||
-        !candidateClasses.contains(label)) {
-      return GestureRecognitionResult.notRecognized(latencyMs: latency);
+        !candidates.contains(label)) {
+      return (null, probs[best]);
     }
-    return GestureRecognitionResult(
-      recognitionClass: label,
-      confidence: Confidence(probs[best]),
-      latencyMs: latency,
-    );
+    return (label, probs[best]);
   }
 
   /// Caracteristicas de un fotograma: se busca la mano y se clasifica el

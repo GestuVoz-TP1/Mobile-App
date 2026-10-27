@@ -65,6 +65,34 @@ class GestureService {
     }
   }
 
+  /// true si el reconocedor analiza los fotogramas a medida que llegan.
+  bool get supportsContinuous => _recognizer is ContinuousGestureRecognition;
+
+  /// Reconocimiento continuo: empieza una busqueda nueva.
+  void resetContinuous() {
+    final r = _recognizer;
+    if (r is ContinuousGestureRecognition) {
+      (r as ContinuousGestureRecognition).reset();
+    }
+  }
+
+  /// Reconocimiento continuo: agrega un fotograma y devuelve el resultado
+  /// cuando se reconoce un gesto con mensaje; null mientras siga buscando.
+  Future<GestureOutcome?> addFrame(
+    GestureFrame frame,
+    List<Gesture> enabled,
+  ) async {
+    final r = _recognizer;
+    if (r is! ContinuousGestureRecognition) return null;
+    await ensureLoaded();
+    final result = await (r as ContinuousGestureRecognition).addFrame(
+      frame,
+      candidateClasses: enabled.map((g) => g.recognitionClass).toList(),
+    );
+    if (result == null) return null;
+    return _outcomeFor(result, enabled);
+  }
+
   /// HU001 / HU006: devuelve null si el gesto no se reconoce o no puede
   /// asociarse a un mensaje (no se comunica un mensaje incorrecto).
   Future<GestureOutcome?> recognize(
@@ -76,6 +104,13 @@ class GestureService {
       sequence,
       candidateClasses: enabled.map((g) => g.recognitionClass).toList(),
     );
+    return _outcomeFor(result, enabled);
+  }
+
+  Future<GestureOutcome?> _outcomeFor(
+    GestureRecognitionResult result,
+    List<Gesture> enabled,
+  ) async {
     if (!result.recognized) return null;
     final gesture = enabled
         .where((g) => g.recognitionClass == result.recognitionClass)

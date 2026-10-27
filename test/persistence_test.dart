@@ -147,6 +147,11 @@ void main() {
     await SqliteChildProfileRepository(app.db).update(profile.copyWith(
         preferences: profile.preferences
             .copyWith(enabledGestureIds: const [1, 2, 3, 4])));
+    // Instrucciones como las dejaba v7 (pedian quedarse quieto).
+    await db.update('gesto', {
+      'instrucciones': 'Levanta solo el dedo índice.\nDobla los otros dedos.\n'
+          'Mantén el gesto quieto unos 3 segundos.'
+    }, where: "clase_reconocimiento = 'gesto_ayuda'");
     await db.execute('PRAGMA user_version = 5');
     await app.db.close();
 
@@ -170,6 +175,7 @@ void main() {
         (g) => g['clase_reconocimiento'] == 'gesto_ayuda');
     expect(ayuda['representacion_visual'], '☝️');
     expect(ayuda['instrucciones'], contains('dedo índice'));
+    expect(ayuda['instrucciones'], isNot(contains('quieto')));
     final prefs = (await reopened.profiles.byId(profileId))!.preferences;
     expect(prefs.enabledGestureIds,
         List.generate(kSeedGestures.length, (i) => i + 1));

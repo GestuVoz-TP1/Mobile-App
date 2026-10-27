@@ -103,23 +103,41 @@ class CameraService {
     int frameCount = 16,
     Duration maxDuration = const Duration(seconds: 3),
   }) async {
-    final c = _controller;
-    if (c == null || !c.value.isInitialized) return const GestureSequence([]);
     final frames = <GestureFrame>[];
     final done = Completer<void>();
+    final started = await startFrames((f) {
+      if (done.isCompleted) return;
+      frames.add(f);
+      if (frames.length >= frameCount) done.complete();
+    }, step: maxDuration ~/ frameCount);
+    if (!started) return const GestureSequence([]);
+    await done.future
+        .timeout(maxDuration + const Duration(seconds: 1), onTimeout: () {});
+    await stopFrames();
+    return GestureSequence(List.unmodifiable(frames));
+  }
+
+  /// Entrega un fotograma cada [step] (como maximo) hasta [stopFrames].
+  /// Los fotogramas quedan solo en memoria. Devuelve false si la camara no
+  /// esta lista.
+  Future<bool> startFrames(
+    void Function(GestureFrame frame) onFrame, {
+    Duration step = const Duration(milliseconds: 150),
+  }) async {
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return false;
     var lastAt = DateTime.fromMillisecondsSinceEpoch(0);
-    final step = maxDuration ~/ frameCount;
     final rotation = _cameras[_index].sensorOrientation;
     try {
       await c.startImageStream((CameraImage img) {
         final now = DateTime.now();
-        if (done.isCompleted || now.difference(lastAt) < step) return;
+        if (now.difference(lastAt) < step) return;
         lastAt = now;
         // Planos YUV copiados en memoria; el reconocedor hace su propio
         // preprocesamiento (OB2, 8.2).
         final p = img.planes;
         final color = p.length >= 3;
-        frames.add(GestureFrame(
+        onFrame(GestureFrame(
           bytes: Uint8List.fromList(p[0].bytes),
           width: img.width,
           height: img.height,
@@ -131,18 +149,19 @@ class CameraService {
           uvPixelStride: color ? (p[1].bytesPerPixel ?? 1) : 1,
           rotation: rotation,
         ));
-        if (frames.length >= frameCount) done.complete();
       });
-      await done.future.timeout(maxDuration + const Duration(seconds: 1),
-          onTimeout: () {});
+      return true;
     } catch (e) {
-      debugPrint('No se pudo capturar la secuencia: $e');
-    } finally {
-      try {
-        if (c.value.isStreamingImages) await c.stopImageStream();
-      } catch (_) {}
+      debugPrint('No se pudo iniciar la captura: $e');
+      return false;
     }
-    return GestureSequence(List.unmodifiable(frames));
+  }
+
+  Future<void> stopFrames() async {
+    try {
+      final c = _controller;
+      if (c != null && c.value.isStreamingImages) await c.stopImageStream();
+    } catch (_) {}
   }
 
   Future<void> dispose() async {

@@ -115,6 +115,22 @@ abstract interface class GestureRecognitionService {
   Future<void> dispose();
 }
 
+/// Reconocimiento continuo: el reconocedor recibe los fotogramas a medida
+/// que llegan y responde apenas identifica un gesto en los ultimos
+/// fotogramas. Asi el nino no tiene que hacer el gesto en un momento exacto
+/// ni quedarse quieto.
+abstract interface class ContinuousGestureRecognition {
+  /// Empieza una busqueda nueva (descarta los fotogramas anteriores).
+  void reset();
+
+  /// Agrega un fotograma. Devuelve el resultado cuando reconoce un gesto de
+  /// [candidateClasses]; null mientras siga buscando.
+  Future<GestureRecognitionResult?> addFrame(
+    GestureFrame frame, {
+    required List<String> candidateClasses,
+  });
+}
+
 /// Modo de prueba del reconocedor que se usa mientras no existe el modelo
 /// entrenado: quien prueba la app elige el resultado del siguiente intento.
 /// Solo se ofrece en compilaciones de desarrollo. Un modelo real NO

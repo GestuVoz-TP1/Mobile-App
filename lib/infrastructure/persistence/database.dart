@@ -24,8 +24,9 @@ class GestuVozDatabase {
   /// prueba (clases `gesto_*`). v3: sincronizacion con el backend
   /// (identificadores remotos, fecha de cambio, cola de pendientes y UID de
   /// Firebase del tutor). v6: gestos que reconoce el modelo entrenado.
-  /// v7: instrucciones sugeridas y emoji con la forma de la mano.
-  static const schemaVersion = 7;
+  /// v7: instrucciones sugeridas y emoji con la forma de la mano. v8: las
+  /// instrucciones ya no piden quedarse quieto (reconocimiento continuo).
+  static const schemaVersion = 8;
 
   /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
   /// en las pruebas (`inMemoryDatabasePath`).
@@ -437,8 +438,13 @@ class GestuVozDatabase {
         if (g.instructions == null) continue;
         await txn.update('gesto', {'instrucciones': g.instructions},
             where: "clase_reconocimiento = ? AND "
-                "(instrucciones IS NULL OR TRIM(instrucciones) = '')",
-            whereArgs: [g.recognitionClass]);
+                "(instrucciones IS NULL OR TRIM(instrucciones) = '' "
+                'OR instrucciones = ?)',
+            whereArgs: [
+              g.recognitionClass,
+              // Texto de v7, si el tutor no lo cambio.
+              '${g.instructions}\nMantén el gesto quieto unos 3 segundos.',
+            ]);
       }
     });
   }
