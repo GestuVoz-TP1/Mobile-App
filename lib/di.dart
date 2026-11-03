@@ -13,7 +13,7 @@ import 'application/settings_service.dart';
 import 'domain/ml.dart';
 import 'infrastructure/camera/camera_service.dart';
 import 'infrastructure/ml/tflite_gesture_recognition_service.dart';
-import 'infrastructure/persistence/csv_report_exporter.dart';
+import 'infrastructure/persistence/report_exporter.dart';
 import 'infrastructure/persistence/database.dart';
 import 'infrastructure/persistence/legacy_cleanup.dart';
 import 'infrastructure/persistence/repositories.dart';
@@ -76,7 +76,7 @@ class Di {
     // Historial y reportes generados por el backend (OB2).
     final reporting = ReportingService(
       interactionRepo,
-      CsvReportExporter(),
+      FileReportExporter(),
       history: RemoteHistorySource(db, api, beforeQuery: sync.pushPending),
     );
 

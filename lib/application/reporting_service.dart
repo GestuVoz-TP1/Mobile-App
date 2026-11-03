@@ -75,7 +75,11 @@ class ReportingService {
   Future<InteractionRecord?> detail(int profileId, InteractionRecord record) =>
       _history.detail(profileId, record);
 
-  Future<String> exportCsv(
-          String profileName, List<InteractionRecord> records) =>
-      _exporter.exportCsv(profileName, records);
+  Future<String> exportCsv(String profileName, String periodLabel,
+          List<InteractionRecord> records) =>
+      _exporter.exportCsv(profileName, periodLabel, records);
+
+  Future<String> exportPdf(String profileName, String periodLabel,
+          List<InteractionRecord> records, UsageSummary summary) =>
+      _exporter.exportPdf(profileName, periodLabel, records, summary);
 }

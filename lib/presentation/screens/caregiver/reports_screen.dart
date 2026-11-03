@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../domain/auth.dart' show DomainException;
 import '../../../domain/interaction.dart';
@@ -45,21 +46,51 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (range != null) await rc.setPeriod(p, range: range);
   }
 
+  /// Genera el reporte y abre el menu de compartir: el tutor decide si lo
+  /// guarda o a quien lo envia.
   Future<void> _export() async {
-    final rc = context.read<ReportingController>();
-    await rc.exportCsv();
-    if (!mounted || rc.lastExportPath == null) return;
-    showDialog<void>(
+    final pdf = await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Historial exportado'),
-        content: Text('Archivo CSV guardado en:\n${rc.lastExportPath}'),
-        actions: [
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Listo')),
-        ],
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf_outlined),
+              title: const Text('Reporte PDF'),
+              subtitle: const Text('Con gráficos, para leer o compartir'),
+              onTap: () => Navigator.pop(ctx, true),
+            ),
+            ListTile(
+              leading: const Icon(Icons.table_chart_outlined),
+              title: const Text('Datos CSV'),
+              subtitle: const Text('Tabla para abrir en Excel'),
+              onTap: () => Navigator.pop(ctx, false),
+            ),
+          ],
+        ),
       ),
     );
+    if (pdf == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final path =
+        await context.read<ReportingController>().exportReport(pdf: pdf);
+    if (path == null) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('No se pudo generar el reporte.')));
+      return;
+    }
+    try {
+      await SharePlus.instance.share(ShareParams(
+        files: [
+          XFile(path, mimeType: pdf ? 'application/pdf' : 'text/csv'),
+        ],
+        title: 'Reporte de GestuVoz',
+      ));
+    } catch (_) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('No se pudo compartir el reporte.')));
+    }
   }
 
   @override
@@ -93,7 +124,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                     ),
                     IconButton.filledTonal(
-                      tooltip: 'Exportar CSV',
+                      tooltip: 'Descargar reporte',
                       onPressed:
                           rc.busy || rc.records.isEmpty ? null : _export,
                       icon: const Icon(Icons.download_rounded),

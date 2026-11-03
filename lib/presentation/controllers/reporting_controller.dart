@@ -47,8 +47,6 @@ class ReportingController extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  String? lastExportPath;
-
   (DateTime?, DateTime?) _bounds() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -111,16 +109,32 @@ class ReportingController extends ChangeNotifier {
     return _service.detail(profile.id!, record);
   }
 
-  Future<void> exportCsv() async {
+  /// Texto del periodo seleccionado para los reportes.
+  String get periodLabel {
+    final range = _range;
+    if (_period == HistoryPeriod.custom && range != null) {
+      String f(DateTime d) => '${d.day.toString().padLeft(2, '0')}/'
+          '${d.month.toString().padLeft(2, '0')}/${d.year}';
+      return '${f(range.start)} al ${f(range.end)}';
+    }
+    return _period.label;
+  }
+
+  /// Genera el archivo del reporte y devuelve su ruta; null si no se pudo.
+  Future<String?> exportReport({required bool pdf}) async {
     final profile = _session.activeProfile;
-    if (profile == null) return;
+    final summary = _summary;
+    if (profile == null || summary == null) return null;
     _busy = true;
     notifyListeners();
     try {
-      lastExportPath =
-          await _service.exportCsv(profile.child.name, _records);
-    } catch (_) {
-      _error = 'No se pudo exportar el historial.';
+      return pdf
+          ? await _service.exportPdf(
+              profile.child.name, periodLabel, _records, summary)
+          : await _service.exportCsv(profile.child.name, periodLabel, _records);
+    } catch (e) {
+      debugPrint('No se pudo generar el reporte: $e');
+      return null;
     } finally {
       _busy = false;
       notifyListeners();

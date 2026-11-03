@@ -110,7 +110,12 @@ abstract interface class HistorySource {
   Future<InteractionRecord?> detail(int profileId, InteractionRecord record);
 }
 
-/// Puerto: exporta el historial a un archivo (CSV para Excel).
+/// Puerto: exporta el historial a un archivo: reporte PDF con graficos o datos
+/// CSV para Excel. Devuelve la ruta del archivo.
 abstract interface class ReportExporter {
-  Future<String> exportCsv(String profileName, List<InteractionRecord> records);
+  Future<String> exportCsv(
+      String profileName, String periodLabel, List<InteractionRecord> records);
+
+  Future<String> exportPdf(String profileName, String periodLabel,
+      List<InteractionRecord> records, UsageSummary summary);
 }

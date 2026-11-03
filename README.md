@@ -348,6 +348,8 @@ flutter test
   eliminación de perfiles y migración de versiones de la base.
 - `test/widget_test.dart`: reglas de dominio, reconocimiento de gestos,
   resúmenes del historial y componentes de la interfaz.
+- `test/report_exporter_test.dart`: reporte PDF con gráficos y datos CSV para
+  Excel.
 - `test/hand_detection_test.dart`: lectura de los fotogramas de la cámara
   (giro y color) y decodificación del detector de palmas.
 - `test/sync_test.dart`: sincronización con un backend simulado (sin
