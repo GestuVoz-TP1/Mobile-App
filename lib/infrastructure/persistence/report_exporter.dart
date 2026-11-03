@@ -11,9 +11,6 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../domain/interaction.dart';
 import '../../domain/reporting.dart';
 
-/// Genera los archivos del historial: reporte PDF con graficos y datos CSV
-/// para Excel. Se guardan en la carpeta temporal, porque solo existen para
-/// compartirlos: el tutor decide a donde enviarlos.
 class FileReportExporter implements ReportExporter {
   @override
   Future<String> exportCsv(String profileName, String periodLabel,
@@ -51,12 +48,9 @@ String _isoDate(DateTime d) => '${d.year}-${_two(d.month)}-${_two(d.day)}';
 String _date(DateTime d) => '${_two(d.day)}/${_two(d.month)}/${d.year}';
 String _time(DateTime d) => '${_two(d.hour)}:${_two(d.minute)}';
 
-/// CSV para Excel: UTF-8 con marca de orden, para que muestre bien las tildes,
-/// y punto y coma, el separador de listas de Excel en español.
 Uint8List buildReportCsv(String profileName, String periodLabel,
     List<InteractionRecord> records) {
   String cell(String v) {
-    // Un texto escrito por el tutor no debe ejecutarse como formula en Excel.
     final safe = v.startsWith(RegExp(r'[=+\-@]')) ? "'$v" : v;
     return safe.contains(RegExp(r'[;"\n\r]'))
         ? '"${safe.replaceAll('"', '""')}"'
@@ -93,7 +87,6 @@ const _inkSoft = PdfColor.fromInt(0xFF44544E);
 const _line = PdfColor.fromInt(0xFFDDE5E2);
 const _coral = PdfColor.fromInt(0xFFD9584A);
 
-/// Reporte descriptivo de uso: resumen, graficos y detalle.
 Future<Uint8List> buildReportPdf({
   required String profileName,
   required String periodLabel,
@@ -226,7 +219,6 @@ pw.Widget _stat(String value, String label, {bool dark = false}) => pw.Expanded(
       ),
     );
 
-/// Interacciones por dia; por mes si el periodo supera los 31 dias.
 pw.Widget _activityChart(List<InteractionRecord> records) {
   if (records.isEmpty) return pw.SizedBox();
   final days = [
@@ -288,7 +280,6 @@ pw.Widget _activityChart(List<InteractionRecord> records) {
       for (final (i, d) in counts.keys.indexed)
         pw.Expanded(
           child: pw.Text(
-            // Con muchos dias, una etiqueta de cada varias para que se lean.
             many && i % (counts.length ~/ 7 + 1) != 0
                 ? ''
                 : byMonth

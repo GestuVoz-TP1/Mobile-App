@@ -7,7 +7,6 @@ import 'presentation/app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Configuracion tomada de android/app/google-services.json.
   await Firebase.initializeApp();
   final di = await Di.build();
   runApp(

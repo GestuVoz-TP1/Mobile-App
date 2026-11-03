@@ -10,9 +10,6 @@ import '../../infrastructure/camera/camera_service.dart';
 import '../../infrastructure/tts/tts_service.dart';
 import 'session_controller.dart';
 
-/// Etapas de la pantalla "Usar mis gestos":
-/// preparacion -> camara ("Buscando tus manos...") -> reconocido / no
-/// reconocido.
 enum GesturePhase {
   loading,
   unavailable,
@@ -26,12 +23,8 @@ enum GesturePhase {
   notRecognized,
 }
 
-/// Por que la modalidad no esta disponible para el perfil.
 enum GestureUnavailableReason { disabled, noConsent, noGestures, error }
 
-/// Controla el reconocimiento de gestos del nino:
-/// Camara -> GestureRecognitionService -> Gesto -> Intencion -> Pictograma
-/// -> Voz -> Interaccion.
 class CaptureController extends ChangeNotifier {
   CaptureController({
     required CameraService camera,
@@ -66,19 +59,15 @@ class CaptureController extends ChangeNotifier {
   bool _voiceFailed = false;
   bool get voiceFailed => _voiceFailed;
 
-  /// Modo de prueba: solo en compilaciones de desarrollo y solo mientras el
-  /// reconocedor no sea un modelo entrenado.
   bool get testModeAvailable => kDebugMode && _gestures.supportsTestOutcome;
   RecognizerInfo get recognizerInfo => _gestures.recognizerInfo;
 
   GestureSequence _lastSequence = const GestureSequence([]);
   bool _disposed = false;
 
-  /// Tiempo maximo de busqueda en el reconocimiento continuo.
   static const searchTimeout = Duration(seconds: 10);
   Completer<GestureOutcome?>? _search;
 
-  /// Termina la busqueda continua en curso, si la hay.
   void _stopSearch() {
     final s = _search;
     if (s != null && !s.isCompleted) s.complete(null);
@@ -89,7 +78,6 @@ class CaptureController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  /// Pantalla de preparacion: gestos habilitados del perfil.
   Future<void> open() async {
     _outcome = null;
     _reason = null;
@@ -100,7 +88,7 @@ class CaptureController extends ChangeNotifier {
       if (!profile.preferences.gesturesEnabled) {
         _reason = GestureUnavailableReason.disabled;
       } else if (!_session.consentAllowsProcessing) {
-        _reason = GestureUnavailableReason.noConsent; // sin consentimiento
+        _reason = GestureUnavailableReason.noConsent;
       } else {
         _enabled = await _gestures.enabledFor(profile);
         if (_enabled.isEmpty) _reason = GestureUnavailableReason.noGestures;
@@ -112,7 +100,6 @@ class CaptureController extends ChangeNotifier {
     _set(_reason == null ? GesturePhase.preparation : GesturePhase.unavailable);
   }
 
-  /// "Comenzar": enciende la camara y captura la secuencia.
   Future<void> start() async {
     _set(GesturePhase.startingCamera);
     if (!camera.isReady) {
@@ -127,7 +114,6 @@ class CaptureController extends ChangeNotifier {
     await _capture();
   }
 
-  /// Nuevo intento manteniendo la configuracion del perfil.
   Future<void> retry() async {
     _outcome = null;
     _voiceFailed = false;
@@ -142,27 +128,20 @@ class CaptureController extends ChangeNotifier {
       return _captureContinuous();
     }
     final seq = await camera.captureSequence();
-    // Si la camara se libero durante la captura (app en segundo plano), se
-    // descarta el intento.
     if (_disposed || _phase != GesturePhase.capturing) return;
     _lastSequence = seq;
     if (testModeAvailable) {
-      // Modo de prueba: quien prueba elige el resultado del intento.
       _set(GesturePhase.choosingTestResult);
     } else {
       await _recognize();
     }
   }
 
-  /// Modo de prueba: [recognitionClass] null = "No reconocido".
   Future<void> chooseTestResult(String? recognitionClass) async {
     _gestures.setTestOutcome(recognitionClass);
     await _recognize();
   }
 
-  /// Reconocimiento continuo: analiza cada fotograma al llegar y termina
-  /// apenas reconoce un gesto, o tras [searchTimeout] sin reconocer nada.
-  /// El nino no tiene que acertar el momento ni quedarse quieto.
   Future<void> _captureContinuous() async {
     _gestures.resetContinuous();
     final search = _search = Completer<GestureOutcome?>();
@@ -170,7 +149,6 @@ class CaptureController extends ChangeNotifier {
     final timer = Timer(searchTimeout, _stopSearch);
     var busy = false;
     final started = await camera.startFrames((frame) async {
-      // Mientras se analiza un fotograma, los que llegan se descartan.
       if (busy || search.isCompleted || profileId == null) return;
       busy = true;
       try {
@@ -188,8 +166,6 @@ class CaptureController extends ChangeNotifier {
     timer.cancel();
     _search = null;
     await camera.stopFrames();
-    // Si la camara se libero durante la busqueda (app en segundo plano), se
-    // descarta el intento.
     if (_disposed || _phase != GesturePhase.capturing) return;
     await _finish(out);
   }
@@ -206,7 +182,7 @@ class CaptureController extends ChangeNotifier {
     } catch (_) {
       out = null;
     }
-    _lastSequence = const GestureSequence([]); // no se conservan imagenes
+    _lastSequence = const GestureSequence([]);
     await _finish(out);
   }
 
@@ -219,7 +195,6 @@ class CaptureController extends ChangeNotifier {
     }
     _outcome = out;
     _set(GesturePhase.recognized);
-    // Reproduce automaticamente el mensaje por voz.
     if (_session.voice?.voiceEnabled ?? true) {
       _voiceFailed = !await _tts.speak(out.intention.message);
       if (!_disposed) notifyListeners();
@@ -232,7 +207,6 @@ class CaptureController extends ChangeNotifier {
     );
   }
 
-  /// "Escuchar mensaje".
   Future<void> speakAgain() async {
     final o = _outcome;
     if (o == null) return;
@@ -240,14 +214,12 @@ class CaptureController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Vuelve a la preparacion (p. ej. tras un problema de camara).
   void backToPreparation() {
     _stopSearch();
     _outcome = null;
     _set(GesturePhase.preparation);
   }
 
-  /// Libera la camara (al salir o al pasar la app a segundo plano).
   Future<void> releaseCamera() async {
     _stopSearch();
     await camera.dispose();

@@ -7,7 +7,6 @@ import '../../domain/interaction.dart';
 import '../../domain/reporting.dart';
 import 'session_controller.dart';
 
-/// Periodos del filtro de historial.
 enum HistoryPeriod { today, week, all, custom }
 
 extension HistoryPeriodX on HistoryPeriod {
@@ -19,7 +18,6 @@ extension HistoryPeriodX on HistoryPeriod {
       };
 }
 
-/// Estado de la pantalla "Historial y reportes".
 class ReportingController extends ChangeNotifier {
   ReportingController(this._service, this._session);
   final ReportingService _service;
@@ -37,7 +35,6 @@ class ReportingController extends ChangeNotifier {
   UsageSummary? _summary;
   UsageSummary? get summary => _summary;
 
-  /// Actividad de los ultimos 7 dias.
   UsageSummary? _week;
   UsageSummary? get week => _week;
 
@@ -80,7 +77,7 @@ class ReportingController extends ChangeNotifier {
           await _service.historySummary(profile.id!, from: from, to: to);
       _week = await _service.weekSummary(profile.id!);
     } on DomainException catch (e) {
-      _failed(e.message); // p. ej. sin conexion con el servidor
+      _failed(e.message);
     } catch (_) {
       _failed('No se pudo cargar el historial.');
     } finally {
@@ -89,7 +86,6 @@ class ReportingController extends ChangeNotifier {
     }
   }
 
-  /// No se conservan los datos anteriores: serian de otro periodo.
   void _failed(String message) {
     _error = message;
     _records = const [];
@@ -109,7 +105,6 @@ class ReportingController extends ChangeNotifier {
     return _service.detail(profile.id!, record);
   }
 
-  /// Texto del periodo seleccionado para los reportes.
   String get periodLabel {
     final range = _range;
     if (_period == HistoryPeriod.custom && range != null) {
@@ -120,7 +115,6 @@ class ReportingController extends ChangeNotifier {
     return _period.label;
   }
 
-  /// Genera el archivo del reporte y devuelve su ruta; null si no se pudo.
   Future<String?> exportReport({required bool pdf}) async {
     final profile = _session.activeProfile;
     final summary = _summary;

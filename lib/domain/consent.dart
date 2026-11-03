@@ -1,8 +1,5 @@
-/// Decision del padre o tutor sobre el tratamiento de los datos del nino (Ley
-/// N.º 29733). PERFIL_NINO 1:1 CONSENTIMIENTO.
 library;
 
-/// CONSENTIMIENTO.estado_consentimiento
 enum ConsentState { granted, notGranted, withdrawn }
 
 extension ConsentStateX on ConsentState {
@@ -40,13 +37,10 @@ class Consent {
     this.withdrawnAt,
   });
 
-  /// Solo con consentimiento vigente se registran interacciones y se
-  /// habilita la camara de gestos.
   bool get allowsProcessing => state == ConsentState.granted;
 }
 
 abstract interface class ConsentRepository {
-  /// null si el perfil aun no tiene una decision registrada.
   Future<Consent?> forProfile(int profileId);
   Future<Consent> save(Consent consent);
 }

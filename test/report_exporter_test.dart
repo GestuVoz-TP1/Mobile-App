@@ -41,15 +41,13 @@ void main() {
 
   test('El CSV abre bien en Excel: tildes, columnas y sin fórmulas', () {
     final bytes = buildReportCsv('Valentina López', 'Todo', records);
-    expect(bytes.sublist(0, 3), [0xEF, 0xBB, 0xBF]); // UTF-8 para Excel
+    expect(bytes.sublist(0, 3), [0xEF, 0xBB, 0xBF]);
     final lines = utf8.decode(bytes.sublist(3)).split('\n');
     expect(lines[0].trim(), 'Historial de uso;Valentina López');
     expect(lines[1].trim(), 'Período;Todo');
     expect(lines[4].trim(), 'Fecha;Hora;Recurso;Pictograma;Mensaje;Gesto;Intención');
     expect(lines[5].trim(), '02/11/2026;09:15;Gesto;Sí;Sí;Sí;Decir que sí');
-    // El punto y coma dentro de una frase no parte la columna.
     expect(lines[6], contains('"Estoy bien; gracias"'));
-    // Un texto que empieza con = no se ejecuta como fórmula.
     expect(lines[8], contains("'=SUMA(A1)"));
   });
 

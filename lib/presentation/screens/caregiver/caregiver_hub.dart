@@ -17,8 +17,6 @@ import 'settings_screen.dart';
 import 'vocabulary_screen.dart';
 import 'voice_settings_screen.dart';
 
-/// Panel del padre o tutor con navegacion inferior: Inicio · Reportes ·
-/// Ajustes.
 class CaregiverHub extends StatefulWidget {
   const CaregiverHub({super.key});
 
@@ -185,7 +183,6 @@ class _ActiveProfileCard extends StatelessWidget {
   }
 }
 
-/// "interacciones hoy" y "gestos reconocidos".
 class _TodayStats extends StatelessWidget {
   final int profileId;
   const _TodayStats({required this.profileId});
@@ -200,7 +197,6 @@ class _TodayStats extends StatelessWidget {
       builder: (context, snap) {
         final records = snap.data ?? const [];
         final summary = context.read<ReportingService>().summarize(records);
-        // Ambas tarjetas con la misma altura aunque una etiqueta ocupe mas.
         return IntrinsicHeight(
           child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -262,7 +258,6 @@ class _PictogramsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Se reconstruye cuando cambia el tablero (p. ej. tras editar).
     context.watch<CommunicationController>();
     return FutureBuilder<Board>(
       future: context.read<CommunicationService>().buildBoard(profileId),

@@ -4,14 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../domain/communication.dart';
 
-/// Muestra el "dibujo" de un pictograma: la imagen subida por el tutor
-/// (PICTOGRAMA.imagen) si existe, o el emoji del pictograma semilla. Se usa en
-/// todas las pantallas para que semilla y personalizados se vean igual.
 class PictoVisual extends StatelessWidget {
   final Pictogram pictogram;
   final double size;
 
-  /// true = la imagen ocupa todo el espacio disponible.
   final bool fill;
 
   const PictoVisual({
@@ -30,7 +26,6 @@ class PictoVisual extends StatelessWidget {
       );
 }
 
-/// Variante a partir de datos sueltos (historial, gestos).
 class PictoGlyph extends StatelessWidget {
   final Uint8List? image;
   final String? emoji;

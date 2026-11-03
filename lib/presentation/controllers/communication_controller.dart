@@ -6,11 +6,6 @@ import '../../domain/communication.dart';
 import '../../infrastructure/tts/tts_service.dart';
 import 'session_controller.dart';
 
-/// Estado del tablero del nino.
-///
-/// El nino elige UN pictograma: se muestra en "Mi mensaje", se reproduce por
-/// voz y se registra la interaccion (si hay consentimiento). No se componen
-/// frases con varios pictogramas.
 class CommunicationController extends ChangeNotifier {
   CommunicationController({
     required CommunicationService communication,
@@ -38,17 +33,14 @@ class CommunicationController extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  /// Pictograma mostrado en "Mi mensaje".
   Pictogram? _message;
   Pictogram? get message => _message;
 
-  /// La voz no pudo reproducirse.
   bool _voiceFailed = false;
   bool get voiceFailed => _voiceFailed;
 
   bool get voiceEnabled => _session.voice?.voiceEnabled ?? true;
 
-  /// Carga los pictogramas disponibles para el perfil activo.
   Future<void> loadBoard({bool force = false}) async {
     final profile = _session.activeProfile;
     if (profile == null) return;
@@ -69,7 +61,6 @@ class CommunicationController extends ChangeNotifier {
     }
   }
 
-  /// Marca el tablero para recargarse (tras cambios del tutor).
   void invalidate() {
     _board = null;
     _boardProfileId = null;
@@ -77,7 +68,6 @@ class CommunicationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Muestra el mensaje y lo comunica por voz.
   Future<void> pick(Pictogram p) async {
     final profile = _session.activeProfile;
     if (profile == null) return;
@@ -91,7 +81,6 @@ class CommunicationController extends ChangeNotifier {
     await _interactions.recordPictogram(profile.id!, p);
   }
 
-  /// "Reproducir con voz" de "Mi mensaje".
   Future<void> speakMessage() async {
     final p = _message;
     if (p == null) return;
@@ -99,7 +88,6 @@ class CommunicationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// "Limpiar" de "Mi mensaje".
   void clearMessage() {
     _message = null;
     _voiceFailed = false;

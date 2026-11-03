@@ -5,11 +5,9 @@ import 'package:flutter/foundation.dart';
 
 import '../../domain/ml.dart';
 
-/// Problema que impide usar la camara.
 enum CameraIssue { none, noCamera, permissionDenied, failure }
 
 extension CameraIssueX on CameraIssue {
-  /// Que debe solucionarse antes de usar la modalidad de gestos.
   String get howToFix => switch (this) {
         CameraIssue.none => '',
         CameraIssue.noCamera =>
@@ -24,9 +22,6 @@ extension CameraIssueX on CameraIssue {
       };
 }
 
-/// Envuelve el plugin `camera`. Usa la camara frontal (el nino mira la
-/// pantalla) y entrega SECUENCIAS de fotogramas en memoria para el
-/// reconocimiento de gestos. Ninguna imagen se guarda en disco.
 class CameraService {
   CameraController? _controller;
   List<CameraDescription> _cameras = const [];
@@ -59,8 +54,6 @@ class CameraService {
     }
   }
 
-  /// Inicia la camara. Al inicializar, el plugin solicita el permiso de
-  /// camara si aun no se otorgo.
   Future<void> start() async {
     if (_initializing) return;
     if (_cameras.isEmpty) {
@@ -96,8 +89,6 @@ class CameraService {
     await start();
   }
 
-  /// Captura una secuencia de [frameCount] fotogramas durante como maximo
-  /// [maxDuration]. Los fotogramas quedan solo en memoria.
   Future<GestureSequence> captureSequence({
     int frameCount = 16,
     Duration maxDuration = const Duration(seconds: 3),
@@ -116,9 +107,6 @@ class CameraService {
     return GestureSequence(List.unmodifiable(frames));
   }
 
-  /// Entrega un fotograma cada [step] (como maximo) hasta [stopFrames].
-  /// Los fotogramas quedan solo en memoria. Devuelve false si la camara no
-  /// esta lista.
   Future<bool> startFrames(
     void Function(GestureFrame frame) onFrame, {
     Duration step = const Duration(milliseconds: 150),
@@ -132,8 +120,6 @@ class CameraService {
         final now = DateTime.now();
         if (now.difference(lastAt) < step) return;
         lastAt = now;
-        // Planos YUV copiados en memoria; el reconocedor hace su propio
-        // preprocesamiento.
         final p = img.planes;
         final color = p.length >= 3;
         onFrame(GestureFrame(

@@ -1,10 +1,7 @@
-/// Resumenes DESCRIPTIVOS del uso de la aplicacion. No realiza evaluaciones ni
-/// interpretaciones clinicas.
 library;
 
 import 'interaction.dart';
 
-/// Recurso comunicativo y numero de usos.
 class FrequentResource {
   final int pictogramId;
   final String name;
@@ -27,7 +24,6 @@ class UsageSummary {
   final int pictogramInteractions;
   final int distinctIntentions;
 
-  /// Conteo por dia, ultimos 7 (indice 0 = hace 6 dias).
   final List<int> weekly;
   final List<FrequentResource> frequent;
 
@@ -40,13 +36,11 @@ class UsageSummary {
     required this.frequent,
   });
 
-  /// Minimo de registros para mostrar frecuencias.
   static const minRecordsForFrequencies = 3;
   bool get hasEnoughForFrequencies =>
       totalInteractions >= minRecordsForFrequencies;
 }
 
-/// Construye el resumen a partir del historial.
 class ReportBuilder {
   const ReportBuilder();
 
@@ -92,22 +86,15 @@ class ReportBuilder {
   }
 }
 
-/// Puerto: de donde se obtiene el historial y su resumen. Local (SQLite) o
-/// remoto (backend).
 abstract interface class HistorySource {
-  /// Interacciones del periodo [from, to).
   Future<List<InteractionRecord>> records(int profileId,
       {DateTime? from, DateTime? to});
 
-  /// Resumen del periodo [from, to).
   Future<UsageSummary> summary(int profileId, {DateTime? from, DateTime? to});
 
-  /// Detalle de una interaccion; null si ya no esta disponible.
   Future<InteractionRecord?> detail(int profileId, InteractionRecord record);
 }
 
-/// Puerto: exporta el historial a un archivo: reporte PDF con graficos o datos
-/// CSV para Excel. Devuelve la ruta del archivo.
 abstract interface class ReportExporter {
   Future<String> exportCsv(
       String profileName, String periodLabel, List<InteractionRecord> records);

@@ -5,18 +5,12 @@ import '../persistence/database.dart';
 import '../sync/sync_service.dart' show RemoteIds;
 import 'api_client.dart';
 
-/// Historial y reportes consultados al backend.
-///
-/// Los identificadores remotos se traducen a los nombres guardados en el
-/// telefono (pictogramas, gestos e intenciones).
 class RemoteHistorySource implements HistorySource {
   RemoteHistorySource(this._db, this._api, {this.beforeQuery});
 
   final GestuVozDatabase _db;
   final ApiClient _api;
 
-  /// Envia lo pendiente antes de consultar, para que el historial incluya
-  /// lo registrado en el telefono.
   final Future<void> Function()? beforeQuery;
 
   static const offlineMessage =
@@ -81,25 +75,22 @@ class RemoteHistorySource implements HistorySource {
     } on OfflineException {
       throw const DomainException(offlineMessage);
     } on ApiException catch (e) {
-      if (e.status == 404) return null; // ya no esta disponible
+      if (e.status == 404) return null;
       rethrow;
     }
   }
 
-  /// null si el perfil aun no esta en el backend (p. ej. sin consentimiento).
   Future<dynamic> _query(
       int profileId, String resource, DateTime? from, DateTime? to) async {
     try {
       await beforeQuery?.call();
     } catch (_) {
-      // Se consulta igual; lo pendiente se enviara despues.
     }
     final uuid = await _profileUuid(profileId);
     if (uuid == null) return null;
     try {
       return await _api.get('perfiles/$uuid/$resource', query: {
         if (from != null) 'desde': _day(from),
-        // El backend recibe `hasta` inclusivo; el periodo local es [from, to).
         if (to != null) 'hasta': _day(to.subtract(const Duration(days: 1))),
       });
     } on OfflineException {
@@ -176,7 +167,6 @@ class _Picto {
   final int categoryId;
 }
 
-/// Nombres locales de los catalogos y pictogramas.
 class _Names {
   _Names(this._byId, this._byUuid, this.gestures, this.intentions);
 
@@ -217,7 +207,6 @@ class _Names {
     final base = RemoteIds.localFromKey(remoteId, 'base');
     final found = base != null ? _byId[base] : _byUuid[remoteId];
     if (found != null) return found;
-    // Pictograma eliminado del telefono: se muestra igual en el historial.
     return _unknown.putIfAbsent(
         remoteId,
         () => _Picto(-(_unknown.length + 1), 'Pictograma eliminado', '',

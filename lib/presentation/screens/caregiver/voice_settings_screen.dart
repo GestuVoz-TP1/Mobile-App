@@ -7,8 +7,6 @@ import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Comunicacion · Voz y reproduccion: CONFIGURACION_VOZ del perfil activo. Los
-/// cambios se aplican al guardar.
 class VoiceSettingsScreen extends StatefulWidget {
   const VoiceSettingsScreen({super.key});
 

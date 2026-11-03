@@ -10,14 +10,7 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 
-/// "Usar mis gestos":
-/// 1. Preparacion: gestos habilitados con su representacion e instrucciones.
-/// 2. "Comenzar" -> camara con "Buscando tus manos...".
-/// 3. Reconocido o no reconocido.
-///
-/// Reconocimiento abierto: el nino hace cualquiera de los gestos habilitados.
 class GestureRecognitionScreen extends StatefulWidget {
-  /// Abrir el tablero de pictogramas.
   final VoidCallback onUsePictograms;
   const GestureRecognitionScreen({super.key, required this.onUsePictograms});
 
@@ -40,8 +33,6 @@ class _GestureRecognitionScreenState extends State<GestureRecognitionScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Libera la camara al pasar a segundo plano (no se capta nada fuera de la
-    // pantalla de reconocimiento).
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
       _ctrl.releaseCamera();
@@ -78,7 +69,6 @@ class _GestureRecognitionScreenState extends State<GestureRecognitionScreen>
   }
 }
 
-// 1. Preparacion
 class _Preparation extends StatelessWidget {
   final CaptureController controller;
   const _Preparation({required this.controller});
@@ -182,7 +172,6 @@ class _GestureCard extends StatelessWidget {
   }
 }
 
-// 2. Camara
 class _CameraStage extends StatelessWidget {
   final CaptureController controller;
   const _CameraStage({required this.controller});
@@ -223,7 +212,6 @@ class _CameraStage extends StatelessWidget {
                         )
                       else
                         const ColoredBox(color: Colors.black26),
-                      // Recuadro guia: mantener las manos dentro.
                       Center(
                         child: FractionallySizedBox(
                           widthFactor: 0.82,
@@ -326,9 +314,6 @@ class _CameraStage extends StatelessWidget {
   }
 }
 
-/// Modo de prueba: solo aparece en compilaciones de desarrollo mientras no
-/// existe el modelo entrenado. Permite elegir el resultado del intento. No
-/// muestra porcentajes.
 class _TestResultPanel extends StatelessWidget {
   final CaptureController controller;
   const _TestResultPanel({required this.controller});
@@ -376,9 +361,6 @@ class _TestResultPanel extends StatelessWidget {
   }
 }
 
-// 3a. Reconocido
-/// Solo en la version para medir la latencia en el telefono: flutter build apk
-/// --dart-define=MOSTRAR_LATENCIA=true
 const _mostrarLatencia = bool.fromEnvironment('MOSTRAR_LATENCIA');
 
 class _Recognized extends StatelessWidget {
@@ -391,7 +373,7 @@ class _Recognized extends StatelessWidget {
     final style = CategoryStyle.of(o.pictogram.categoryId);
     final confidence = controller.recognizerInfo.isRealModel
         ? o.result.confidence
-        : null; // sin modelo real no se muestran porcentajes
+        : null;
     return SafeArea(
       child: Column(
         children: [
@@ -518,7 +500,6 @@ class _Recognized extends StatelessWidget {
   }
 }
 
-// 3b. No reconocido
 class _NotRecognized extends StatelessWidget {
   final CaptureController controller;
   final VoidCallback onUsePictograms;
@@ -600,7 +581,6 @@ class _NotRecognized extends StatelessWidget {
   }
 }
 
-// Modalidad no disponible / problema de camara
 class _Unavailable extends StatelessWidget {
   final CaptureController controller;
   final VoidCallback onUsePictograms;

@@ -1,12 +1,9 @@
-/// Preferencias de reproduccion de mensajes de cada perfil (idioma, tipo de
-/// voz, velocidad y volumen). PERFIL_NINO 1:1 CONFIGURACION_VOZ.
 library;
 
 import 'shared.dart';
 
 export 'shared.dart' show DomainException;
 
-/// Valores permitidos.
 abstract final class VoiceLimits {
   static const minRate = 0.2;
   static const maxRate = 0.8;
@@ -14,7 +11,6 @@ abstract final class VoiceLimits {
   static const minVolume = 0.1;
   static const maxVolume = 1.0;
 
-  /// Solo espanol (sin soporte multi-idioma).
   static const defaultLanguage = 'es-ES';
 }
 
@@ -23,7 +19,6 @@ class VoiceConfiguration {
   final int profileId;
   final String language;
 
-  /// Nombre de la voz del motor TTS; null = voz por defecto del dispositivo.
   final String? voiceType;
   final double rate;
   final double volume;
@@ -39,7 +34,6 @@ class VoiceConfiguration {
     this.voiceEnabled = true,
   });
 
-  /// Valida los valores antes de guardar.
   VoiceConfiguration validated() {
     if (rate < VoiceLimits.minRate || rate > VoiceLimits.maxRate) {
       throw const DomainException(

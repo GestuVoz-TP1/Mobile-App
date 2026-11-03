@@ -3,9 +3,6 @@ import 'dart:typed_data';
 
 import '../../domain/ml.dart';
 
-/// Lee un [GestureFrame] (YUV 420 del sensor) como imagen RGB derecha, sin
-/// convertir el fotograma completo: solo se muestrean los pixeles que piden
-/// el detector de palmas y el clasificador.
 class UprightImage {
   UprightImage(this.frame)
       : width = frame.rotation % 180 == 0 ? frame.width : frame.height,
@@ -15,8 +12,6 @@ class UprightImage {
   final int width;
   final int height;
 
-  /// Escribe en [out] (a partir de [offset]) el color RGB del punto (x, y)
-  /// de la imagen derecha, en el rango 0-255. Fuera de la imagen: negro.
   void sample(double x, double y, Float32List out, int offset) {
     final f = frame;
     final w = f.width, h = f.height;
@@ -41,7 +36,6 @@ class UprightImage {
       out[offset + 2] = 0;
       return;
     }
-    // Luminancia: bilineal. Color: vecino mas cercano.
     final stride = f.yRowStride > 0 ? f.yRowStride : w;
     final x0 = sx.floor(), y0 = sy.floor();
     final x1 = math.min(x0 + 1, w - 1), y1 = math.min(y0 + 1, h - 1);
@@ -65,8 +59,6 @@ class UprightImage {
     out[offset + 2] = (lum + 1.772 * u).clamp(0.0, 255.0);
   }
 
-  /// Recorte cuadrado de lado [side] centrado en ([cx], [cy]), redimensionado
-  /// a [size] x [size] pixeles RGB (0-255), en formato [1, size, size, 3].
   Float32List squareCrop(double cx, double cy, double side, int size) {
     final out = Float32List(size * size * 3);
     final step = side / size;
@@ -83,7 +75,6 @@ class UprightImage {
   }
 }
 
-/// Palma detectada, en pixeles de la imagen derecha.
 class Palm {
   const Palm({
     required this.cx,
@@ -98,13 +89,9 @@ class Palm {
 
   final double cx, cy, size;
 
-  /// Muñeca y base del dedo medio: indican hacia donde estan los dedos.
   final double wristX, wristY, middleX, middleY;
   final double score;
 
-  /// Caja cuadrada de la mano completa (cx, cy, lado). La palma se agranda
-  /// y se desplaza hacia los dedos; los factores se ajustaron con imagenes
-  /// de prueba de HaGRIDv2 para parecerse a los recortes del entrenamiento.
   (double, double, double) handBox({double scale = 3.0, double shift = 0.5}) {
     final dx = middleX - wristX, dy = middleY - wristY;
     final n = math.sqrt(dx * dx + dy * dy);
@@ -113,8 +100,6 @@ class Palm {
   }
 }
 
-/// Decodifica la salida del detector de palmas de MediaPipe
-/// (`palm_detection_lite.tflite`, entrada 192 x 192).
 class PalmDecoder {
   PalmDecoder({this.minScore = 0.3, this.maxPalms = 2}) : _anchors = _build();
 
@@ -125,7 +110,6 @@ class PalmDecoder {
 
   int get anchorCount => _anchors.length ~/ 2;
 
-  /// Anclas SSD: capas con pasos 8 (2 anclas por celda) y 16 (6 por celda).
   static Float32List _build() {
     final a = <double>[];
     for (final (stride, perCell) in const [(8, 2), (16, 6)]) {
@@ -143,8 +127,6 @@ class PalmDecoder {
     return Float32List.fromList(a);
   }
 
-  /// Entrada del detector: la imagen completa con bordes negros para hacerla
-  /// cuadrada, a 192 x 192 y en el rango 0-1.
   Float32List input(UprightImage img) {
     final side = math.max(img.width, img.height).toDouble();
     final t = img.squareCrop(img.width / 2, img.height / 2, side, inputSize);
@@ -154,7 +136,6 @@ class PalmDecoder {
     return t;
   }
 
-  /// [regressors]: [2016 x 18], [scores]: [2016] (logits).
   List<Palm> decode(
       Float32List regressors, Float32List scores, UprightImage img) {
     final side = math.max(img.width, img.height).toDouble();
@@ -205,7 +186,6 @@ class PalmDecoder {
   }
 }
 
-/// Union de dos cajas de mano (gestos con las dos manos), con margen.
 (double, double, double) unionBox(
     (double, double, double) a, (double, double, double) b,
     {double margin = 1.1}) {

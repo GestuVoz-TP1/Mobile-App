@@ -12,12 +12,8 @@ import '../../domain/consent.dart';
 import '../../domain/settings.dart';
 import '../../infrastructure/tts/tts_service.dart';
 
-/// Experiencia activa tras iniciar sesion (panel del nino o panel del
-/// padre/tutor).
 enum AppMode { none, child, caregiver }
 
-/// Estado de sesion global: tutor autenticado, perfiles, perfil activo, modo,
-/// configuracion de voz y consentimiento del perfil activo.
 class SessionController extends ChangeNotifier {
   SessionController({
     required AuthService auth,
@@ -56,8 +52,6 @@ class SessionController extends ChangeNotifier {
   Consent? _consent;
   Consent? get consent => _consent;
 
-  /// Con consentimiento vigente se registran interacciones y se habilita
-  /// la camara de gestos.
   bool get consentAllowsProcessing => _consent?.allowsProcessing ?? false;
 
   AppMode _mode = AppMode.none;
@@ -67,16 +61,12 @@ class SessionController extends ChangeNotifier {
   bool get highContrast =>
       _active?.preferences.highContrast ?? false;
 
-  /// Se ejecuta tras iniciar sesion (descarga de datos del backend). Un
-  /// error aqui no impide entrar: los datos locales siguen disponibles.
   Future<void> Function(Account account)? afterSignIn;
 
-  /// Se ejecuta al cerrar sesion.
   Future<void> Function()? afterSignOut;
 
   Future<void> bootstrap() async {
     await _tts.init();
-    // Sesion guardada de Firebase: no requiere conexion.
     final restored = await _auth.restoreSession();
     if (restored != null) {
       _account = restored;
@@ -105,7 +95,6 @@ class SessionController extends ChangeNotifier {
     wait ? await run() : unawaited(run());
   }
 
-  /// Crea la cuenta e inicia la sesion para continuar la configuracion.
   Future<void> register(RegistrationForm form) async {
     _account = await _auth.register(form);
     await _loadProfiles();
@@ -113,7 +102,6 @@ class SessionController extends ChangeNotifier {
     await _runAfterSignIn(_account!, wait: true);
   }
 
-  /// Recupera del backend los perfiles y la configuracion del tutor.
   Future<void> login(String email, String password) async {
     final account = await _auth.login(email, password);
     await _runAfterSignIn(account, wait: true);
@@ -127,7 +115,6 @@ class SessionController extends ChangeNotifier {
 
   bool get usesRemoteAuth => _auth.usesRemoteAuth;
 
-  /// Termina la sesion y vuelve a la pantalla de acceso.
   Future<void> logout() async {
     await _tts.stop();
     await _auth.logout();
@@ -151,7 +138,6 @@ class SessionController extends ChangeNotifier {
     if (keep != null) {
       await _activate(keep);
     } else if (_profileList.length == 1) {
-      // Con un unico perfil se selecciona directamente.
       await _activate(_profileList.first);
     } else {
       _active = null;
@@ -167,14 +153,12 @@ class SessionController extends ChangeNotifier {
     await _tts.configure(_voice!);
   }
 
-  /// Carga unicamente los recursos del perfil elegido.
   Future<void> selectProfile(ChildProfile p) async {
     await _activate(p);
     _mode = AppMode.none;
     notifyListeners();
   }
 
-  /// El nuevo perfil queda activo para registrar su consentimiento.
   Future<ChildProfile> createProfile(ProfileForm form) async {
     final created = await _profiles.create(_account!.id!, form);
     _profileList = await _profiles.forTutor(_account!.id!);
@@ -190,7 +174,6 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Preferencias de comunicacion.
   Future<void> savePreferences(CommunicationPreferences prefs) async {
     final p = _active;
     if (p == null) return;
@@ -220,14 +203,12 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// "Probar voz" con valores aun no guardados.
   Future<bool> previewVoice(VoiceConfiguration v, String text) async {
     await _tts.configure(v);
     final ok = await _tts.speak(text);
     return ok;
   }
 
-  /// Restaura la configuracion guardada tras una vista previa sin guardar.
   Future<void> restoreVoice() async {
     if (_voice != null) await _tts.configure(_voice!);
   }
@@ -272,9 +253,6 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Salir del modo nino pide la contrasena del tutor (sin PIN).
-  /// Solo verifica; el cambio de pantalla lo hace [leaveChildMode] una vez
-  /// cerrado el dialogo.
   Future<bool> verifyTutorPassword(String password) async {
     final acc = _account;
     if (acc == null) return false;

@@ -7,8 +7,6 @@ import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Registro de la cuenta del padre o tutor. Solo correo y contrasena (modelo
-/// PADRE_TUTOR). El consentimiento se registra al crear cada perfil infantil.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 

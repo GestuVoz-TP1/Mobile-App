@@ -28,16 +28,12 @@ import 'presentation/controllers/communication_controller.dart';
 import 'presentation/controllers/reporting_controller.dart';
 import 'presentation/controllers/session_controller.dart';
 
-/// Composition root (raiz de composicion). Cablea infraestructura ->
-/// aplicacion -> presentacion. Es el UNICO lugar que conoce las
-/// implementaciones concretas.
 class Di {
   Di._(this._providers);
   final List<SingleChildWidget> _providers;
   List<SingleChildWidget> get providers => _providers;
 
   static Future<Di> build() async {
-    // Fotos del antiguo modulo de expresion facial.
     await removeLegacyTrainingImages();
 
     final db = await GestuVozDatabase.open();
@@ -50,17 +46,12 @@ class Di {
     final voiceRepo = SqliteVoiceConfigurationRepository(db);
     final consentRepo = SqliteConsentRepository(db);
 
-    // Reconocimiento de gestos: modelo MobileNet + LSTM en el dispositivo.
-    // Para volver al reconocedor de prueba:
-    // TestModeGestureRecognitionService().
     final GestureRecognitionService recognizer =
         TensorFlowLiteGestureRecognitionService();
 
     final tts = TtsService();
     final camera = CameraService();
 
-    // Acceso con Firebase Authentication y sincronizacion con el backend
-    // Django.
     final firebaseAuth = FirebaseAuthGateway();
     final auth = AuthService(authRepo, Sha256SecretHasher(), firebaseAuth);
     final api = ApiClient(token: firebaseAuth.idToken);
@@ -71,7 +62,6 @@ class Di {
     final communication = CommunicationService(pictoRepo);
     final interactions = InteractionService(interactionRepo, consentRepo);
     final gestures = GestureService(recognizer, gestureRepo, pictoRepo);
-    // Historial y reportes generados por el backend.
     final reporting = ReportingService(
       interactionRepo,
       FileReportExporter(),
@@ -87,7 +77,6 @@ class Di {
     )
       ..afterSignIn = (account) async {
         try {
-          // Nuevo telefono o reinstalacion: recupera los datos del tutor.
           await sync.pullAll(account.id!);
         } finally {
           sync.start(account.id!);

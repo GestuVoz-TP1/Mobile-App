@@ -1,21 +1,3 @@
-/// Gestos iniciales.
-///
-/// Los cuatro primeros son los gestos iniciales del prototipo. Los siguientes
-/// son los que reconoce el modelo entrenado con HaGRIDv2 (repositorio ML,
-/// `config/gestos.json`, pendiente de validacion por el especialista). Agua
-/// no tiene todavia datos de entrenamiento, por lo que el modelo no la
-/// reconoce. El orden importa: define los identificadores `gesto-<id>` y
-/// `intencion-<id>` que comparte el backend.
-///
-/// - `instrucciones`: pasos sugeridos (una linea por paso), editables por el
-///   tutor. Describen la forma de la mano con la que se entreno el modelo.
-/// - `visual`: emoji con la forma de la mano del gesto.
-/// - Cada gesto se enlaza a un pictograma semilla existente ([pictogramKey]),
-///   cuya frase es el mensaje de la intencion.
-///
-/// Para cargar el repertorio oficial: reemplazar esta lista (o insertar las
-/// filas en GESTO / INTENCION_COMUNICATIVA) con las clases que devuelva el
-/// modelo TensorFlow Lite. El resto de la app no cambia.
 library;
 
 class SeedGesture {

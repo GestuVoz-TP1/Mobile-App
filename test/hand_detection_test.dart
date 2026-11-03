@@ -4,8 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gestuvoz/domain/ml.dart';
 import 'package:gestuvoz/infrastructure/ml/hand_detection.dart';
 
-/// Imagen derecha de [w] x [h] con un valor distinto por pixel, guardada
-/// como la entrega el sensor (girada) para la [rotation] dada.
 GestureFrame _frame(int w, int h, int rotation, int Function(int x, int y) v) {
   final sw = rotation % 180 == 0 ? w : h;
   final sh = rotation % 180 == 0 ? h : w;
@@ -22,7 +20,7 @@ GestureFrame _frame(int w, int h, int rotation, int Function(int x, int y) v) {
     }
   }
   final uvLength = ((sw + 1) ~/ 2) * ((sh + 1) ~/ 2);
-  final uv = Uint8List(uvLength)..fillRange(0, uvLength, 128); // gris
+  final uv = Uint8List(uvLength)..fillRange(0, uvLength, 128);
   return GestureFrame(
     bytes: y,
     width: sw,
@@ -55,7 +53,6 @@ void main() {
   }
 
   test('Convierte YUV a RGB (rojo puro)', () {
-    // Rojo (255, 0, 0) en YUV BT.601 completo: Y=76, U=85, V=255.
     final f = GestureFrame(
       bytes: Uint8List.fromList([76, 76, 76, 76]),
       width: 2,
@@ -76,8 +73,8 @@ void main() {
     final img = UprightImage(_frame(4, 4, 0, (_, _) => 200));
     final crop = img.squareCrop(2, 2, 8, 8);
     expect(crop.length, 8 * 8 * 3);
-    expect(crop[0], 0); // esquina superior izquierda, fuera
-    expect(crop[(4 * 8 + 4) * 3], closeTo(200, 1e-3)); // centro
+    expect(crop[0], 0);
+    expect(crop[(4 * 8 + 4) * 3], closeTo(200, 1e-3));
   });
 
   test('El detector de palmas usa 2016 anclas y decodifica la caja', () {
@@ -86,21 +83,19 @@ void main() {
     final img = UprightImage(_frame(300, 200, 0, (_, _) => 0));
     final reg = Float32List(2016 * 18);
     final scores = Float32List(2016)..fillRange(0, 2016, -10);
-    // Ancla 0: celda (0, 0) de la capa de paso 8 -> centro (4, 4) en 192 px.
     scores[0] = 5;
-    reg[2] = 19.2; // ancho = 0,1 del lado
+    reg[2] = 19.2;
     reg[3] = 19.2;
-    reg[9] = -19.2; // dedo medio arriba de la muñeca
+    reg[9] = -19.2;
     final palms = d.decode(reg, scores, img);
     expect(palms, hasLength(1));
     final p = palms.single;
-    // Lado del cuadrado = 300; la imagen tiene 50 px de borde arriba.
     expect(p.cx, closeTo(4 / 192 * 300, 1e-3));
     expect(p.cy, closeTo(4 / 192 * 300 - 50, 1e-3));
     expect(p.size, closeTo(30, 1e-3));
     final (cx, cy, side) = p.handBox();
     expect(cx, closeTo(p.cx, 1e-3));
-    expect(cy, closeTo(p.cy - 15, 1e-3)); // se desplaza hacia los dedos
+    expect(cy, closeTo(p.cy - 15, 1e-3));
     expect(side, closeTo(90, 1e-3));
   });
 }

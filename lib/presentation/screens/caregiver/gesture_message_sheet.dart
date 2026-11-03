@@ -11,9 +11,6 @@ import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 import 'vocabulary_screen.dart';
 
-/// Hoja para adaptar lo que comunica un gesto en el perfil activo: su mensaje
-/// y su pictograma. El gesto no cambia, porque es lo que reconoce el modelo.
-/// Devuelve true si hubo cambios.
 class GestureMessageSheet extends StatefulWidget {
   final int profileId;
   final GestureMessage current;
@@ -171,7 +168,6 @@ class _GestureMessageSheetState extends State<GestureMessageSheet> {
   }
 }
 
-/// Elige un pictograma del catalogo del perfil o crea uno con imagen propia.
 class _PictogramPicker extends StatefulWidget {
   final int profileId;
   final CommunicationService service;

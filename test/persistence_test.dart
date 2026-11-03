@@ -21,7 +21,6 @@ import 'package:gestuvoz/infrastructure/seed/pictogram_seed.dart';
 import 'package:sqflite/sqflite.dart' show Sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-/// Servicios reales sobre una base SQLite real (archivo temporal).
 class _App {
   _App(this.db)
       : auth = AuthService(SqliteAuthRepository(db), Sha256SecretHasher()),
@@ -88,7 +87,6 @@ void main() {
       () async {
     final (app, _, profileId) = await withProfile();
     final db = app.db.db;
-    // Base como la creaba v1: clases demo_* y textos con "(DEMO)".
     for (final g in kSeedGestures) {
       final old = g.recognitionClass.replaceFirst('gesto_', 'demo_');
       await db.update('gesto', {'clase_reconocimiento': old},
@@ -121,7 +119,6 @@ void main() {
     expect(intents.any((n) => n.contains('DEMO')), isFalse);
     final detail = (await rdb.query('interaccion')).single['detalle'];
     expect(detail, 'Gesto reconocido');
-    // El perfil del usuario sigue ahí.
     expect((await reopened.profiles.byId(profileId))?.child.name,
         'Valentina López');
     await reopened.db.close();
@@ -131,7 +128,6 @@ void main() {
       () async {
     final (app, _, profileId) = await withProfile();
     final db = app.db.db;
-    // Base como la dejaba v5: solo los 4 gestos iniciales.
     final nuevos = kSeedGestures.skip(4).map((g) => g.recognitionClass);
     for (final c in nuevos) {
       final g = (await db.query('gesto',
@@ -150,7 +146,6 @@ void main() {
     await SqliteChildProfileRepository(app.db).update(profile.copyWith(
         preferences: profile.preferences
             .copyWith(enabledGestureIds: const [1, 2, 3, 4])));
-    // Instrucciones como las dejaba v7 (pedian quedarse quieto).
     await db.update('gesto', {
       'instrucciones': 'Levanta solo el dedo índice.\nDobla los otros dedos.\n'
           'Mantén el gesto quieto unos 3 segundos.'
@@ -163,7 +158,6 @@ void main() {
     final gestos = await rdb.query('gesto', orderBy: 'id_gesto');
     expect(gestos.map((g) => g['clase_reconocimiento']),
         kSeedGestures.map((g) => g.recognitionClass));
-    // Cada gesto nuevo tiene su intención y su pictograma.
     for (final g in gestos.skip(4)) {
       final i = (await rdb.query('intencion_comunicativa',
               where: 'id_gesto = ?', whereArgs: [g['id_gesto']]))
@@ -173,7 +167,6 @@ void main() {
               where: 'id_intencion = ?', whereArgs: [i['id_intencion']]),
           hasLength(1));
     }
-    // v7: emoji con la forma de la mano e instrucciones sugeridas.
     final ayuda = gestos.firstWhere(
         (g) => g['clase_reconocimiento'] == 'gesto_ayuda');
     expect(ayuda['representacion_visual'], '☝️');
@@ -184,7 +177,6 @@ void main() {
         List.generate(kSeedGestures.length, (i) => i + 1));
     await reopened.db.close();
 
-    // Idempotente: abrir otra vez no duplica nada.
     final again = await _App.open(path);
     expect(await again.db.db.query('gesto'), hasLength(kSeedGestures.length));
     await again.db.close();
@@ -212,18 +204,16 @@ void main() {
         profileId: luisId, name: '', message: '', categoryId: otra);
 
     expect(await categoria(luisId, id), otra);
-    expect(await categoria(ana.id!, id), original); // no afecta a otro perfil
+    expect(await categoria(ana.id!, id), original);
     final tablero = await app.communication.buildBoard(luisId);
     expect(tablero.byCategory[otra]!.where((p) => p.id == id), hasLength(1));
     expect(tablero.byCategory[original]!.where((p) => p.id == id), isEmpty);
 
-    // Guardar el perfil con una copia anterior no borra el cambio.
     final perfil = (await app.profiles.byId(luisId))!;
     await SqliteChildProfileRepository(app.db).update(perfil.copyWith(
         preferences: const CommunicationPreferences(pictogramColumns: 2)));
     expect(await categoria(luisId, id), otra);
 
-    // Volver a la categoría original no deja nada guardado.
     await SqlitePictogramRepository(app.db)
         .setProfileCategory(luisId, id, original);
     final limpio = (await app.profiles.byId(luisId))!.preferences;
@@ -261,7 +251,6 @@ void main() {
         intention: antes.intention,
         pictogram: antes.pictogram);
 
-    // El padre cambia mensaje y pictograma: el gesto sigue siendo el mismo.
     final otro = (await app.communication.catalog(luisId))
         .map((i) => i.pictogram)
         .firstWhere((p) => p.id != antes.pictogram.id);
@@ -272,10 +261,8 @@ void main() {
     expect(despues.pictogram.id, otro.id);
     expect(despues.gesture.id, si.id);
 
-    // No afecta a otro perfil.
     expect((await reconoce(ana.id!)).intention.message, 'Sí');
 
-    // El historial conserva el mensaje y el pictograma de ese momento.
     await app.interactions.recordGesture(luisId,
         gesture: despues.gesture,
         intention: despues.intention,
@@ -286,7 +273,6 @@ void main() {
     final viejo = registros.firstWhere((r) => r.message == 'Sí');
     expect(viejo.interaction.pictogramId, antes.pictogram.id);
 
-    // Un registro anterior a este cambio muestra el mensaje del pictograma.
     await app.db.db.update('interaccion', {'detalle': 'Gesto reconocido'},
         where: 'id_interaccion = ?', whereArgs: [viejo.interaction.id]);
     final legado = (await SqliteInteractionRepository(app.db)
@@ -294,13 +280,11 @@ void main() {
         .firstWhere((r) => r.interaction.id == viejo.interaction.id);
     expect(legado.message, legado.pictogramMessage);
 
-    // Guardar el perfil con una copia anterior no borra lo elegido.
     final perfil = (await app.profiles.byId(luisId))!;
     await SqliteChildProfileRepository(app.db).update(perfil.copyWith(
         preferences: const CommunicationPreferences(pictogramColumns: 2)));
     expect((await reconoce(luisId)).intention.message, 'Estoy bien');
 
-    // Mensaje vacío: se rechaza. Volver al original: limpia lo guardado.
     expect(service.saveMessage(luisId, si, message: '   ', pictogramId: null),
         throwsA(isA<DomainException>()));
     await service.resetMessage(luisId, si);
@@ -334,7 +318,7 @@ void main() {
 
     final ahora = (await service.messageFor(luisId, si))!;
     expect(ahora.pictogram!.id, original.id);
-    expect(ahora.message, 'Estoy bien'); // el mensaje se conserva
+    expect(ahora.message, 'Estoy bien');
     await app.db.close();
   });
 
@@ -441,7 +425,6 @@ void main() {
     expect(await app.interactions.recordPictogram(profileId, picto), isTrue);
     await app.privacy.withdraw(profileId);
     expect(await app.interactions.recordPictogram(profileId, picto), isFalse);
-    // El retiro no borra los datos existentes.
     final rows = await app.db.db.query('interaccion');
     expect(rows.length, 1);
     final c = await app.privacy.forProfile(profileId);
@@ -517,10 +500,8 @@ void main() {
     expect(await visibleIn(sibling.id!), isFalse);
     expect(await visibleIn(stranger.id!), isFalse);
 
-    // Ocultarlo del tablero no lo quita del catálogo de su perfil.
     await app.communication.setSelected(profileId, mine.id!, false);
     expect(await visibleIn(profileId), isTrue);
-    // Al eliminar el perfil se elimina también, aunque estuviera oculto.
     await app.profiles.delete(profileId);
     expect(
         (await app.db.db.query('pictograma',

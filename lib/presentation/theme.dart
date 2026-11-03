@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Sistema visual de GestuVoz: turquesa como color de accion, fondos claros y
-/// tarjetas pastel por categoria. Los estados se comunican con icono + texto,
-/// nunca solo con color.
 class AppColors {
-  // Accion principal (botones, seleccion). Blanco sobre primary: 6.3:1.
   static const primary = Color(0xFF276B62);
   static const primaryDark = Color(0xFF1B4A44);
   static const primarySoft = Color(0xFFDDF0EB);
@@ -15,7 +11,6 @@ class AppColors {
   static const inkSoft = Color(0xFF44544E);
   static const outline = Color(0xFFDDE5E2);
 
-  // Estados
   static const success = Color(0xFF2E7D5B);
   static const successSoft = Color(0xFFDDF0E4);
   static const coral = Color(0xFFD9584A);
@@ -23,7 +18,6 @@ class AppColors {
   static const amberSoft = Color(0xFFFFF4D6);
   static const amberInk = Color(0xFF6E5200);
 
-  // Pastel (fondos de tarjetas del nino)
   static const pink = Color(0xFFFDE4E0);
   static const blue = Color(0xFFE3EEFB);
   static const yellow = Color(0xFFFFF3D6);
@@ -31,7 +25,6 @@ class AppColors {
   static const mint = Color(0xFFDDF0EB);
   static const peach = Color(0xFFFFE8D6);
 
-  // Acentos (bordes de seleccion) de cada pastel
   static const pinkAccent = Color(0xFFE07A6E);
   static const blueAccent = Color(0xFF5B8FD6);
   static const yellowAccent = Color(0xFFD9A62B);
@@ -80,7 +73,6 @@ ThemeData buildTheme({required bool highContrast}) {
   );
   final borderColor = highContrast ? Colors.black : AppColors.outline;
   return base.copyWith(
-    // Peso medio: el regular de Baloo 2 se ve delgado en textos pequeños.
     textTheme: base.textTheme
         .copyWith(
           bodyLarge:
@@ -118,7 +110,6 @@ ThemeData buildTheme({required bool highContrast}) {
         minimumSize: const Size(64, 56),
         backgroundColor: primary,
         foregroundColor: Colors.white,
-        // Desactivado sin perder legibilidad.
         disabledBackgroundColor: AppColors.outline,
         disabledForegroundColor: AppColors.inkSoft,
         textStyle: const TextStyle(
@@ -196,7 +187,6 @@ ThemeData buildTheme({required bool highContrast}) {
       selectedColor: AppColors.primarySoft,
       checkmarkColor: AppColors.primaryDark,
       iconTheme: IconThemeData(color: primary, size: 18),
-      // Sin color explicito, el texto del chip sale invisible.
       labelStyle: TextStyle(
           fontFamily: 'Baloo2',
           fontSize: 14,

@@ -6,12 +6,6 @@ import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Privacidad del perfil activo:
-/// - Informacion sobre los datos tratados y su finalidad.
-/// - Otorgar / no otorgar el consentimiento.
-/// - Retirar el consentimiento (con confirmacion).
-///
-/// [onboarding] = se muestra justo despues de crear el perfil.
 class ConsentScreen extends StatefulWidget {
   final bool onboarding;
   const ConsentScreen({super.key, this.onboarding = false});
@@ -32,7 +26,6 @@ class _ConsentScreenState extends State<ConsentScreen> {
     }
   }
 
-  /// Si no puede cargarse, se informa y se reintenta.
   Future<void> _reload() async {
     setState(() => _loadError = false);
     try {
@@ -165,7 +158,6 @@ class _ConsentScreenState extends State<ConsentScreen> {
   }
 }
 
-/// Informacion sobre los datos tratados y su finalidad (Ley N.º 29733).
 class _InfoCard extends StatelessWidget {
   const _InfoCard();
 

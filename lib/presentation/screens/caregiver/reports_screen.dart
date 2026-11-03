@@ -13,10 +13,7 @@ import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 import '../../widgets/usage_bar_chart.dart';
 
-/// Historial y reportes. Consulta descriptiva del uso; no realiza evaluaciones
-/// ni interpretaciones clinicas.
 class HistoryScreen extends StatefulWidget {
-  /// true = se muestra dentro de la pestana "Reportes" del panel del tutor.
   final bool embedded;
   const HistoryScreen({super.key, this.embedded = false});
 
@@ -46,8 +43,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (range != null) await rc.setPeriod(p, range: range);
   }
 
-  /// Genera el reporte y abre el menu de compartir: el tutor decide si lo
-  /// guarda o a quien lo envia.
   Future<void> _export() async {
     final pdf = await showModalBottomSheet<bool>(
       context: context,
@@ -243,7 +238,6 @@ class _StatBox extends StatelessWidget {
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: dark ? Colors.white : AppColors.ink)),
-            // La palabra se reduce para caber entera, sin cortarse.
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
@@ -279,7 +273,6 @@ class _WeekCard extends StatelessWidget {
       );
 }
 
-/// Mensajes y recursos mas usados en el periodo.
 class _FrequentCard extends StatelessWidget {
   final UsageSummary summary;
   const _FrequentCard({required this.summary});
@@ -424,7 +417,6 @@ class _RecordTile extends StatelessWidget {
   }
 }
 
-/// Detalle de una interaccion (fecha, hora y recurso utilizado).
 Future<void> showInteractionDetail(
     BuildContext context, InteractionRecord record) {
   return showModalBottomSheet<void>(
@@ -440,7 +432,6 @@ Future<void> showInteractionDetail(
             child: Center(child: CircularProgressIndicator()),
           );
         } else if (snap.hasError) {
-          // P. ej. sin conexion; el registro puede seguir existiendo.
           final error = snap.error;
           child = Column(
             mainAxisSize: MainAxisSize.min,

@@ -7,15 +7,6 @@ import '../../domain/ml.dart';
 import '../../domain/shared.dart';
 import 'hand_detection.dart';
 
-/// Modelo real, ejecutado en el dispositivo:
-///
-///   fotograma -> detector de palmas (MediaPipe) -> recorte de la mano
-///             -> MobileNetV3 (caracteristicas de 128 valores)
-///   16 fotogramas -> LSTM -> gesto o "ninguno"
-///
-/// Los modelos se entrenaron con HaGRIDv2 en el repositorio ML
-/// (`entrenamiento/`). Las etiquetas (`etiquetas.txt`) son los valores de
-/// GESTO.clase_reconocimiento. Las imagenes solo se procesan en memoria.
 class TensorFlowLiteGestureRecognitionService
     implements GestureRecognitionService, ContinuousGestureRecognition {
   TensorFlowLiteGestureRecognitionService({
@@ -25,7 +16,6 @@ class TensorFlowLiteGestureRecognitionService
 
   final String modelDir;
 
-  /// Umbral para no comunicar un mensaje incorrecto.
   final double minConfidence;
 
   static const _cropSize = 224;
@@ -41,9 +31,6 @@ class TensorFlowLiteGestureRecognitionService
   int _featureSize = 0;
   int _palmBoxOutput = 0;
 
-  /// Reconocimiento continuo: caracteristicas de los ultimos fotogramas y la
-  /// decision anterior (se pide la misma dos veces seguidas para no
-  /// responder por un instante ambiguo).
   final List<Float32List> _window = [];
   String? _previous;
 
@@ -74,8 +61,6 @@ class TensorFlowLiteGestureRecognitionService
         .map((l) => l.trim())
         .where((l) => l.isNotEmpty)
         .toList();
-    // El clasificador devuelve (caracteristicas, probabilidades); el orden
-    // de las salidas se identifica por su tamaño.
     final outs = _frame!.getOutputTensors();
     _featureOutput = outs[0].shape.last == _labels.length ? 1 : 0;
     _featureSize = outs[_featureOutput].shape.last;
@@ -96,10 +81,8 @@ class TensorFlowLiteGestureRecognitionService
     final features = Float32List(_sequenceLength * _featureSize);
     final frames = sequence.frames;
     for (var t = 0; t < _sequenceLength; t++) {
-      // Si llegaron menos fotogramas, se repiten los ultimos.
       final frame = frames[t < frames.length ? t : frames.length - 1];
       features.setAll(t * _featureSize, _frameFeatures(frame));
-      // Deja respirar a la interfaz entre fotogramas.
       await Future<void>.delayed(Duration.zero);
     }
 
@@ -126,7 +109,6 @@ class TensorFlowLiteGestureRecognitionService
     GestureFrame frame, {
     required List<String> candidateClasses,
   }) async {
-    // Latencia: desde que llega el fotograma hasta la decision.
     final watch = Stopwatch()..start();
     await load();
     _window.add(_frameFeatures(frame));
@@ -148,8 +130,6 @@ class TensorFlowLiteGestureRecognitionService
     );
   }
 
-  /// LSTM sobre 16 fotogramas: la clase si supera [minConfidence], no es
-  /// "ninguno" y esta entre [candidates]; si no, null.
   (String?, double) _decide(Float32List features, List<String> candidates) {
     final probs = Float32List(_labels.length);
     _sequence!.run(features.buffer.asUint8List(), probs.buffer.asUint8List());
@@ -166,10 +146,6 @@ class TensorFlowLiteGestureRecognitionService
     return (label, probs[best]);
   }
 
-  /// Caracteristicas de un fotograma: se busca la mano y se clasifica el
-  /// recorte. Con dos manos se prueba cada una y su union (gestos con ambas
-  /// manos) y se queda el recorte con el gesto mas claro. Sin manos se usa
-  /// la imagen completa, que el modelo reconoce como "ninguno".
   Float32List _frameFeatures(GestureFrame frame) {
     final img = UprightImage(frame);
     final palms = _detectPalms(img);

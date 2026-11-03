@@ -19,7 +19,6 @@ import 'package:http/testing.dart';
 import 'package:sqflite/sqflite.dart' show Sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-/// Backend falso: registra las peticiones y responde lo configurado.
 class FakeBackend {
   final requests = <http.Request>[];
   final getResponses = <String, Object?>{};
@@ -105,7 +104,7 @@ class _Env {
     );
     final env = _Env(db, backend ?? FakeBackend(), account.id!);
     env.sync.start(env.tutorId);
-    await env.sync.stop(); // sin temporizadores en las pruebas
+    await env.sync.stop();
     env.sync.start(env.tutorId);
     return env;
   }
@@ -153,7 +152,6 @@ void main() {
     expect(prefs['categorias_pictogramas'],
         {'base-${item.pictogram.id}': otra});
 
-    // El mensaje y el pictograma por gesto también se envían.
     await SqliteGestureRepository(env.db).setCustomization(
         profileId,
         2,
@@ -197,7 +195,6 @@ void main() {
     await env.sync.pushPending();
     expect(env.backend.sent.length, 1);
     expect(env.backend.sent.single, endsWith('/consentimiento'));
-    // Perfil y voz siguen pendientes.
     expect(await env.count('SELECT COUNT(*) FROM sync_pendiente'), 2);
     await env.sync.stop();
     await env.db.close();
@@ -316,17 +313,14 @@ void main() {
     expect(profiles.single.preferences.enabledGestureIds, [2]);
     final board = await env.communication.buildBoard(profiles.single.id!);
     expect(board.pictogramCount, 2);
-    // El mensaje y el pictograma del gesto llegan al telefono nuevo.
     final custom = profiles.single.preferences.gestureCustomizations[2]!;
     expect(custom.message, 'Tengo sed');
     expect(custom.pictogramId, 5);
-    // El pictograma inicial llega en la categoria elegida en el perfil.
     expect(board.byCategory[3]!.where((p) => p.id == 5), hasLength(1));
     expect((await env.privacy.forProfile(profiles.single.id!))!
         .allowsProcessing, isTrue);
     final voz = await env.db.db.query('configuracion_voz');
     expect(voz.single['velocidad'], 0.6);
-    // La descarga no genera envíos.
     expect(await env.count('SELECT COUNT(*) FROM sync_pendiente'), 0);
     await env.sync.stop();
     await env.db.close();
@@ -394,7 +388,6 @@ void main() {
     expect(summary.totalInteractions, 2);
     expect(summary.weekly[5], 2);
 
-    // Registro que ya no existe en el backend.
     expect(await history.detail(profileId, records.first), isNull);
 
     env.backend.offline = true;
@@ -432,7 +425,6 @@ void main() {
         .first['imagen_ref'];
     expect(await ref(), 'ref-1');
 
-    // Cambiar solo el mensaje no vuelve a subir la imagen.
     final stored = (await env.communication.catalog(profileId))
         .map((e) => e.pictogram)
         .firstWhere((p) => p.id == picto.id);
@@ -445,7 +437,6 @@ void main() {
     await env.sync.pushPending();
     expect(env.backend.sent.where((s) => s.endsWith('/imagen')).length, 1);
 
-    // Una imagen nueva sí se sube.
     await env.communication.updatePictogram(stored,
         profileId: profileId,
         name: 'Mi osito',
@@ -483,7 +474,6 @@ void main() {
         .first;
     expect(row['imagen'], [1, 2, 3]);
     expect(row['imagen_ref'], 'pictogramas/uid-tutor/p-osito/abc');
-    // Una segunda descarga no repite la imagen.
     backend.requests.clear();
     await env.sync.pullAll(env.tutorId);
     expect(

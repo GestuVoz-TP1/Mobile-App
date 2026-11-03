@@ -1,27 +1,19 @@
-/// GESTO 1:1 INTENCION_COMUNICATIVA 1:1 PICTOGRAMA. El modelo de reconocimiento
-/// devuelve una `clase_reconocimiento`; con ella se obtiene el gesto, su
-/// intencion y el pictograma que la representa.
 library;
 
 import 'child.dart' show GestureCustomization;
 
 export 'shared.dart' show DomainException;
 
-/// GESTO
 class Gesture {
   final int id;
   final String name;
   final String? description;
 
-  /// Referencia visual del gesto (emoji o ruta de recurso).
   final String? visualRepresentation;
 
-  /// Etiqueta que devuelve el modelo de reconocimiento.
   final String recognitionClass;
   final String availability;
 
-  /// Indicaciones para realizar el gesto. Editables por el tutor; pueden
-  /// estar vacias.
   final String? instructions;
 
   const Gesture({
@@ -37,7 +29,6 @@ class Gesture {
   bool get hasInstructions =>
       instructions != null && instructions!.trim().isNotEmpty;
 
-  /// Pasos de las instrucciones (una linea por paso).
   List<String> get instructionSteps => (instructions ?? '')
       .split('\n')
       .map((s) => s.trim())
@@ -45,7 +36,6 @@ class Gesture {
       .toList();
 }
 
-/// INTENCION_COMUNICATIVA
 class CommunicativeIntention {
   final int id;
   final String name;
@@ -70,10 +60,8 @@ abstract interface class GestureRepository {
   Future<CommunicativeIntention?> intentionById(int id);
   Future<void> updateInstructions(int gestureId, String? instructions);
 
-  /// Lo que el tutor eligio para el gesto en este perfil; null si nada.
   Future<GestureCustomization?> customizationFor(int profileId, int gestureId);
 
-  /// [customization] vacia o null vuelve al mensaje y pictograma originales.
   Future<void> setCustomization(
       int profileId, int gestureId, GestureCustomization? customization);
 }

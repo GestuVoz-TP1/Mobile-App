@@ -8,29 +8,14 @@ import '../seed/gesture_seed.dart';
 import '../seed/pictogram_seed.dart';
 import '../sync/sync_log.dart';
 
-/// Base de datos local SQLite de GestuVoz.
-///
-/// Particularidades del esquema: contrasena local en PADRE_TUTOR (hasta
-/// integrar Firebase), FK opcionales PICTOGRAMA.id_intencion e
-/// INTERACCION.id_gesto/id_intencion, y columnas `emoji`, `orden`,
-/// `instrucciones` y `voz_activada`.
 class GestuVozDatabase {
   GestuVozDatabase._(this.db);
   final Database db;
 
   static const fileName = 'gestuvoz.db';
 
-  /// v1: esquema inicial. v2: textos de gestos iniciales sin etiquetas de
-  /// prueba (clases `gesto_*`). v3: sincronizacion con el backend
-  /// (identificadores remotos, fecha de cambio, cola de pendientes y UID de
-  /// Firebase del tutor). v6: gestos que reconoce el modelo entrenado.
-  /// v7: instrucciones sugeridas y emoji con la forma de la mano. v8: las
-  /// instrucciones ya no piden quedarse quieto (reconocimiento continuo).
-  /// v9: instrucciones de Agua.
   static const schemaVersion = 9;
 
-  /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
-  /// en las pruebas (`inMemoryDatabasePath`).
   static Future<GestuVozDatabase> open({
     String? path,
     DatabaseFactory? factory,
@@ -51,8 +36,6 @@ class GestuVozDatabase {
         },
         onUpgrade: (db, oldVersion, _) async {
           if (oldVersion < 2) await _migrateToV2(db);
-          // Idempotentes: tambien completan una base creada por la rama del
-          // prototipo sin conexion, que usa otra numeracion de versiones.
           await _migrateToV3(db);
           await _migrateToV4(db);
           await _migrateCustomOwner(db);
@@ -169,8 +152,6 @@ class GestuVozDatabase {
     await batch.commit(noResult: true);
   }
 
-  /// Carga los datos iniciales: categorias y pictogramas existentes del
-  /// prototipo y los gestos iniciales con su intencion.
   static Future<void> _seed(Database db) async {
     await db.transaction((txn) async {
       final catIdByKey = <String, int>{};
@@ -219,8 +200,6 @@ class GestuVozDatabase {
     });
   }
 
-  /// v2: quita las etiquetas de prueba de los gestos iniciales en bases ya
-  /// creadas con v1. No borra datos del usuario.
   static Future<void> _migrateToV2(Database db) async {
     await db.transaction((txn) async {
       for (final g in kSeedGestures) {
@@ -251,20 +230,10 @@ class GestuVozDatabase {
     });
   }
 
-  /// v3: columnas y tabla para sincronizar con el backend (Cloud Firestore).
-  /// - `uuid`: identificador remoto (documento en Firestore) de lo que crea el
-  ///   usuario. Los catalogos fijos usan claves `base-<id>`, `gesto-<id>`,
-  ///   `intencion-<id>`.
-  /// - `actualizado_en`: fecha del ultimo cambio (gana el ultimo cambio).
-  /// - `sincronizada`: interacciones ya enviadas.
-  /// - `sync_pendiente`: cola de cambios por enviar.
-  /// - `firebase_uid`: usuario de Firebase Authentication del tutor.
-  /// Es aditiva: conserva los datos existentes y les asigna su UUID.
   static Future<void> _migrateToV3(Database db) async {
     const uuid = Uuid();
     final now = DateTime.now().toUtc().toIso8601String();
     await db.transaction((txn) async {
-      // Idempotente: solo agrega lo que falta.
       Future<void> addColumn(String table, String column, String type) async {
         final cols = await txn.rawQuery('PRAGMA table_info($table)');
         if (cols.any((c) => c['name'] == column)) return;
@@ -304,7 +273,6 @@ class GestuVozDatabase {
       ]) {
         await txn.execute(sql);
       }
-      // UUID para los datos que ya existian (no para los catalogos fijos).
       Future<void> backfill(String table, String idCol, String where) async {
         final rows =
             await txn.query(table, columns: [idCol], where: where);
@@ -332,16 +300,12 @@ class GestuVozDatabase {
     });
   }
 
-  /// Dueño de cada pictograma personalizado: solo aparece en el catálogo del
-  /// perfil que lo creó (no en otros perfiles ni en otras cuentas del mismo
-  /// teléfono). Idempotente.
   static Future<void> _migrateCustomOwner(Database db) async {
     final cols = await db.rawQuery('PRAGMA table_info(pictograma)');
     if (!cols.any((c) => c['name'] == 'id_perfil_propietario')) {
       await db.execute(
           'ALTER TABLE pictograma ADD COLUMN id_perfil_propietario INTEGER');
     }
-    // Los que ya existian quedan a cargo del primer perfil que los usa.
     await db.rawUpdate('''
       UPDATE pictograma SET id_perfil_propietario = (
         SELECT MIN(pp.id_perfil) FROM perfil_pictograma pp
@@ -349,17 +313,12 @@ class GestuVozDatabase {
       WHERE id_perfil_propietario IS NULL AND uuid IS NOT NULL''');
   }
 
-  /// v4: ruta en Cloud Storage de la imagen guardada en el telefono
-  /// (`referencia_imagen`). Nula si la imagen aun no se sube o no se descarga.
   static Future<void> _migrateToV4(Database db) async {
     final cols = await db.rawQuery('PRAGMA table_info(pictograma)');
     if (cols.any((c) => c['name'] == 'imagen_ref')) return;
     await db.execute('ALTER TABLE pictograma ADD COLUMN imagen_ref TEXT');
   }
 
-  /// v6: agrega los gestos de [kSeedGestures] que falten (los que reconoce
-  /// el modelo entrenado), con su intencion y su pictograma, y los habilita
-  /// en los perfiles existentes. Idempotente.
   static Future<void> _migrateModelGestures(Database db) async {
     await db.transaction((txn) async {
       final added = <int>[];
@@ -383,8 +342,6 @@ class GestuVozDatabase {
             orderBy: 'id_pictograma',
             limit: 1);
         if (pictoRows.isEmpty) continue;
-        // Mismo identificador que en una instalacion nueva (orden de la
-        // semilla), porque el backend lo usa como `gesto-<id>`.
         final gestureId = await txn.insert('gesto', {
           'id_gesto': await freeId('gesto', 'id_gesto', index + 1),
           'nombre': g.name,
@@ -429,8 +386,6 @@ class GestuVozDatabase {
     });
   }
 
-  /// v7: emoji con la forma de la mano y, si el tutor aun no escribio
-  /// instrucciones, los pasos sugeridos. Idempotente.
   static Future<void> _migrateGestureGuides(Database db) async {
     await db.transaction((txn) async {
       for (final g in kSeedGestures) {
@@ -443,7 +398,6 @@ class GestuVozDatabase {
                 'OR instrucciones = ?)',
             whereArgs: [
               g.recognitionClass,
-              // Texto de v7, si el tutor no lo cambio.
               '${g.instructions}\nMantén el gesto quieto unos 3 segundos.',
             ]);
       }

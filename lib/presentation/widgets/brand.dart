@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Isotipo de GestuVoz: mano sobre un cuadrado turquesa.
 class GestuVozLogo extends StatelessWidget {
   final double size;
   const GestuVozLogo({super.key, this.size = 56});
@@ -22,7 +21,6 @@ class GestuVozLogo extends StatelessWidget {
   }
 }
 
-/// Wordmark "GestuVoz".
 class GestuVozWordmark extends StatelessWidget {
   final double fontSize;
   const GestuVozWordmark({super.key, this.fontSize = 30});
@@ -42,7 +40,6 @@ class GestuVozWordmark extends StatelessWidget {
   }
 }
 
-/// Logo + nombre en una fila.
 class GestuVozBrand extends StatelessWidget {
   final double size;
   const GestuVozBrand({super.key, this.size = 48});

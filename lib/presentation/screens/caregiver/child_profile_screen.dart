@@ -14,8 +14,6 @@ import 'child_edit_screen.dart';
 import 'consent_screen.dart';
 import 'gestures_catalog_screen.dart';
 
-/// Perfil del nino: informacion basica y preferencias de comunicacion del
-/// perfil activo.
 class ChildProfileScreen extends StatefulWidget {
   const ChildProfileScreen({super.key});
 
@@ -48,7 +46,6 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
         (s.voice?.voiceEnabled ?? true) != _voiceEnabled;
   }
 
-  /// Preparar la modalidad de gestos.
   Future<void> _toggleGestures(bool on) async {
     setState(() => _gestureIssue = null);
     if (!on) {
@@ -62,7 +59,6 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
           'de tratamiento de datos de este perfil.');
       return;
     }
-    // Solicita el permiso y verifica que la camara este disponible.
     setState(() => _checkingCamera = true);
     final camera = context.read<CameraService>();
     await camera.discover();

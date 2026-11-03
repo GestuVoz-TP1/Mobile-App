@@ -1,5 +1,3 @@
-/// Catalogo de pictogramas (PICTOGRAMA), sus categorias (CATEGORIA) y la
-/// seleccion/orden de pictogramas de cada perfil (PERFIL_PICTOGRAMA).
 library;
 
 import 'dart:typed_data';
@@ -8,7 +6,6 @@ import 'shared.dart';
 
 export 'shared.dart' show DomainException;
 
-/// CATEGORIA
 class PictogramCategory {
   final int id;
   final String name;
@@ -23,15 +20,10 @@ class PictogramCategory {
   });
 }
 
-/// Valores de `estado_disponibilidad` (CATEGORIA, GESTO).
 abstract final class Availability {
   static const available = 'disponible';
 }
 
-/// PICTOGRAMA. [message] es la frase que se reproduce por voz.
-///
-/// Un pictograma personalizado siempre tiene [image]; los pictogramas semilla
-/// se representan con [emoji].
 class Pictogram {
   final int? id;
   final String name;
@@ -53,10 +45,8 @@ class Pictogram {
 
   bool get hasImage => image != null && image!.isNotEmpty;
 
-  /// Personalizado = creado por el tutor con imagen propia.
   bool get isCustom => hasImage;
 
-  /// Valida un pictograma personalizado.
   factory Pictogram.custom({
     int? id,
     required String name,
@@ -100,11 +90,9 @@ class Pictogram {
       );
 }
 
-/// Pictograma del catalogo junto con su estado para un perfil.
 class ProfilePictogram {
   final Pictogram pictogram;
 
-  /// true si tiene fila en PERFIL_PICTOGRAMA (visible en el tablero).
   final bool selected;
   final int? order;
 
@@ -118,33 +106,24 @@ class ProfilePictogram {
 abstract interface class PictogramRepository {
   Future<List<PictogramCategory>> categories();
 
-  /// Catalogo completo (PICTOGRAMA) con la seleccion del perfil.
   Future<List<ProfilePictogram>> catalogForProfile(int profileId);
 
-  /// Pictogramas seleccionados del perfil, en su orden (tablero del nino).
   Future<List<Pictogram>> boardForProfile(int profileId);
 
   Future<Pictogram?> byId(int id);
   Future<Pictogram?> byIntention(int intentionId);
 
-  /// Inserta un pictograma personalizado y lo selecciona para el perfil.
   Future<Pictogram> insertCustom(Pictogram pictogram, int profileId);
   Future<void> update(Pictogram pictogram);
 
-  /// Nombres de los gestos que, en este perfil, usan el pictograma.
   Future<List<String>> gesturesUsing(int profileId, int pictogramId);
 
-  /// Categoria de un pictograma inicial solo para este perfil.
   Future<void> setProfileCategory(
       int profileId, int pictogramId, int categoryId);
 
-  /// Mostrar/ocultar sin eliminar del catalogo.
   Future<void> setSelected(int profileId, int pictogramId, bool selected);
 
-  /// Orden del tablero del perfil.
   Future<void> reorder(int profileId, List<int> orderedPictogramIds);
 
-  /// Elimina un pictograma personalizado si no tiene interacciones
-  /// registradas. Devuelve false si no pudo eliminarse.
   Future<bool> deleteCustomIfUnused(int pictogramId);
 }

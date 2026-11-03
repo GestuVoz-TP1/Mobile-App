@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Barras de interacciones por dia (ultimos 7).
 class WeeklyUsageChart extends StatelessWidget {
   final List<int> counts;
   const WeeklyUsageChart({super.key, required this.counts});
