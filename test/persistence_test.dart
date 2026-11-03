@@ -77,7 +77,7 @@ void main() {
     expect(gestures.length, kSeedGestures.length);
     expect(gestures.every((g) => (g['clase_reconocimiento'] as String)
         .startsWith('gesto_')), isTrue);
-    expect(gestures.every((g) => g['instrucciones'] == null), isTrue);
+    expect(gestures.where((g) => g['instrucciones'] == null).length, 1);
     await app.db.close();
   });
 
@@ -122,6 +122,69 @@ void main() {
     expect((await reopened.profiles.byId(profileId))?.child.name,
         'Valentina López');
     await reopened.db.close();
+  });
+
+  test('Migración v5 → v6: agrega los gestos del modelo y los habilita',
+      () async {
+    final (app, _, profileId) = await withProfile();
+    final db = app.db.db;
+    // Base como la dejaba v5: solo los 4 gestos iniciales.
+    final nuevos = kSeedGestures.skip(4).map((g) => g.recognitionClass);
+    for (final c in nuevos) {
+      final g = (await db.query('gesto',
+              where: 'clase_reconocimiento = ?', whereArgs: [c]))
+          .single['id_gesto'];
+      final i = (await db.query('intencion_comunicativa',
+              where: 'id_gesto = ?', whereArgs: [g]))
+          .single['id_intencion'];
+      await db.update('pictograma', {'id_intencion': null},
+          where: 'id_intencion = ?', whereArgs: [i]);
+      await db.delete('intencion_comunicativa',
+          where: 'id_intencion = ?', whereArgs: [i]);
+      await db.delete('gesto', where: 'id_gesto = ?', whereArgs: [g]);
+    }
+    final profile = (await app.profiles.byId(profileId))!;
+    await SqliteChildProfileRepository(app.db).update(profile.copyWith(
+        preferences: profile.preferences
+            .copyWith(enabledGestureIds: const [1, 2, 3, 4])));
+    // Instrucciones como las dejaba v7 (pedian quedarse quieto).
+    await db.update('gesto', {
+      'instrucciones': 'Levanta solo el dedo índice.\nDobla los otros dedos.\n'
+          'Mantén el gesto quieto unos 3 segundos.'
+    }, where: "clase_reconocimiento = 'gesto_ayuda'");
+    await db.execute('PRAGMA user_version = 5');
+    await app.db.close();
+
+    final reopened = await _App.open(path);
+    final rdb = reopened.db.db;
+    final gestos = await rdb.query('gesto', orderBy: 'id_gesto');
+    expect(gestos.map((g) => g['clase_reconocimiento']),
+        kSeedGestures.map((g) => g.recognitionClass));
+    // Cada gesto nuevo tiene su intención y su pictograma.
+    for (final g in gestos.skip(4)) {
+      final i = (await rdb.query('intencion_comunicativa',
+              where: 'id_gesto = ?', whereArgs: [g['id_gesto']]))
+          .single;
+      expect(
+          await rdb.query('pictograma',
+              where: 'id_intencion = ?', whereArgs: [i['id_intencion']]),
+          hasLength(1));
+    }
+    // v7: emoji con la forma de la mano e instrucciones sugeridas.
+    final ayuda = gestos.firstWhere(
+        (g) => g['clase_reconocimiento'] == 'gesto_ayuda');
+    expect(ayuda['representacion_visual'], '☝️');
+    expect(ayuda['instrucciones'], contains('dedo índice'));
+    expect(ayuda['instrucciones'], isNot(contains('quieto')));
+    final prefs = (await reopened.profiles.byId(profileId))!.preferences;
+    expect(prefs.enabledGestureIds,
+        List.generate(kSeedGestures.length, (i) => i + 1));
+    await reopened.db.close();
+
+    // Idempotente: abrir otra vez no duplica nada.
+    final again = await _App.open(path);
+    expect(await again.db.db.query('gesto'), hasLength(kSeedGestures.length));
+    await again.db.close();
   });
 
   test('HU018/HU019: registro y login con correo; credenciales inválidas',
