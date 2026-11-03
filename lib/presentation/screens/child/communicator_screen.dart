@@ -182,19 +182,22 @@ class _CategoryBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(18),
                 onTap: () => onSelect(c.id),
                 child: Container(
-                  width: 92,
+                  width: 108,
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(style.emoji, style: const TextStyle(fontSize: 24)),
-                      Text(c.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: isSel ? Colors.white : AppColors.ink)),
+                      // El nombre se reduce para verse completo, sin cortarse.
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(c.name,
+                            maxLines: 1,
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isSel ? Colors.white : AppColors.ink)),
+                      ),
                     ],
                   ),
                 ),

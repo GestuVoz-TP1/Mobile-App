@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../domain/auth.dart' show DomainException;
 import '../../../domain/interaction.dart';
 import '../../../domain/reporting.dart';
 import '../../category_style.dart';
@@ -213,11 +214,15 @@ class _StatBox extends StatelessWidget {
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     color: dark ? Colors.white : AppColors.ink)),
-            Text(label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    color: dark ? Colors.white : AppColors.inkSoft)),
+            // La palabra se reduce para caber entera, sin cortarse.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(label,
+                  maxLines: 1,
+                  style: TextStyle(
+                      color: dark ? Colors.white : AppColors.inkSoft)),
+            ),
           ],
         ),
       );
@@ -283,7 +288,7 @@ class _FrequentCard extends StatelessWidget {
                         Expanded(
                           flex: 3,
                           child: Text(f.message,
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600)),
@@ -404,6 +409,25 @@ Future<void> showInteractionDetail(
           child = const Padding(
             padding: EdgeInsets.all(Insets.xl),
             child: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snap.hasError) {
+          // RNF-05: p. ej. sin conexion; el registro puede seguir existiendo.
+          final error = snap.error;
+          child = Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              StatusNote(
+                  error is DomainException
+                      ? error.message
+                      : 'No se pudo cargar el detalle del registro.',
+                  kind: NoteKind.error),
+              const SizedBox(height: Insets.md),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Volver al historial'),
+              ),
+            ],
           );
         } else if (snap.data == null) {
           // HU033, criterio 2

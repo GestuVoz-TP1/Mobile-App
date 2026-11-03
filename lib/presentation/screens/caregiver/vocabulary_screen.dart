@@ -185,7 +185,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     child: Text(
                       _canReorder
                           ? 'Activa “Mostrar” para que el pictograma aparezca '
-                              'en el tablero. Arrastra ⠿ para cambiar el orden.'
+                              'en el tablero. Arrastra los puntos para cambiar el orden.'
                           : 'Activa “Mostrar” para que el pictograma aparezca '
                               'en el tablero.',
                       style: TextStyle(
@@ -298,8 +298,9 @@ class _PictogramRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Dos lineas: varios mensajes solo se distinguen al final.
                     Text(p.message,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w700)),
@@ -440,6 +441,7 @@ class _CustomEditorState extends State<_CustomEditor> {
       } else {
         await widget.service.updatePictogram(
           _existing!,
+          profileId: widget.profileId,
           name: _name.text,
           message: _message.text,
           categoryId: _categoryId,

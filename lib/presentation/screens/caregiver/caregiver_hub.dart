@@ -200,7 +200,10 @@ class _TodayStats extends StatelessWidget {
       builder: (context, snap) {
         final records = snap.data ?? const [];
         final summary = context.read<ReportingService>().summarize(records);
-        return Row(
+        // Ambas tarjetas con la misma altura aunque una etiqueta ocupe mas.
+        return IntrinsicHeight(
+          child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
               child: _Stat(
@@ -218,6 +221,7 @@ class _TodayStats extends StatelessWidget {
               ),
             ),
           ],
+          ),
         );
       },
     );

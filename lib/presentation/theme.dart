@@ -12,7 +12,7 @@ class AppColors {
   static const bg = Color(0xFFF4F7F6);
   static const surface = Colors.white;
   static const ink = Color(0xFF15302B);
-  static const inkSoft = Color(0xFF55665F);
+  static const inkSoft = Color(0xFF44544E);
   static const outline = Color(0xFFDDE5E2);
 
   // Estados
@@ -80,7 +80,17 @@ ThemeData buildTheme({required bool highContrast}) {
   );
   final borderColor = highContrast ? Colors.black : AppColors.outline;
   return base.copyWith(
-    textTheme: base.textTheme.apply(bodyColor: ink, displayColor: ink),
+    // Peso medio: el regular de Baloo 2 se ve delgado en textos pequeños.
+    textTheme: base.textTheme
+        .copyWith(
+          bodyLarge:
+              base.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+          bodyMedium:
+              base.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+          bodySmall:
+              base.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+        )
+        .apply(bodyColor: ink, displayColor: ink),
     appBarTheme: AppBarTheme(
       centerTitle: false,
       backgroundColor: highContrast ? Colors.white : AppColors.bg,
@@ -108,6 +118,9 @@ ThemeData buildTheme({required bool highContrast}) {
         minimumSize: const Size(64, 56),
         backgroundColor: primary,
         foregroundColor: Colors.white,
+        // Desactivado sin perder legibilidad.
+        disabledBackgroundColor: AppColors.outline,
+        disabledForegroundColor: AppColors.inkSoft,
         textStyle: const TextStyle(
             fontFamily: 'Baloo2', fontSize: 18, fontWeight: FontWeight.w700),
         shape: RoundedRectangleBorder(
@@ -179,7 +192,21 @@ ThemeData buildTheme({required bool highContrast}) {
     chipTheme: ChipThemeData(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       side: BorderSide(color: borderColor),
-      labelStyle: const TextStyle(fontFamily: 'Baloo2', fontSize: 14),
+      backgroundColor: Colors.white,
+      selectedColor: AppColors.primarySoft,
+      checkmarkColor: AppColors.primaryDark,
+      iconTheme: IconThemeData(color: primary, size: 18),
+      // Sin color explicito, el texto del chip sale invisible.
+      labelStyle: TextStyle(
+          fontFamily: 'Baloo2',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: ink),
+      secondaryLabelStyle: TextStyle(
+          fontFamily: 'Baloo2',
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: ink),
     ),
   );
 }
