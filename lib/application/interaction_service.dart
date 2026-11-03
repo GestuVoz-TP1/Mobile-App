@@ -15,7 +15,7 @@ class InteractionService {
   Future<bool> recordPictogram(int profileId, Pictogram p) => _record(
         Interaction(
           at: DateTime.now(),
-          detail: 'Pictograma seleccionado en el tablero',
+          detail: p.message, // la frase de ese momento
           profileId: profileId,
           pictogramId: p.id!,
         ),
@@ -31,7 +31,7 @@ class InteractionService {
       _record(
         Interaction(
           at: DateTime.now(),
-          detail: 'Gesto reconocido',
+          detail: intention.message, // la frase de ese momento
           profileId: profileId,
           pictogramId: pictogram.id!,
           gestureId: gesture.id,

@@ -135,6 +135,9 @@ abstract interface class PictogramRepository {
   Future<Pictogram> insertCustom(Pictogram pictogram, int profileId);
   Future<void> update(Pictogram pictogram);
 
+  /// Nombres de los gestos que, en este perfil, usan el pictograma.
+  Future<List<String>> gesturesUsing(int profileId, int pictogramId);
+
   /// HU014: categoria de un pictograma inicial solo para este perfil.
   Future<void> setProfileCategory(
       int profileId, int pictogramId, int categoryId);

@@ -82,6 +82,17 @@ extension on String {
 /// Opciones de genero ofrecidas en el formulario (NINO.genero es opcional).
 const kGenderOptions = ['Femenino', 'Masculino', 'Prefiero no indicar'];
 
+/// Mensaje o pictograma que el tutor eligio para un gesto en este perfil. El
+/// gesto no cambia: lo reconoce el modelo; solo cambia lo que comunica.
+class GestureCustomization {
+  final String? message;
+  final int? pictogramId;
+
+  const GestureCustomization({this.message, this.pictogramId});
+
+  bool get isEmpty => message == null && pictogramId == null;
+}
+
 /// Niveles de apoyo del DSM-5 para el TEA. El tutor registra lo que indico el
 /// especialista: la aplicacion no diagnostica.
 const kSupportLevelOptions = [
@@ -117,12 +128,16 @@ class CommunicationPreferences {
   /// compartidos, asi que el cambio se guarda aqui y no afecta a otros perfiles.
   final Map<int, int> pictogramCategories;
 
+  /// Mensaje y pictograma elegidos para cada gesto (id de GESTO).
+  final Map<int, GestureCustomization> gestureCustomizations;
+
   const CommunicationPreferences({
     this.gesturesEnabled = false,
     this.enabledGestureIds = const [],
     this.pictogramColumns = 3,
     this.highContrast = false,
     this.pictogramCategories = const {},
+    this.gestureCustomizations = const {},
   });
 
   CommunicationPreferences copyWith({
@@ -131,6 +146,7 @@ class CommunicationPreferences {
     int? pictogramColumns,
     bool? highContrast,
     Map<int, int>? pictogramCategories,
+    Map<int, GestureCustomization>? gestureCustomizations,
   }) {
     final cols = pictogramColumns ?? this.pictogramColumns;
     if (!kPictogramSizeOptions.containsKey(cols)) {
@@ -142,6 +158,8 @@ class CommunicationPreferences {
       pictogramColumns: cols,
       highContrast: highContrast ?? this.highContrast,
       pictogramCategories: pictogramCategories ?? this.pictogramCategories,
+      gestureCustomizations:
+          gestureCustomizations ?? this.gestureCustomizations,
     );
   }
 
@@ -153,6 +171,13 @@ class CommunicationPreferences {
         'categorias_pictogramas': {
           for (final e in pictogramCategories.entries)
             e.key.toString(): e.value,
+        },
+        'gestos_personalizados': {
+          for (final e in gestureCustomizations.entries)
+            e.key.toString(): {
+              'mensaje': e.value.message,
+              'id_pictograma': e.value.pictogramId,
+            },
         },
       });
 
@@ -173,6 +198,15 @@ class CommunicationPreferences {
               .entries)
             if (int.tryParse('${e.key}') != null && e.value is int)
               int.parse('${e.key}'): e.value as int,
+        },
+        gestureCustomizations: {
+          for (final e in ((j['gestos_personalizados'] as Map?) ?? const {})
+              .entries)
+            if (int.tryParse('${e.key}') != null && e.value is Map)
+              int.parse('${e.key}'): GestureCustomization(
+                message: (e.value as Map)['mensaje'] as String?,
+                pictogramId: (e.value as Map)['id_pictograma'] as int?,
+              ),
         },
       );
     } catch (_) {

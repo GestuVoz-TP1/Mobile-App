@@ -4,6 +4,26 @@ import '../domain/gesture.dart';
 import '../domain/ml.dart';
 
 /// Resultado completo de un intento: gesto -> intencion -> pictograma.
+/// Lo que comunica un gesto en un perfil, con lo que eligio el tutor.
+class GestureMessage {
+  final Gesture gesture;
+  final String originalMessage;
+  final String message;
+  final Pictogram? originalPictogram;
+  final Pictogram? pictogram;
+
+  const GestureMessage({
+    required this.gesture,
+    required this.originalMessage,
+    required this.message,
+    required this.originalPictogram,
+    required this.pictogram,
+  });
+
+  bool get isCustomized =>
+      message != originalMessage || pictogram?.id != originalPictogram?.id;
+}
+
 class GestureOutcome {
   final Gesture gesture;
   final CommunicativeIntention intention;
@@ -53,6 +73,52 @@ class GestureService {
         .toList();
   }
 
+  /// Mensaje y pictograma del gesto en este perfil.
+  Future<GestureMessage?> messageFor(int profileId, Gesture g) async {
+    final intention = await _gestures.intentionForGesture(g.id);
+    if (intention == null) return null;
+    final original = await _pictos.byIntention(intention.id);
+    final custom = await _gestures.customizationFor(profileId, g.id);
+    final customPicto = custom?.pictogramId == null
+        ? null
+        : await _pictos.byId(custom!.pictogramId!);
+    return GestureMessage(
+      gesture: g,
+      originalMessage: intention.message,
+      message: custom?.message ?? intention.message,
+      originalPictogram: original,
+      pictogram: customPicto ?? original,
+    );
+  }
+
+  /// Guarda el mensaje y el pictograma elegidos. Lo que coincide con el
+  /// original no se guarda. El mensaje no puede quedar vacio.
+  Future<void> saveMessage(
+    int profileId,
+    Gesture g, {
+    required String message,
+    required int? pictogramId,
+  }) async {
+    final text = message.trim();
+    if (text.isEmpty) {
+      throw const DomainException('Escribe el mensaje del gesto.');
+    }
+    final current = await messageFor(profileId, g);
+    await _gestures.setCustomization(
+      profileId,
+      g.id,
+      GestureCustomization(
+        message: text == current?.originalMessage ? null : text,
+        pictogramId:
+            pictogramId == current?.originalPictogram?.id ? null : pictogramId,
+      ),
+    );
+  }
+
+  /// Vuelve al mensaje y al pictograma originales del gesto.
+  Future<void> resetMessage(int profileId, Gesture g) =>
+      _gestures.setCustomization(profileId, g.id, null);
+
   /// Instrucciones editables por el tutor.
   Future<void> updateInstructions(int gestureId, String? text) =>
       _gestures.updateInstructions(gestureId, text);
@@ -80,8 +146,9 @@ class GestureService {
   /// cuando se reconoce un gesto con mensaje; null mientras siga buscando.
   Future<GestureOutcome?> addFrame(
     GestureFrame frame,
-    List<Gesture> enabled,
-  ) async {
+    List<Gesture> enabled, {
+    required int profileId,
+  }) async {
     final r = _recognizer;
     if (r is! ContinuousGestureRecognition) return null;
     await ensureLoaded();
@@ -90,26 +157,28 @@ class GestureService {
       candidateClasses: enabled.map((g) => g.recognitionClass).toList(),
     );
     if (result == null) return null;
-    return _outcomeFor(result, enabled);
+    return _outcomeFor(result, enabled, profileId);
   }
 
   /// HU001 / HU006: devuelve null si el gesto no se reconoce o no puede
   /// asociarse a un mensaje (no se comunica un mensaje incorrecto).
   Future<GestureOutcome?> recognize(
     GestureSequence sequence,
-    List<Gesture> enabled,
-  ) async {
+    List<Gesture> enabled, {
+    required int profileId,
+  }) async {
     await ensureLoaded();
     final result = await _recognizer.recognize(
       sequence,
       candidateClasses: enabled.map((g) => g.recognitionClass).toList(),
     );
-    return _outcomeFor(result, enabled);
+    return _outcomeFor(result, enabled, profileId);
   }
 
   Future<GestureOutcome?> _outcomeFor(
     GestureRecognitionResult result,
     List<Gesture> enabled,
+    int profileId,
   ) async {
     if (!result.recognized) return null;
     final gesture = enabled
@@ -118,11 +187,18 @@ class GestureService {
     if (gesture == null) return null;
     final intention = await _gestures.intentionForGesture(gesture.id);
     if (intention == null) return null;
-    final pictogram = await _pictos.byIntention(intention.id);
-    if (pictogram == null) return null;
+    final chosen = await messageFor(profileId, gesture);
+    final pictogram = chosen?.pictogram;
+    if (chosen == null || pictogram == null) return null;
     return GestureOutcome(
       gesture: gesture,
-      intention: intention,
+      intention: CommunicativeIntention(
+        id: intention.id,
+        name: intention.name,
+        description: intention.description,
+        message: chosen.message,
+        gestureId: intention.gestureId,
+      ),
       pictogram: pictogram,
       result: result,
     );

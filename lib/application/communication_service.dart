@@ -97,6 +97,10 @@ class CommunicationService {
   Future<void> reorder(int profileId, List<int> orderedIds) =>
       _pictos.reorder(profileId, orderedIds);
 
+  /// Gestos de este perfil que usan el pictograma (aviso antes de eliminarlo).
+  Future<List<String>> gesturesUsing(int profileId, int pictogramId) =>
+      _pictos.gesturesUsing(profileId, pictogramId);
+
   /// Elimina un pictograma personalizado si no tiene historial.
   Future<bool> deleteCustom(int pictogramId) =>
       _pictos.deleteCustomIfUnused(pictogramId);

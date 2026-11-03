@@ -3,11 +3,16 @@ import 'package:provider/provider.dart';
 
 import '../../../application/gesture_service.dart';
 import '../../../domain/gesture.dart';
+import '../../controllers/communication_controller.dart';
+import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/picto_visual.dart';
+import 'gesture_message_sheet.dart';
 
 /// Gestos que reconoce la aplicacion (HU003) con su referencia visual,
-/// intencion y mensaje. Las instrucciones son editables.
+/// intencion y mensaje. Las instrucciones, y el mensaje y el pictograma de cada
+/// gesto en el perfil activo, son editables.
 class GesturesCatalogScreen extends StatefulWidget {
   const GesturesCatalogScreen({super.key});
 
@@ -16,7 +21,7 @@ class GesturesCatalogScreen extends StatefulWidget {
 }
 
 class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
-  late Future<List<(Gesture, CommunicativeIntention?)>> _future;
+  late Future<List<(Gesture, GestureMessage?)>> _future;
 
   @override
   void initState() {
@@ -24,10 +29,17 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
     _future = _load();
   }
 
-  Future<List<(Gesture, CommunicativeIntention?)>> _load() async {
+  int? get _profileId =>
+      context.read<SessionController>().activeProfile?.id;
+
+  Future<List<(Gesture, GestureMessage?)>> _load() async {
     final service = context.read<GestureService>();
     final gestures = await service.catalog();
-    return [for (final g in gestures) (g, await service.intentionFor(g))];
+    final profileId = _profileId;
+    return [
+      for (final g in gestures)
+        (g, profileId == null ? null : await service.messageFor(profileId, g)),
+    ];
   }
 
   void _reload() => setState(() => _future = _load());
@@ -44,12 +56,25 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
     }
   }
 
+  Future<void> _editMessage(GestureMessage current) async {
+    final changed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) =>
+          GestureMessageSheet(profileId: _profileId!, current: current),
+    );
+    if (changed == true && mounted) {
+      context.read<CommunicationController>().invalidate();
+      _reload();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Gestos disponibles')),
       body: SafeArea(
-        child: FutureBuilder<List<(Gesture, CommunicativeIntention?)>>(
+        child: FutureBuilder<List<(Gesture, GestureMessage?)>>(
           future: _future,
           builder: (context, snap) {
             if (snap.hasError) {
@@ -69,7 +94,7 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
             return ListView(
               padding: const EdgeInsets.all(Insets.md),
               children: [
-                for (final (g, intention) in items)
+                for (final (g, chosen) in items)
                   Padding(
                     padding: const EdgeInsets.only(bottom: Insets.sm),
                     child: Card(
@@ -101,16 +126,34 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
                                           style: const TextStyle(
                                               fontSize: 19,
                                               fontWeight: FontWeight.w800)),
-                                      if (intention != null)
-                                        Text(
-                                            'Mensaje: “${intention.message}”',
+                                      if (chosen != null)
+                                        Text('Mensaje: “${chosen.message}”',
                                             style: TextStyle(
                                                 color: Theme.of(context)
                                                     .colorScheme
                                                     .onSurfaceVariant)),
+                                      if (chosen?.isCustomized ?? false) ...[
+                                        const SizedBox(height: Insets.xs),
+                                        const TagBadge('PERSONALIZADO'),
+                                      ],
                                     ],
                                   ),
                                 ),
+                                if (chosen?.pictogram != null)
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    clipBehavior: Clip.antiAlias,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.bg,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: PictoVisual(
+                                        pictogram: chosen!.pictogram!,
+                                        size: 28,
+                                        fill: chosen.pictogram!.hasImage),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: Insets.sm),
@@ -125,13 +168,24 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
                                 Text('• $step')
                             else
                               const Text('Sin instrucciones registradas.'),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton.icon(
-                                onPressed: () => _editInstructions(g),
-                                icon: const Icon(Icons.edit_outlined),
-                                label: const Text('Editar instrucciones'),
-                              ),
+                            const SizedBox(height: Insets.xs),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                const Text('Editar:'),
+                                if (chosen != null)
+                                  TextButton.icon(
+                                    onPressed: () => _editMessage(chosen),
+                                    icon: const Icon(
+                                        Icons.record_voice_over_outlined),
+                                    label: const Text('Mensaje'),
+                                  ),
+                                TextButton.icon(
+                                  onPressed: () => _editInstructions(g),
+                                  icon: const Icon(Icons.edit_outlined),
+                                  label: const Text('Instrucciones'),
+                                ),
+                              ],
                             ),
                           ],
                         ),

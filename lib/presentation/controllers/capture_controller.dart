@@ -166,14 +166,16 @@ class CaptureController extends ChangeNotifier {
   Future<void> _captureContinuous() async {
     _gestures.resetContinuous();
     final search = _search = Completer<GestureOutcome?>();
+    final profileId = _session.activeProfile?.id;
     final timer = Timer(searchTimeout, _stopSearch);
     var busy = false;
     final started = await camera.startFrames((frame) async {
       // Mientras se analiza un fotograma, los que llegan se descartan.
-      if (busy || search.isCompleted) return;
+      if (busy || search.isCompleted || profileId == null) return;
       busy = true;
       try {
-        final out = await _gestures.addFrame(frame, _enabled);
+        final out =
+            await _gestures.addFrame(frame, _enabled, profileId: profileId);
         if (out != null && !search.isCompleted) search.complete(out);
       } catch (e) {
         debugPrint('Error al reconocer el fotograma: $e');
@@ -196,7 +198,11 @@ class CaptureController extends ChangeNotifier {
     _set(GesturePhase.analyzing);
     GestureOutcome? out;
     try {
-      out = await _gestures.recognize(_lastSequence, _enabled);
+      final profileId = _session.activeProfile?.id;
+      out = profileId == null
+          ? null
+          : await _gestures.recognize(_lastSequence, _enabled,
+              profileId: profileId);
     } catch (_) {
       out = null;
     }

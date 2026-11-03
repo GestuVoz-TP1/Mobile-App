@@ -178,8 +178,11 @@ sigue disponible para pruebas: se activa en `lib/di.dart`.
 | Descanso ⏸️ | Necesito un descanso | Sí |
 | Abrazo 🫶 | Quiero un abrazo | Sí |
 
-Cada gesto está asociado a una intención y a un pictograma del tablero. Sus
-instrucciones se escriben desde **Ajustes → Gestos disponibles**. El
+Cada gesto está asociado a una intención y a un pictograma del tablero. Desde
+**Ajustes → Gestos disponibles** se escriben sus instrucciones y, para cada
+perfil, se puede cambiar su mensaje y su pictograma; el gesto no cambia. El
+historial guarda la frase de cada momento, así que cambiar un mensaje no
+reescribe los registros anteriores. La imagen sí es siempre la actual. El
 repertorio está pendiente de validación por el especialista.
 
 ---

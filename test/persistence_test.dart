@@ -4,12 +4,15 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gestuvoz/application/auth_service.dart';
 import 'package:gestuvoz/application/communication_service.dart';
+import 'package:gestuvoz/application/gesture_service.dart';
 import 'package:gestuvoz/application/interaction_service.dart';
 import 'package:gestuvoz/application/privacy_service.dart';
 import 'package:gestuvoz/application/profile_service.dart';
 import 'package:gestuvoz/application/settings_service.dart';
 import 'package:gestuvoz/domain/child.dart';
 import 'package:gestuvoz/domain/consent.dart';
+import 'package:gestuvoz/domain/ml.dart';
+import 'package:gestuvoz/infrastructure/ml/test_mode_gesture_recognition_service.dart';
 import 'package:gestuvoz/infrastructure/persistence/database.dart';
 import 'package:gestuvoz/infrastructure/persistence/repositories.dart';
 import 'package:gestuvoz/infrastructure/security/secret_hasher_impl.dart';
@@ -225,6 +228,113 @@ void main() {
         .setProfileCategory(luisId, id, original);
     final limpio = (await app.profiles.byId(luisId))!.preferences;
     expect(limpio.pictogramCategories, isEmpty);
+    await app.db.close();
+  });
+
+  test('Mensaje y pictograma por gesto: por perfil y sin reescribir el historial',
+      () async {
+    final (app, tutorId, luisId) = await withProfile();
+    final ana = await app.profiles.create(
+        tutorId, ProfileForm(name: 'Ana', birthDate: DateTime(2018, 2, 3)));
+    final recognizer = TestModeGestureRecognitionService();
+    final service = GestureService(recognizer, SqliteGestureRepository(app.db),
+        SqlitePictogramRepository(app.db));
+    final si = (await service.catalog())
+        .firstWhere((g) => g.recognitionClass == 'gesto_si');
+    final frame = GestureSequence([
+      GestureFrame(
+          bytes: Uint8List(1), width: 1, height: 1, capturedAt: DateTime(2026))
+    ]);
+
+    Future<GestureOutcome> reconoce(int perfil) async {
+      await service.ensureLoaded();
+      recognizer.setTestOutcome('gesto_si');
+      final out = await service.recognize(frame, [si], profileId: perfil);
+      return out!;
+    }
+
+    await app.privacy.decide(luisId, granted: true);
+    final antes = await reconoce(luisId);
+    expect(antes.intention.message, 'Sí');
+    await app.interactions.recordGesture(luisId,
+        gesture: antes.gesture,
+        intention: antes.intention,
+        pictogram: antes.pictogram);
+
+    // El padre cambia mensaje y pictograma: el gesto sigue siendo el mismo.
+    final otro = (await app.communication.catalog(luisId))
+        .map((i) => i.pictogram)
+        .firstWhere((p) => p.id != antes.pictogram.id);
+    await service.saveMessage(luisId, si,
+        message: '  Estoy bien  ', pictogramId: otro.id);
+    final despues = await reconoce(luisId);
+    expect(despues.intention.message, 'Estoy bien');
+    expect(despues.pictogram.id, otro.id);
+    expect(despues.gesture.id, si.id);
+
+    // No afecta a otro perfil.
+    expect((await reconoce(ana.id!)).intention.message, 'Sí');
+
+    // El historial conserva el mensaje y el pictograma de ese momento.
+    await app.interactions.recordGesture(luisId,
+        gesture: despues.gesture,
+        intention: despues.intention,
+        pictogram: despues.pictogram);
+    final registros =
+        await SqliteInteractionRepository(app.db).recordsForProfile(luisId);
+    expect(registros.map((r) => r.message).toSet(), {'Sí', 'Estoy bien'});
+    final viejo = registros.firstWhere((r) => r.message == 'Sí');
+    expect(viejo.interaction.pictogramId, antes.pictogram.id);
+
+    // Un registro anterior a este cambio muestra el mensaje del pictograma.
+    await app.db.db.update('interaccion', {'detalle': 'Gesto reconocido'},
+        where: 'id_interaccion = ?', whereArgs: [viejo.interaction.id]);
+    final legado = (await SqliteInteractionRepository(app.db)
+            .recordsForProfile(luisId))
+        .firstWhere((r) => r.interaction.id == viejo.interaction.id);
+    expect(legado.message, legado.pictogramMessage);
+
+    // Guardar el perfil con una copia anterior no borra lo elegido.
+    final perfil = (await app.profiles.byId(luisId))!;
+    await SqliteChildProfileRepository(app.db).update(perfil.copyWith(
+        preferences: const CommunicationPreferences(pictogramColumns: 2)));
+    expect((await reconoce(luisId)).intention.message, 'Estoy bien');
+
+    // Mensaje vacío: se rechaza. Volver al original: limpia lo guardado.
+    expect(service.saveMessage(luisId, si, message: '   ', pictogramId: null),
+        throwsA(isA<DomainException>()));
+    await service.resetMessage(luisId, si);
+    expect((await reconoce(luisId)).intention.message, 'Sí');
+    expect(
+        (await app.profiles.byId(luisId))!.preferences.gestureCustomizations,
+        isEmpty);
+    await app.db.close();
+  });
+
+  test('Eliminar un pictograma asignado: el gesto vuelve al original', () async {
+    final (app, _, luisId) = await withProfile();
+    final recognizer = TestModeGestureRecognitionService();
+    final service = GestureService(recognizer, SqliteGestureRepository(app.db),
+        SqlitePictogramRepository(app.db));
+    final si = (await service.catalog())
+        .firstWhere((g) => g.recognitionClass == 'gesto_si');
+    final original = (await service.messageFor(luisId, si))!.originalPictogram!;
+    final cat = (await app.communication.categories()).first.id;
+    final mio = await app.communication.addCustom(
+        profileId: luisId,
+        name: 'Mi foto',
+        message: 'Estoy bien',
+        categoryId: cat,
+        image: Uint8List.fromList([1, 2, 3]));
+    await service.saveMessage(luisId, si,
+        message: 'Estoy bien', pictogramId: mio.id);
+    expect(await app.communication.gesturesUsing(luisId, mio.id!), ['Sí']);
+
+    expect(await app.communication.deleteCustom(mio.id!), isTrue);
+
+    final ahora = (await service.messageFor(luisId, si))!;
+    expect(ahora.pictogram!.id, original.id);
+    expect(ahora.message, 'Estoy bien'); // el mensaje se conserva
     await app.db.close();
   });
 

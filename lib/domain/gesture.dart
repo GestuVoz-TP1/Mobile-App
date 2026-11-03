@@ -7,6 +7,8 @@
 /// -------------------------------------------------------------------------
 library;
 
+import 'child.dart' show GestureCustomization;
+
 export 'shared.dart' show DomainException;
 
 /// GESTO
@@ -71,4 +73,11 @@ abstract interface class GestureRepository {
   Future<CommunicativeIntention?> intentionForGesture(int gestureId);
   Future<CommunicativeIntention?> intentionById(int id);
   Future<void> updateInstructions(int gestureId, String? instructions);
+
+  /// Lo que el tutor eligio para el gesto en este perfil; null si nada.
+  Future<GestureCustomization?> customizationFor(int profileId, int gestureId);
+
+  /// [customization] vacia o null vuelve al mensaje y pictograma originales.
+  Future<void> setCustomization(
+      int profileId, int gestureId, GestureCustomization? customization);
 }

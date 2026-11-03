@@ -212,17 +212,16 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
   @override
   Future<void> update(ChildProfile profile) async {
     await _db.db.transaction((txn) async {
-      // Las categorias por perfil solo cambian con setProfileCategory; asi no
-      // se pierden si esta copia del perfil se cargo antes de ese cambio.
-      final stored = await txn.query('perfil_nino',
+      // Categorias y gestos personalizados tienen sus propios metodos; asi no
+      // se pierden si esta copia del perfil se cargo antes de esos cambios.
+      final rows = await txn.query('perfil_nino',
           columns: ['preferencias_comunicacion'],
           where: 'id_perfil = ?',
           whereArgs: [profile.id]);
-      final categories = stored.isEmpty
-          ? const <int, int>{}
+      final stored = rows.isEmpty
+          ? const CommunicationPreferences()
           : CommunicationPreferences.fromJson(
-                  stored.first['preferencias_comunicacion'] as String?)
-              .pictogramCategories;
+              rows.first['preferencias_comunicacion'] as String?);
       await txn.update(
         'nino',
         {
@@ -238,7 +237,10 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         {
           'nivel_apoyo': profile.supportLevel,
           'preferencias_comunicacion': profile.preferences
-              .copyWith(pictogramCategories: categories)
+              .copyWith(
+                pictogramCategories: stored.pictogramCategories,
+                gestureCustomizations: stored.gestureCustomizations,
+              )
               .toJson(),
           'estado_perfil': profile.state,
         },
@@ -527,6 +529,25 @@ class SqlitePictogramRepository implements PictogramRepository {
   }
 
   @override
+  Future<List<String>> gesturesUsing(int profileId, int pictogramId) async {
+    final rows = await _db.db.query('perfil_nino',
+        columns: ['preferencias_comunicacion'],
+        where: 'id_perfil = ?',
+        whereArgs: [profileId]);
+    if (rows.isEmpty) return const [];
+    final prefs = CommunicationPreferences.fromJson(
+        rows.first['preferencias_comunicacion'] as String?);
+    final names = <String>[];
+    for (final e in prefs.gestureCustomizations.entries) {
+      if (e.value.pictogramId != pictogramId) continue;
+      final g = await _db.db.query('gesto',
+          columns: ['nombre'], where: 'id_gesto = ?', whereArgs: [e.key]);
+      if (g.isNotEmpty) names.add(g.first['nombre'] as String);
+    }
+    return names;
+  }
+
+  @override
   Future<bool> deleteCustomIfUnused(int pictogramId) async {
     return _db.db.transaction((txn) async {
       final used = Sqflite.firstIntValue(await txn.rawQuery(
@@ -544,6 +565,34 @@ class SqlitePictogramRepository implements PictogramRepository {
               whereArgs: [pictogramId]))
           .map((r) => r['id_perfil'] as int)
           .toList();
+      // Los gestos que lo usaban vuelven a su pictograma original; el mensaje
+      // que eligio el tutor se conserva.
+      final owners = await txn.query('perfil_nino',
+          columns: ['id_perfil', 'preferencias_comunicacion']);
+      for (final owner in owners) {
+        final prefs = CommunicationPreferences.fromJson(
+            owner['preferencias_comunicacion'] as String?);
+        if (!prefs.gestureCustomizations.values
+            .any((c) => c.pictogramId == pictogramId)) {
+          continue;
+        }
+        final kept = {
+          for (final e in prefs.gestureCustomizations.entries)
+            if (e.value.pictogramId != pictogramId)
+              e.key: e.value
+            else if (e.value.message != null)
+              e.key: GestureCustomization(message: e.value.message),
+        };
+        await txn.update(
+            'perfil_nino',
+            {
+              'preferencias_comunicacion':
+                  prefs.copyWith(gestureCustomizations: kept).toJson(),
+            },
+            where: 'id_perfil = ?',
+            whereArgs: [owner['id_perfil']]);
+        await SyncLog.touchProfile(txn, owner['id_perfil'] as int);
+      }
       await txn.delete('pictograma',
           where: 'id_pictograma = ?', whereArgs: [pictogramId]);
       await SyncLog.delete(txn, SyncEntity.pictogram,
@@ -614,6 +663,48 @@ class SqliteGestureRepository implements GestureRepository {
     final rows = await _db.db.query('intencion_comunicativa',
         where: 'id_intencion = ?', whereArgs: [id], limit: 1);
     return rows.isEmpty ? null : _mapIntention(rows.first);
+  }
+
+  @override
+  Future<GestureCustomization?> customizationFor(
+      int profileId, int gestureId) async {
+    final rows = await _db.db.query('perfil_nino',
+        columns: ['preferencias_comunicacion'],
+        where: 'id_perfil = ?',
+        whereArgs: [profileId]);
+    if (rows.isEmpty) return null;
+    return CommunicationPreferences.fromJson(
+            rows.first['preferencias_comunicacion'] as String?)
+        .gestureCustomizations[gestureId];
+  }
+
+  @override
+  Future<void> setCustomization(
+      int profileId, int gestureId, GestureCustomization? customization) async {
+    await _db.db.transaction((txn) async {
+      final rows = await txn.query('perfil_nino',
+          columns: ['preferencias_comunicacion'],
+          where: 'id_perfil = ?',
+          whereArgs: [profileId]);
+      if (rows.isEmpty) return;
+      final prefs = CommunicationPreferences.fromJson(
+          rows.first['preferencias_comunicacion'] as String?);
+      final all = {...prefs.gestureCustomizations};
+      if (customization == null || customization.isEmpty) {
+        all.remove(gestureId);
+      } else {
+        all[gestureId] = customization;
+      }
+      await txn.update(
+          'perfil_nino',
+          {
+            'preferencias_comunicacion':
+                prefs.copyWith(gestureCustomizations: all).toJson(),
+          },
+          where: 'id_perfil = ?',
+          whereArgs: [profileId]);
+      await SyncLog.touchProfile(txn, profileId);
+    });
   }
 
   @override

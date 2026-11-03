@@ -8,6 +8,7 @@ import 'package:gestuvoz/application/interaction_service.dart';
 import 'package:gestuvoz/application/privacy_service.dart';
 import 'package:gestuvoz/application/profile_service.dart';
 import 'package:gestuvoz/domain/auth.dart';
+import 'package:gestuvoz/domain/child.dart';
 import 'package:gestuvoz/infrastructure/persistence/database.dart';
 import 'package:gestuvoz/infrastructure/persistence/repositories.dart';
 import 'package:gestuvoz/infrastructure/remote/api_client.dart';
@@ -151,6 +152,25 @@ void main() {
         env.backend.bodyOf('PUT perfiles/$uuid')['preferencias_de_comunicacion'];
     expect(prefs['categorias_pictogramas'],
         {'base-${item.pictogram.id}': otra});
+
+    // El mensaje y el pictograma por gesto también se envían.
+    await SqliteGestureRepository(env.db).setCustomization(
+        profileId,
+        2,
+        GestureCustomization(
+            message: 'Tengo sed', pictogramId: item.pictogram.id));
+    await env.sync.pushPending();
+    final body = env.backend.requests.lastWhere(
+        (r) => r.method == 'PUT' && r.url.path.endsWith('perfiles/$uuid'));
+    expect(
+        (jsonDecode(body.body) as Map)['preferencias_de_comunicacion']
+            ['gestos_personalizados'],
+        {
+          'gesto-2': {
+            'mensaje': 'Tengo sed',
+            'id_pictograma': 'base-${item.pictogram.id}',
+          }
+        });
     await env.sync.stop();
     await env.db.close();
   });
@@ -256,6 +276,9 @@ void main() {
               'columnas_tablero': 2,
               'alto_contraste': false,
               'categorias_pictogramas': {'base-5': 3},
+              'gestos_personalizados': {
+                'gesto-2': {'mensaje': 'Tengo sed', 'id_pictograma': 'base-5'},
+              },
               'pictogramas': [
                 {'id_pictograma': 'p-osito', 'orden': 1},
                 {'id_pictograma': 'base-5', 'orden': 2},
@@ -293,6 +316,10 @@ void main() {
     expect(profiles.single.preferences.enabledGestureIds, [2]);
     final board = await env.communication.buildBoard(profiles.single.id!);
     expect(board.pictogramCount, 2);
+    // El mensaje y el pictograma del gesto llegan al telefono nuevo.
+    final custom = profiles.single.preferences.gestureCustomizations[2]!;
+    expect(custom.message, 'Tengo sed');
+    expect(custom.pictogramId, 5);
     // HU014: el pictograma inicial llega en la categoria elegida en el perfil.
     expect(board.byCategory[3]!.where((p) => p.id == 5), hasLength(1));
     expect((await env.privacy.forProfile(profiles.single.id!))!

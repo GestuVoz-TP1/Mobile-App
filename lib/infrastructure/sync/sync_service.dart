@@ -280,6 +280,22 @@ class SyncService {
       FROM perfil_pictograma pp
       JOIN pictograma pi ON pi.id_pictograma = pp.id_pictograma
       WHERE pp.id_perfil = ? ORDER BY pp.orden''', [profileId]);
+    final customGestures = <String, Map<String, Object?>>{};
+    for (final e in prefs.gestureCustomizations.entries) {
+      final picto = e.value.pictogramId;
+      final row = picto == null
+          ? const <Map<String, Object?>>[]
+          : await _sql.query('pictograma',
+              columns: ['uuid'],
+              where: 'id_pictograma = ?',
+              whereArgs: [picto]);
+      customGestures[RemoteIds.gesture(e.key)] = {
+        'mensaje': e.value.message,
+        'id_pictograma': row.isEmpty
+            ? null
+            : (row.first['uuid'] as String?) ?? RemoteIds.basePictogram(picto!),
+      };
+    }
     await _api.put('perfiles/${p['uuid']}', {
       'nivel_apoyo': p['nivel_apoyo'],
       'preferencias_de_comunicacion': {
@@ -292,6 +308,7 @@ class SyncService {
           for (final e in prefs.pictogramCategories.entries)
             RemoteIds.basePictogram(e.key): e.value,
         },
+        'gestos_personalizados': customGestures,
         'pictogramas': [
           for (final v in visible)
             {
@@ -595,6 +612,25 @@ class SyncService {
         where: 'uuid = ?', whereArgs: [p['id_perfil']]);
     // Si el servidor aun no maneja este dato, se conserva el del telefono.
     final remoteCategories = remotePrefs['categorias_pictogramas'] as Map?;
+    final remoteGestures = remotePrefs['gestos_personalizados'] as Map?;
+    final localPrefs = rows.isEmpty
+        ? const CommunicationPreferences()
+        : CommunicationPreferences.fromJson(
+            rows.first['preferencias_comunicacion'] as String?);
+    final gestureCustomizations = remoteGestures == null
+        ? localPrefs.gestureCustomizations
+        : <int, GestureCustomization>{};
+    for (final e in (remoteGestures ?? const {}).entries) {
+      final gestureId = RemoteIds.localFromKey('${e.key}', 'gesto');
+      if (gestureId == null) continue;
+      final value = e.value as Map;
+      final remotePicto = value['id_pictograma'] as String?;
+      gestureCustomizations[gestureId] = GestureCustomization(
+        message: value['mensaje'] as String?,
+        pictogramId:
+            remotePicto == null ? null : await _localPictogram(txn, remotePicto),
+      );
+    }
     final prefs = CommunicationPreferences(
       gesturesEnabled: remotePrefs['gestos_activados'] as bool? ?? false,
       enabledGestureIds: [
@@ -609,11 +645,8 @@ class SyncService {
                 if (RemoteIds.localFromKey('${e.key}', 'base') != null)
                   RemoteIds.localFromKey('${e.key}', 'base')!: e.value as int,
             }
-          : rows.isEmpty
-              ? const {}
-              : CommunicationPreferences.fromJson(
-                      rows.first['preferencias_comunicacion'] as String?)
-                  .pictogramCategories,
+          : localPrefs.pictogramCategories,
+      gestureCustomizations: gestureCustomizations,
     );
     final ninoValues = {
       'nombre': nino['nombre'],

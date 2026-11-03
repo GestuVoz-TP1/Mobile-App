@@ -363,7 +363,7 @@ class _RecordTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(record.pictogramMessage,
+                      Text(record.message,
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w700)),
                       Row(
@@ -467,7 +467,7 @@ Future<void> showInteractionDetail(
                   ),
                   const SizedBox(width: Insets.md),
                   Expanded(
-                    child: Text('“${r.pictogramMessage}”',
+                    child: Text('“${r.message}”',
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.w800)),
                   ),
@@ -481,7 +481,6 @@ Future<void> showInteractionDetail(
               if (r.gestureName != null) _DetailRow('Gesto', r.gestureName!),
               if (r.intentionName != null)
                 _DetailRow('Intención', r.intentionName!),
-              if (i.detail != null) _DetailRow('Detalle', i.detail!),
               const SizedBox(height: Insets.md),
               FilledButton(
                 onPressed: () => Navigator.pop(ctx),

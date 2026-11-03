@@ -111,7 +111,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
     final changed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _CustomEditor(
+      builder: (_) => PictogramEditorSheet(
         existing: existing,
         categories: _categories,
         profileId: _profileId,
@@ -361,24 +361,29 @@ class _PictogramRow extends StatelessWidget {
 /// - Personalizado: imagen + mensaje obligatorios, nombre y categoria
 ///   (HU012 / HU013 / HU014). Cancelar conserva la version anterior.
 /// - Semilla: solo se puede cambiar su categoria (HU014).
-class _CustomEditor extends StatefulWidget {
+class PictogramEditorSheet extends StatefulWidget {
   final Pictogram? existing;
   final List<PictogramCategory> categories;
   final int profileId;
   final CommunicationService service;
 
-  const _CustomEditor({
+  /// Recibe el pictograma recien creado.
+  final ValueChanged<Pictogram>? onCreated;
+
+  const PictogramEditorSheet({
+    super.key,
     required this.existing,
     required this.categories,
     required this.profileId,
     required this.service,
+    this.onCreated,
   });
 
   @override
-  State<_CustomEditor> createState() => _CustomEditorState();
+  State<PictogramEditorSheet> createState() => _PictogramEditorSheetState();
 }
 
-class _CustomEditorState extends State<_CustomEditor> {
+class _PictogramEditorSheetState extends State<PictogramEditorSheet> {
   late final TextEditingController _name;
   late final TextEditingController _message;
   final _picker = ImagePicker();
@@ -431,13 +436,14 @@ class _CustomEditorState extends State<_CustomEditor> {
     });
     try {
       if (_existing == null) {
-        await widget.service.addCustom(
+        final created = await widget.service.addCustom(
           profileId: widget.profileId,
           name: _name.text,
           message: _message.text,
           categoryId: _categoryId,
           image: _imageBytes,
         );
+        widget.onCreated?.call(created);
       } else {
         await widget.service.updatePictogram(
           _existing!,
@@ -459,10 +465,16 @@ class _CustomEditorState extends State<_CustomEditor> {
   }
 
   Future<void> _delete() async {
+    final gestures = await widget.service
+        .gesturesUsing(widget.profileId, _existing!.id!);
+    if (!mounted) return;
     final ok = await confirmDialog(
       context,
       title: 'Eliminar pictograma',
-      message: 'Se eliminará “${_existing!.name}” del catálogo.',
+      message: gestures.isEmpty
+          ? 'Se eliminará “${_existing!.name}” del catálogo.'
+          : 'Este pictograma está asignado a: ${gestures.join(', ')}. Si lo '
+              'eliminas, volverá a usarse el pictograma original del gesto.',
       confirmLabel: 'Eliminar',
       destructive: true,
     );

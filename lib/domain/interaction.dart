@@ -69,6 +69,22 @@ class InteractionRecord {
     this.gestureName,
     this.intentionName,
   });
+
+  /// Antes de guardar la frase, `detalle` tenia estos textos fijos.
+  static const _legacyDetails = {
+    'Gesto reconocido',
+    'Pictograma seleccionado en el tablero',
+  };
+
+  /// Lo que se comunico: la frase guardada en ese momento, para que cambiar
+  /// despues un mensaje no reescriba el historial. Los registros anteriores
+  /// no la tienen y muestran el mensaje actual del pictograma.
+  String get message {
+    final detail = interaction.detail;
+    return detail == null || _legacyDetails.contains(detail)
+        ? pictogramMessage
+        : detail;
+  }
 }
 
 abstract interface class InteractionRepository {

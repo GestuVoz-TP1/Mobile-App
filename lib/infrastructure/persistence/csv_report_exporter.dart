@@ -28,7 +28,7 @@ class CsvReportExporter implements ReportExporter {
         '${two(d.hour)}:${two(d.minute)}',
         r.interaction.source.label,
         cell(r.pictogramName),
-        cell(r.pictogramMessage),
+        cell(r.message),
         cell(r.gestureName ?? ''),
         cell(r.intentionName ?? ''),
       ].join(','));
