@@ -1,15 +1,5 @@
 import '../../domain/ml.dart';
 
-/// Reconocedor que se usa mientras no existe el modelo entrenado.
-///
-/// NO es un modelo de Machine Learning y NO analiza las imagenes. Recibe la
-/// secuencia capturada por la camara (para ejercitar el flujo real) y devuelve
-/// el resultado elegido en el modo de prueba, que solo aparece en
-/// compilaciones de desarrollo. Sin un resultado elegido devuelve
-/// "no reconocido". Nunca informa porcentajes de confianza.
-///
-/// Se reemplazara por [TensorFlowLiteGestureRecognitionService] cuando exista
-/// el modelo MobileNet + LSTM entrenado.
 class TestModeGestureRecognitionService
     implements GestureRecognitionService, TestOutcomeRecognition {
   bool _loaded = false;

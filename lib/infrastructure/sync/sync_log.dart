@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
-/// Entidades que se sincronizan con el backend.
 abstract final class SyncEntity {
   static const profile = 'perfil';
   static const consent = 'consentimiento';
@@ -16,11 +15,6 @@ abstract final class SyncOp {
   static const delete = 'delete';
 }
 
-/// Registro local de cambios por sincronizar (tabla `sync_pendiente`).
-///
-/// Los repositorios lo llaman dentro de la misma transaccion en que guardan
-/// el dato, para que ningun cambio quede sin su aviso de sincronizacion. La
-/// carga util se arma al enviar, con el estado mas reciente del dato.
 abstract final class SyncLog {
   static const _uuid = Uuid();
   static final _changes = StreamController<void>.broadcast();
@@ -29,12 +23,9 @@ abstract final class SyncLog {
 
   static String now() => DateTime.now().toUtc().toIso8601String();
 
-  /// Avisa que hay cambios locales por enviar (el servicio de sincronizacion
-  /// los envia unos segundos despues).
   static Stream<void> get changes => _changes.stream;
   static void notify() => _changes.add(null);
 
-  /// Marca un dato como pendiente de enviar (crear o actualizar).
   static Future<void> upsert(
       DatabaseExecutor ex, String entity, int localId) async {
     await ex.rawInsert('''
@@ -44,8 +35,6 @@ abstract final class SyncLog {
     notify();
   }
 
-  /// Marca un dato como pendiente de eliminar en el backend. Descarta los
-  /// envios pendientes de ese mismo dato.
   static Future<void> delete(
     DatabaseExecutor ex,
     String entity, {
@@ -63,8 +52,6 @@ abstract final class SyncLog {
     notify();
   }
 
-  /// Registra que el perfil cambio (datos del nino o preferencias, incluidos
-  /// los pictogramas visibles y su orden).
   static Future<void> touchProfile(DatabaseExecutor ex, int profileId) async {
     await ex.update('perfil_nino', {'actualizado_en': now()},
         where: 'id_perfil = ?', whereArgs: [profileId]);

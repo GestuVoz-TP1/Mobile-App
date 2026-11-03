@@ -4,9 +4,6 @@ import '../../domain/communication.dart';
 import '../theme.dart';
 import 'picto_visual.dart';
 
-/// Celda de pictograma: tarjeta pastel del color de su categoria, imagen
-/// grande, texto corto, "rebote" al pulsar y borde + icono cuando esta
-/// seleccionada (el estado no depende solo del color).
 class PictoTile extends StatefulWidget {
   final Pictogram pictogram;
   final Color background;

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Fondo limpio de la app (fondo claro sin decoraciones que distraigan). En
-/// alto contraste usa blanco.
 class SoftBackground extends StatelessWidget {
   final Widget child;
   const SoftBackground({super.key, required this.child});

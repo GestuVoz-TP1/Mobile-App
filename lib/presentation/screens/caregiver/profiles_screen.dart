@@ -8,10 +8,6 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'child_edit_screen.dart';
 
-/// Perfiles infantiles del tutor: seleccionar, cambiar, crear y eliminar.
-///
-/// [isRoot] = se muestra como primera pantalla cuando aun no hay un perfil
-/// activo.
 class ProfilesScreen extends StatelessWidget {
   final bool isRoot;
   const ProfilesScreen({super.key, this.isRoot = false});

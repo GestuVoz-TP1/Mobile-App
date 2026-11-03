@@ -6,8 +6,6 @@ import '../../../domain/gesture.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Gestos que reconoce la aplicacion con su referencia visual, intencion y
-/// mensaje. Las instrucciones son editables.
 class GesturesCatalogScreen extends StatefulWidget {
   const GesturesCatalogScreen({super.key});
 
@@ -147,8 +145,6 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
   }
 }
 
-/// Hoja para editar las instrucciones de un gesto. Es duena de su
-/// controlador y lo libera al cerrarse. Devuelve el texto o null si se cancela.
 class _InstructionsSheet extends StatefulWidget {
   final Gesture gesture;
   const _InstructionsSheet({required this.gesture});

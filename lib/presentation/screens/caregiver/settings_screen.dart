@@ -12,7 +12,6 @@ import 'profiles_screen.dart';
 import 'vocabulary_screen.dart';
 import 'voice_settings_screen.dart';
 
-/// Pestana "Ajustes" del panel del tutor.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 

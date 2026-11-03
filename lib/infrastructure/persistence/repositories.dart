@@ -12,10 +12,6 @@ import '../../domain/settings.dart';
 import '../sync/sync_log.dart';
 import 'database.dart';
 
-/// Implementaciones de los puertos de repositorio sobre SQLite
-/// ([GestuVozDatabase]). Adaptadores de infraestructura: el dominio no sabe
-/// que existe SQLite.
-
 String _date(DateTime d) => d.toIso8601String();
 
 bool _sameBytes(Uint8List? a, Uint8List? b) {
@@ -28,7 +24,6 @@ bool _sameBytes(Uint8List? a, Uint8List? b) {
 }
 DateTime _parse(Object? v) => DateTime.parse(v as String);
 
-// PADRE_TUTOR
 class SqliteAuthRepository implements AuthRepository {
   SqliteAuthRepository(this._db);
   final GestuVozDatabase _db;
@@ -89,8 +84,6 @@ class SqliteAuthRepository implements AuthRepository {
         'contrasena_sal': password.salt,
         'firebase_uid': uid,
       };
-      // Primero por UID; si no, por correo (cuenta local previa del mismo
-      // tutor en este telefono).
       var rows = await txn.query('padre_tutor',
           columns: ['id_tutor'], where: 'firebase_uid = ?', whereArgs: [uid]);
       if (rows.isEmpty) {
@@ -116,7 +109,6 @@ class SqliteAuthRepository implements AuthRepository {
   }
 }
 
-// NINO + PERFIL_NINO
 class SqliteChildProfileRepository implements ChildProfileRepository {
   SqliteChildProfileRepository(this._db);
   final GestuVozDatabase _db;
@@ -174,7 +166,6 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         'uuid': SyncLog.newId(),
         'actualizado_en': now,
       });
-      // CONFIGURACION_VOZ inicial (1:1 con el perfil).
       const v = VoiceConfiguration(profileId: 0);
       await txn.insert('configuracion_voz', {
         'idioma': v.language,
@@ -185,8 +176,6 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         'id_perfil': profileId,
         'actualizado_en': now,
       });
-      // El perfil nuevo inicia con los pictogramas semilla seleccionados
-      // (los semilla son los que no tienen identificador remoto).
       await txn.rawInsert('''
         INSERT INTO perfil_pictograma (id_pictograma, id_perfil, orden)
         SELECT id_pictograma, ?, id_pictograma FROM pictograma
@@ -241,8 +230,6 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
           whereArgs: [profileId]);
       if (rows.isEmpty) return;
       final childId = rows.first['id_nino'] as int;
-      // Tambien se elimina en la nube. Se descartan los envios pendientes de
-      // este perfil.
       for (final entity in [SyncEntity.consent, SyncEntity.voice]) {
         await txn.delete('sync_pendiente',
             where: 'entidad = ? AND id_local = ?',
@@ -250,7 +237,6 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
       }
       await SyncLog.delete(txn, SyncEntity.profile,
           localId: profileId, remoteId: rows.first['uuid'] as String?);
-      // Pictogramas personalizados que usaba este perfil.
       final customs = (await txn.rawQuery('''
         SELECT p.id_pictograma FROM pictograma p
         LEFT JOIN perfil_pictograma pp
@@ -260,20 +246,16 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
               [profileId, profileId]))
           .map((r) => r['id_pictograma'] as int)
           .toList();
-      // Datos exclusivos del perfil. Interacciones, configuracion de voz,
-      // consentimiento y seleccion de pictogramas se borran por cascada.
       await txn.delete('interaccion',
           where: 'id_perfil = ?', whereArgs: [profileId]);
       await txn.delete('perfil_nino',
           where: 'id_perfil = ?', whereArgs: [profileId]);
       await txn.delete('nino', where: 'id_nino = ?', whereArgs: [childId]);
-      // Los que siguen en uso por otros perfiles pasan a uno de ellos.
       await txn.rawUpdate('''
         UPDATE pictograma SET id_perfil_propietario = (
           SELECT MIN(pp.id_perfil) FROM perfil_pictograma pp
           WHERE pp.id_pictograma = pictograma.id_pictograma)
         WHERE id_perfil_propietario = ?''', [profileId]);
-      // Personalizados: solo si ningun otro perfil los usa ni los referencia.
       for (final id in customs) {
         final inUse = Sqflite.firstIntValue(await txn.rawQuery('''
           SELECT (SELECT COUNT(*) FROM perfil_pictograma WHERE id_pictograma = ?)
@@ -295,7 +277,6 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
   }
 }
 
-// CATEGORIA + PICTOGRAMA + PERFIL_PICTOGRAMA
 class SqlitePictogramRepository implements PictogramRepository {
   SqlitePictogramRepository(this._db);
   final GestuVozDatabase _db;
@@ -414,13 +395,11 @@ class SqlitePictogramRepository implements PictogramRepository {
           'mensaje': p.message,
           'id_categoria': p.categoryId,
           if (p.isCustom) 'actualizado_en': SyncLog.now(),
-          // La imagen nueva se vuelve a subir a Cloud Storage.
           if (imageChanged) 'imagen_ref': null,
         },
         where: 'id_pictograma = ?',
         whereArgs: [p.id],
       );
-      // Los pictogramas iniciales son un catalogo fijo y no se sincronizan.
       if (p.isCustom) await SyncLog.upsert(txn, SyncEntity.pictogram, p.id!);
     });
   }
@@ -485,7 +464,6 @@ class SqlitePictogramRepository implements PictogramRepository {
   }
 }
 
-// GESTO + INTENCION_COMUNICATIVA
 class SqliteGestureRepository implements GestureRepository {
   SqliteGestureRepository(this._db);
   final GestuVozDatabase _db;
@@ -552,7 +530,6 @@ class SqliteGestureRepository implements GestureRepository {
   }
 }
 
-// INTERACCION
 class SqliteInteractionRepository implements InteractionRepository {
   SqliteInteractionRepository(this._db);
   final GestuVozDatabase _db;
@@ -596,7 +573,6 @@ class SqliteInteractionRepository implements InteractionRepository {
       'id_pictograma': i.pictogramId,
       'id_gesto': i.gestureId,
       'id_perfil': i.profileId,
-      // Se envia al backend en lote; queda pendiente si no hay conexion.
       'uuid': SyncLog.newId(),
       'sincronizada': 0,
     });
@@ -642,7 +618,6 @@ class SqliteInteractionRepository implements InteractionRepository {
   }
 }
 
-// CONFIGURACION_VOZ
 class SqliteVoiceConfigurationRepository
     implements VoiceConfigurationRepository {
   SqliteVoiceConfigurationRepository(this._db);
@@ -686,7 +661,6 @@ class SqliteVoiceConfigurationRepository
   }
 }
 
-// CONSENTIMIENTO
 class SqliteConsentRepository implements ConsentRepository {
   SqliteConsentRepository(this._db);
   final GestuVozDatabase _db;

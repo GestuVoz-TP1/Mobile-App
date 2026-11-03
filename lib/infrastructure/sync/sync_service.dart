@@ -9,8 +9,6 @@ import '../persistence/database.dart';
 import '../remote/api_client.dart';
 import 'sync_log.dart';
 
-/// Identificadores remotos de los catalogos fijos (iguales en todos los
-/// telefonos). Los datos que crea el usuario usan su UUID.
 abstract final class RemoteIds {
   static String basePictogram(int id) => 'base-$id';
   static String gesture(int id) => 'gesto-$id';
@@ -22,8 +20,6 @@ abstract final class RemoteIds {
           : null;
 }
 
-/// Estado visible de la sincronizacion (informa si no hay conexion con los
-/// servicios remotos).
 class SyncStatus {
   const SyncStatus({
     this.online = true,
@@ -51,15 +47,6 @@ class SyncStatus {
       );
 }
 
-/// Sincroniza SQLite (telefono) con el backend Django.
-///
-/// - Subida: envia la cola `sync_pendiente` y las interacciones pendientes.
-/// - Descarga: al iniciar sesion trae perfiles, ninos, consentimiento, voz y
-///   pictogramas personalizados del tutor.
-/// - Gana el ultimo cambio (`actualizado_en`).
-/// - Sin consentimiento vigente no se envia nada de ese perfil; el
-///   consentimiento en si siempre se envia.
-/// - Sin conexion los cambios quedan pendientes y se envian al reconectar.
 class SyncService {
   SyncService(this._db, this._api, {Connectivity? connectivity})
       : _connectivity = connectivity;
@@ -80,9 +67,6 @@ class SyncService {
 
   Database get _sql => _db.db;
 
-  // Ciclo de vida
-
-  /// Comienza a sincronizar para el tutor con sesion iniciada.
   void start(int tutorId) {
     _tutorId = tutorId;
     _changesSub ??= SyncLog.changes.listen((_) => requestSync());
@@ -94,7 +78,6 @@ class SyncService {
     requestSync(delay: Duration.zero);
   }
 
-  /// Detiene la sincronizacion (cierre de sesion).
   Future<void> stop() async {
     _tutorId = null;
     _debounce?.cancel();
@@ -106,14 +89,11 @@ class SyncService {
     _netSub = null;
   }
 
-  /// Programa un envio (agrupa cambios seguidos).
   void requestSync({Duration delay = const Duration(seconds: 2)}) {
     if (_tutorId == null) return;
     _debounce?.cancel();
     _debounce = Timer(delay, () => unawaited(pushPending()));
   }
-
-  // Subida
 
   static const _order = {
     '${SyncEntity.consent}:${SyncOp.upsert}': 1,
@@ -124,7 +104,6 @@ class SyncService {
     '${SyncEntity.profile}:${SyncOp.delete}': 6,
   };
 
-  /// Envia todo lo pendiente. Devuelve false si no hubo conexion.
   Future<bool> pushPending() async {
     if (_tutorId == null) return false;
     if (_running) {
@@ -136,7 +115,6 @@ class SyncService {
     var online = true;
     var needsPull = false;
     try {
-      // Copia: sqflite devuelve listas de solo lectura.
       final items = [...await _sql.query('sync_pendiente')];
       items.sort((a, b) {
         final pa = _order['${a['entidad']}:${a['operacion']}'] ?? 9;
@@ -218,7 +196,7 @@ class SyncService {
   }
 
   _Outcome _fromError(ApiException e, String op) {
-    if (e.status == 401) return _Outcome.offline; // sesion invalida: reintentar
+    if (e.status == 401) return _Outcome.offline;
     if (e.status == 403 && e.code == 'consentimiento_requerido') {
       return _Outcome.keep;
     }
@@ -328,8 +306,6 @@ class SyncService {
         where: 'id_pictograma = ? AND uuid IS NOT NULL',
         whereArgs: [pictogramId]);
     if (rows.isEmpty) return _Outcome.discard;
-    // El backend exige un perfil con consentimiento vigente: primero los que
-    // usan el pictograma, luego cualquiera del tutor.
     final candidates = await _sql.rawQuery('''
       SELECT pn.uuid FROM perfil_nino pn
       JOIN consentimiento c ON c.id_perfil = pn.id_perfil
@@ -355,7 +331,6 @@ class SyncService {
     return _Outcome.done;
   }
 
-  /// Sube la imagen nueva a Cloud Storage, o la quita si se elimino.
   Future<void> _pushImage(int pictogramId, Map<String, Object?> p,
       Map<String, String> query) async {
     final image = p['imagen'] as Uint8List?;
@@ -367,7 +342,6 @@ class SyncService {
         final r = await _api.putBytes(path, image, query: query);
         newRef = (r as Map<String, dynamic>)['referencia_imagen'] as String?;
       } on ApiException catch (e) {
-        // Imagen no valida o muy grande: queda solo en el telefono.
         if (e.status != 400 && e.status != 413) rethrow;
         debugPrint('Imagen no enviada: $e');
         return;
@@ -382,7 +356,6 @@ class SyncService {
         whereArgs: [pictogramId, image]);
   }
 
-  /// Interacciones registradas sin conexion, por lotes de hasta 500.
   Future<bool> _pushInteractions() async {
     final profiles = await _sql.rawQuery('''
       SELECT DISTINCT i.id_perfil, pn.uuid FROM interaccion i
@@ -421,8 +394,6 @@ class SyncService {
           return false;
         } on ApiException catch (e) {
           if (e.status == 401 || e.status >= 500) return false;
-          // Perfil aun no creado en el backend o sin consentimiento: se
-          // reintenta en la proxima sincronizacion.
           break;
         }
         final ids = rows.map((r) => r['id_interaccion']).toList();
@@ -435,10 +406,6 @@ class SyncService {
     return true;
   }
 
-  // Descarga
-
-  /// Trae del backend los datos del tutor (nuevo telefono o reinstalacion).
-  /// No sobrescribe cambios locales mas recientes ni pendientes de envio.
   Future<void> pullAll(int tutorId) async {
     final pictograms = await _api.get('pictogramas') as List<dynamic>;
     final profiles = await _api.get('perfiles') as List<dynamic>;
@@ -463,8 +430,6 @@ class SyncService {
         if (consent != null) await _mergeConsent(txn, profileId, consent);
         if (voice != null) await _mergeVoice(txn, profileId, voice);
       }
-      // Pictogramas descargados: a cargo del perfil que los usa o, si
-      // ninguno los usa, del primer perfil del tutor.
       await txn.rawUpdate('''
         UPDATE pictograma SET id_perfil_propietario = COALESCE(
           (SELECT MIN(pp.id_perfil) FROM perfil_pictograma pp
@@ -478,7 +443,6 @@ class SyncService {
     await _downloadImages(downloads);
   }
 
-  /// Descarga las imagenes de Cloud Storage que el telefono no tiene.
   Future<void> _downloadImages(List<(int, String)> downloads) async {
     for (final (localId, ref) in downloads) {
       final rows = await _sql.query('pictograma',
@@ -515,7 +479,6 @@ class SyncService {
               whereArgs: [entity, SyncOp.upsert, localId]))
           .isNotEmpty;
 
-  /// Devuelve la imagen que falta descargar (id local, referencia), si hay.
   Future<(int, String)?> _mergePictogram(
       Transaction txn, Map<String, dynamic> p) async {
     final rows = await txn.query('pictograma',
@@ -531,7 +494,6 @@ class SyncService {
       final id = await txn.insert('pictograma', {
         ...values,
         'uuid': p['id_pictograma'],
-        // La imagen se descarga despues; mientras tanto se muestra un icono.
         'imagen': null,
         'imagen_ref': null,
         'emoji': '🖼️',
@@ -549,7 +511,6 @@ class SyncService {
     final localRef = local['imagen_ref'] as String?;
     if (remoteRef != null && remoteRef != localRef) return (localId, remoteRef);
     if (remoteRef == null && localRef != null) {
-      // La imagen se quito desde otro telefono.
       await txn.update(
           'pictograma',
           {
@@ -635,7 +596,6 @@ class SyncService {
       await txn.update('perfil_nino', profileValues,
           where: 'id_perfil = ?', whereArgs: [profileId]);
     }
-    // Pictogramas visibles y su orden.
     await txn.delete('perfil_pictograma',
         where: 'id_perfil = ?', whereArgs: [profileId]);
     for (final v in (remotePrefs['pictogramas'] as List? ?? const [])
@@ -696,18 +656,13 @@ class SyncService {
 }
 
 enum _Outcome {
-  /// Enviado correctamente.
   done,
 
-  /// Se mantiene en la cola (p. ej. sin consentimiento).
   keep,
 
-  /// Sin conexion: se detiene y se reintenta luego.
   offline,
 
-  /// El backend tiene una version mas reciente: se descarga.
   conflict,
 
-  /// Rechazado por el backend por datos invalidos: se descarta.
   discard,
 }

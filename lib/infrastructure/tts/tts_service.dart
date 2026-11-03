@@ -3,15 +3,12 @@ import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../domain/settings.dart';
 
-/// Voz disponible en el motor TTS del dispositivo.
 class TtsVoice {
   final String name;
   final String locale;
   const TtsVoice(this.name, this.locale);
 }
 
-/// Sintesis de voz (soporte auditivo de los pictogramas). Degrada de forma
-/// segura si el dispositivo no tiene motor TTS en espanol.
 class TtsService {
   final FlutterTts _tts = FlutterTts();
   bool _ready = false;
@@ -30,7 +27,6 @@ class TtsService {
     }
   }
 
-  /// Aplica la CONFIGURACION_VOZ del perfil activo.
   Future<void> configure(VoiceConfiguration c) async {
     if (!_ready) return;
     try {
@@ -45,7 +41,6 @@ class TtsService {
     }
   }
 
-  /// Voces en espanol del dispositivo.
   Future<List<TtsVoice>> spanishVoices() async {
     if (!_ready) return const [];
     try {
@@ -68,7 +63,6 @@ class TtsService {
     }
   }
 
-  /// Reproduce [text]. Devuelve false si no se pudo reproducir.
   Future<bool> speak(String text) async {
     if (!_ready || text.trim().isEmpty) return false;
     try {

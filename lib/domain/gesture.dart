@@ -1,25 +1,17 @@
-/// GESTO 1:1 INTENCION_COMUNICATIVA 1:1 PICTOGRAMA. El modelo de reconocimiento
-/// devuelve una `clase_reconocimiento`; con ella se obtiene el gesto, su
-/// intencion y el pictograma que la representa.
 library;
 
 export 'shared.dart' show DomainException;
 
-/// GESTO
 class Gesture {
   final int id;
   final String name;
   final String? description;
 
-  /// Referencia visual del gesto (emoji o ruta de recurso).
   final String? visualRepresentation;
 
-  /// Etiqueta que devuelve el modelo de reconocimiento.
   final String recognitionClass;
   final String availability;
 
-  /// Indicaciones para realizar el gesto. Editables por el tutor; pueden
-  /// estar vacias.
   final String? instructions;
 
   const Gesture({
@@ -35,7 +27,6 @@ class Gesture {
   bool get hasInstructions =>
       instructions != null && instructions!.trim().isNotEmpty;
 
-  /// Pasos de las instrucciones (una linea por paso).
   List<String> get instructionSteps => (instructions ?? '')
       .split('\n')
       .map((s) => s.trim())
@@ -43,7 +34,6 @@ class Gesture {
       .toList();
 }
 
-/// INTENCION_COMUNICATIVA
 class CommunicativeIntention {
   final int id;
   final String name;

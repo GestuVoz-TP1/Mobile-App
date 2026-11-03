@@ -8,7 +8,6 @@ import '../../widgets/brand.dart';
 import '../../widgets/common.dart';
 import '../caregiver/profiles_screen.dart';
 
-/// Tras iniciar sesion: panel del nino o panel del padre/tutor.
 class ModeSelectionScreen extends StatelessWidget {
   const ModeSelectionScreen({super.key});
 

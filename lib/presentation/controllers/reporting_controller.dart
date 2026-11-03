@@ -7,7 +7,6 @@ import '../../domain/interaction.dart';
 import '../../domain/reporting.dart';
 import 'session_controller.dart';
 
-/// Periodos del filtro de historial.
 enum HistoryPeriod { today, week, all, custom }
 
 extension HistoryPeriodX on HistoryPeriod {
@@ -19,7 +18,6 @@ extension HistoryPeriodX on HistoryPeriod {
       };
 }
 
-/// Estado de la pantalla "Historial y reportes".
 class ReportingController extends ChangeNotifier {
   ReportingController(this._service, this._session);
   final ReportingService _service;
@@ -37,7 +35,6 @@ class ReportingController extends ChangeNotifier {
   UsageSummary? _summary;
   UsageSummary? get summary => _summary;
 
-  /// Actividad de los ultimos 7 dias.
   UsageSummary? _week;
   UsageSummary? get week => _week;
 
@@ -82,7 +79,7 @@ class ReportingController extends ChangeNotifier {
           await _service.historySummary(profile.id!, from: from, to: to);
       _week = await _service.weekSummary(profile.id!);
     } on DomainException catch (e) {
-      _error = e.message; // p. ej. sin conexion con el servidor
+      _error = e.message;
     } catch (_) {
       _error = 'No se pudo cargar el historial.';
     } finally {

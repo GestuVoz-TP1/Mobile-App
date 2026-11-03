@@ -197,7 +197,6 @@ void main() {
       ),
     ));
 
-    // Cancelar
     await tester.tap(find.text('abrir'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancelar'));
@@ -205,7 +204,6 @@ void main() {
     expect(result, isNull);
     expect(tester.takeException(), isNull);
 
-    // Contraseña incorrecta: el diálogo sigue abierto con el error
     await tester.tap(find.text('abrir'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'mala');
@@ -213,7 +211,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Contraseña incorrecta'), findsOneWidget);
 
-    // Contraseña correcta: se cierra y devuelve el valor
     await tester.enterText(find.byType(TextField), 'correcta');
     await tester.tap(find.text('Salir'));
     await tester.pumpAndSettle();

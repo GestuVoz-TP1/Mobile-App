@@ -5,9 +5,6 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
-/// URL del backend. Se define al compilar:
-///   flutter run --dart-define=API_BASE_URL=http://192.168.1.50:8000/api/v1/
-/// Por defecto apunta al servidor local visto desde el emulador de Android.
 abstract final class ApiConfig {
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -15,8 +12,6 @@ abstract final class ApiConfig {
   );
 }
 
-/// No hay conexion con el backend (sin internet, servidor apagado o tiempo
-/// de espera agotado). Los cambios quedan pendientes en el telefono.
 class OfflineException implements Exception {
   const OfflineException([this.cause]);
   final Object? cause;
@@ -24,14 +19,12 @@ class OfflineException implements Exception {
   String toString() => 'Sin conexión con el servidor';
 }
 
-/// El backend respondio con un error.
 class ApiException implements Exception {
   ApiException(this.status, this.code, this.body);
   final int status;
   final String code;
   final Map<String, dynamic>? body;
 
-  /// Version guardada en el backend cuando gana el ultimo cambio (409).
   Map<String, dynamic>? get current => body?['actual'] as Map<String, dynamic>?;
 
   @override
@@ -40,7 +33,6 @@ class ApiException implements Exception {
 
 typedef TokenProvider = Future<String?> Function({bool forceRefresh});
 
-/// Cliente HTTPS/REST del backend Django.
 class ApiClient {
   ApiClient({
     required TokenProvider token,
@@ -55,7 +47,6 @@ class ApiClient {
   final Uri _base;
   final http.Client _http;
 
-  /// Amplio: el plan gratuito de Render tarda en despertar el servicio.
   final Duration timeout;
 
   Future<dynamic> get(String path, {Map<String, String>? query}) =>
@@ -69,12 +60,10 @@ class ApiClient {
 
   Future<dynamic> delete(String path) => _send('DELETE', path);
 
-  /// Envia un archivo (bytes) en el cuerpo, por ejemplo una imagen.
   Future<dynamic> putBytes(String path, Uint8List bytes,
           {Map<String, String>? query}) =>
       _send('PUT', path, body: bytes, query: query);
 
-  /// Descarga un archivo; null si no existe (404).
   Future<Uint8List?> getBytes(String path) async {
     try {
       return await _send('GET', path, raw: true) as Uint8List;
@@ -93,7 +82,6 @@ class ApiClient {
   }) async {
     var response = await _request(method, path, body, query, refresh: false);
     if (response.statusCode == 401) {
-      // Token vencido: se renueva una vez.
       response = await _request(method, path, body, query, refresh: true);
     }
     if (raw && response.statusCode >= 200 && response.statusCode < 300) {

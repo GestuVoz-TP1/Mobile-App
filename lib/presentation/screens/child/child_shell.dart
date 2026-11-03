@@ -9,8 +9,6 @@ import '../../widgets/common.dart';
 import '../capture/interaction_capture_screen.dart';
 import 'communicator_screen.dart';
 
-/// Experiencia del nino: Inicio · Hablar · Gestos. Interfaz sencilla, sin
-/// opciones administrativas. Para salir se pide la contrasena del tutor.
 class ChildShell extends StatefulWidget {
   const ChildShell({super.key});
 
@@ -50,8 +48,7 @@ class _ChildShellState extends State<ChildShell> {
           ? null
           : 'Contraseña incorrecta',
     );
-    if (password == null || !mounted) return; // cancelado
-    // Se cambia de pantalla cuando el dialogo ya termino de cerrarse.
+    if (password == null || !mounted) return;
     await Future<void>.delayed(const Duration(milliseconds: 300));
     if (mounted) await session.leaveChildMode();
   }
@@ -115,7 +112,6 @@ class _ChildShellState extends State<ChildShell> {
   }
 }
 
-/// Inicio del nino: saludo, "Usar mis gestos" y "Mis palabras".
 class _ChildHome extends StatelessWidget {
   final ValueChanged<int> onCategory;
   final VoidCallback? onGestures;

@@ -3,7 +3,6 @@ import '../domain/communication.dart';
 import '../domain/gesture.dart';
 import '../domain/ml.dart';
 
-/// Resultado completo de un intento: gesto -> intencion -> pictograma.
 class GestureOutcome {
   final Gesture gesture;
   final CommunicativeIntention intention;
@@ -18,10 +17,6 @@ class GestureOutcome {
   });
 }
 
-/// Comunicacion mediante gestos.
-///
-/// Camara -> [GestureRecognitionService] -> GESTO -> INTENCION_COMUNICATIVA
-/// -> PICTOGRAMA. La voz y el registro los coordina el controlador.
 class GestureService {
   GestureService(this._recognizer, this._gestures, this._pictos);
   final GestureRecognitionService _recognizer;
@@ -30,21 +25,17 @@ class GestureService {
 
   RecognizerInfo get recognizerInfo => _recognizer.info;
 
-  /// true si el reconocedor actual admite el modo de prueba (no es un
-  /// modelo entrenado).
   bool get supportsTestOutcome => _recognizer is TestOutcomeRecognition;
 
   Future<void> ensureLoaded() async {
     if (!_recognizer.isLoaded) await _recognizer.load();
   }
 
-  /// Catalogo de gestos definidos.
   Future<List<Gesture>> catalog() => _gestures.all();
 
   Future<CommunicativeIntention?> intentionFor(Gesture g) =>
       _gestures.intentionForGesture(g.id);
 
-  /// Gestos habilitados para el perfil y disponibles.
   Future<List<Gesture>> enabledFor(ChildProfile profile) async {
     final ids = profile.preferences.enabledGestureIds.toSet();
     return (await _gestures.all())
@@ -53,11 +44,9 @@ class GestureService {
         .toList();
   }
 
-  /// Instrucciones editables por el tutor.
   Future<void> updateInstructions(int gestureId, String? text) =>
       _gestures.updateInstructions(gestureId, text);
 
-  /// Modo de prueba: fija el resultado del siguiente intento.
   void setTestOutcome(String? recognitionClass) {
     final r = _recognizer;
     if (r is TestOutcomeRecognition) {
@@ -65,10 +54,8 @@ class GestureService {
     }
   }
 
-  /// true si el reconocedor analiza los fotogramas a medida que llegan.
   bool get supportsContinuous => _recognizer is ContinuousGestureRecognition;
 
-  /// Reconocimiento continuo: empieza una busqueda nueva.
   void resetContinuous() {
     final r = _recognizer;
     if (r is ContinuousGestureRecognition) {
@@ -76,8 +63,6 @@ class GestureService {
     }
   }
 
-  /// Reconocimiento continuo: agrega un fotograma y devuelve el resultado
-  /// cuando se reconoce un gesto con mensaje; null mientras siga buscando.
   Future<GestureOutcome?> addFrame(
     GestureFrame frame,
     List<Gesture> enabled,
@@ -93,8 +78,6 @@ class GestureService {
     return _outcomeFor(result, enabled);
   }
 
-  /// Devuelve null si el gesto no se reconoce o no puede asociarse a un mensaje
-  /// (no se comunica un mensaje incorrecto).
   Future<GestureOutcome?> recognize(
     GestureSequence sequence,
     List<Gesture> enabled,

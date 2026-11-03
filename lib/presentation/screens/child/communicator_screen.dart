@@ -11,7 +11,6 @@ import '../../widgets/common.dart';
 import '../../widgets/picto_tile.dart';
 import '../../widgets/picto_visual.dart';
 
-/// Tablero del nino: categorias -> pictogramas del perfil -> "Mi mensaje" con UN pictograma, voz y "Limpiar".
 class CommunicatorScreen extends StatefulWidget {
   final int? initialCategoryId;
   final VoidCallback onBack;
@@ -42,7 +41,6 @@ class _CommunicatorScreenState extends State<CommunicatorScreen> {
         board.categories.any((c) => c.id == _categoryId)) {
       return _categoryId;
     }
-    // Primera categoria con pictogramas.
     for (final c in board.categories) {
       if ((board.byCategory[c.id] ?? const []).isNotEmpty) return c.id;
     }
@@ -204,7 +202,6 @@ class _CategoryBar extends StatelessWidget {
   }
 }
 
-/// "MI MENSAJE": un solo pictograma/mensaje a la vez.
 class _MyMessage extends StatelessWidget {
   final CommunicationController controller;
   const _MyMessage({required this.controller});

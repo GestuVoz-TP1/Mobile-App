@@ -1,7 +1,6 @@
 import '../domain/interaction.dart';
 import '../domain/reporting.dart';
 
-/// Historial calculado con los datos del telefono (SQLite).
 class LocalHistorySource implements HistorySource {
   LocalHistorySource(this._interactions,
       {ReportBuilder builder = const ReportBuilder()})
@@ -25,10 +24,6 @@ class LocalHistorySource implements HistorySource {
       _interactions.recordById(record.interaction.id!);
 }
 
-/// Servicio del historial.
-///
-/// [history] define el origen del historial y los reportes: el backend o, por
-/// defecto, los datos locales.
 class ReportingService {
   ReportingService(
     this._interactions,
@@ -44,7 +39,6 @@ class ReportingService {
   final ReportBuilder _builder;
   final HistorySource _history;
 
-  /// Interacciones guardadas en el telefono (resumen rapido del inicio).
   Future<List<InteractionRecord>> records(int profileId,
           {DateTime? from, DateTime? to}) =>
       _interactions.recordsForProfile(profileId, from: from, to: to);
@@ -52,17 +46,14 @@ class ReportingService {
   UsageSummary summarize(List<InteractionRecord> records) =>
       _builder.build(records);
 
-  /// Historial del perfil en el periodo [from, to).
   Future<List<InteractionRecord>> historyRecords(int profileId,
           {DateTime? from, DateTime? to}) =>
       _history.records(profileId, from: from, to: to);
 
-  /// Resumen del periodo.
   Future<UsageSummary> historySummary(int profileId,
           {DateTime? from, DateTime? to}) =>
       _history.summary(profileId, from: from, to: to);
 
-  /// Actividad de los ultimos 7 dias.
   Future<UsageSummary> weekSummary(int profileId) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

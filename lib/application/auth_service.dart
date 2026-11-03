@@ -1,6 +1,5 @@
 import '../domain/auth.dart';
 
-/// Datos del registro: solo correo y contrasena.
 class RegistrationForm {
   final String email;
   final String password;
@@ -13,20 +12,12 @@ class RegistrationForm {
   });
 }
 
-/// Servicio del contexto de autenticacion.
-///
-/// Con [RemoteAuthGateway] (Firebase Authentication) el registro, el inicio
-/// de sesion y la recuperacion de contrasena se hacen en Firebase; el tutor
-/// local se vincula a su UID y guarda el hash de la contrasena para
-/// verificarla sin conexion (salir del modo nino). Sin gateway, el acceso es
-/// solo local.
 class AuthService {
   AuthService(this._accounts, this._hasher, [this._remote]);
   final AuthRepository _accounts;
   final SecretHasher _hasher;
   final RemoteAuthGateway? _remote;
 
-  /// Longitud minima de contrasena.
   static const minPasswordLength = 8;
 
   static const _invalidLogin = DomainException(
@@ -35,7 +26,7 @@ class AuthService {
   bool get usesRemoteAuth => _remote != null;
 
   Email _validateRegistration(RegistrationForm f) {
-    final email = Email(f.email); // valida formato
+    final email = Email(f.email);
     if (f.password.isEmpty) {
       throw const DomainException('Ingresa una contraseña.');
     }
@@ -66,8 +57,6 @@ class AuthService {
     ));
   }
 
-  /// Ante cualquier error devuelve el mismo mensaje para no revelar si el
-  /// correo existe.
   Future<Account> login(String email, String password) async {
     final Email parsed;
     try {
@@ -90,8 +79,6 @@ class AuthService {
     return acc;
   }
 
-  /// Sesion guardada de Firebase (funciona sin conexion): permite que el
-  /// nino siga usando la app aunque se reinicie sin internet.
   Future<Account?> restoreSession() async {
     final user = _remote?.currentUser;
     if (user == null) return null;
@@ -100,9 +87,8 @@ class AuthService {
 
   Future<void> logout() async => _remote?.signOut();
 
-  /// Envia el correo de restablecimiento (requiere Firebase).
   Future<void> sendPasswordReset(String email) async {
-    final parsed = Email(email); // valida el formato
+    final parsed = Email(email);
     final remote = _remote;
     if (remote == null) {
       throw const DomainException(
@@ -111,8 +97,6 @@ class AuthService {
     await remote.sendPasswordReset(parsed.value);
   }
 
-  /// Salir del modo nino pide la contrasena del tutor (verificacion local,
-  /// sin conexion).
   Future<bool> verifyPassword(int tutorId, String password) async {
     final acc = await _accounts.findById(tutorId);
     return acc != null && _hasher.verify(password, acc.password);

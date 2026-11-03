@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Avatar con las iniciales del nino (el modelo no tiene avatar).
 class InitialsAvatar extends StatelessWidget {
   final String initials;
   final double radius;
@@ -25,7 +24,6 @@ class InitialsAvatar extends StatelessWidget {
 
 enum NoteKind { info, success, warning, error }
 
-/// Mensaje de estado con icono + texto (nunca solo color).
 class StatusNote extends StatelessWidget {
   final NoteKind kind;
   final String text;
@@ -83,7 +81,6 @@ class StatusNote extends StatelessWidget {
   }
 }
 
-/// Etiqueta corta (p. ej. "PERSONAL" en pictogramas personalizados).
 class TagBadge extends StatelessWidget {
   final String text;
   const TagBadge(this.text, {super.key});
@@ -105,7 +102,6 @@ class TagBadge extends StatelessWidget {
       );
 }
 
-/// Titulo de seccion.
 class SectionTitle extends StatelessWidget {
   final String text;
   final Widget? trailing;
@@ -127,7 +123,6 @@ class SectionTitle extends StatelessWidget {
       );
 }
 
-/// Fila de menu del tutor.
 class MenuRow extends StatelessWidget {
   final IconData icon;
   final Color iconBg;
@@ -191,7 +186,6 @@ class MenuRow extends StatelessWidget {
       );
 }
 
-/// Pantalla de "algo salio mal" con reintento.
 class RetryPanel extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -224,7 +218,6 @@ class RetryPanel extends StatelessWidget {
       );
 }
 
-/// Estado vacio con icono y texto.
 class EmptyState extends StatelessWidget {
   final String emoji;
   final String title;
@@ -269,7 +262,6 @@ class EmptyState extends StatelessWidget {
       );
 }
 
-/// Confirmacion generica (confirmar / cancelar).
 Future<bool> confirmDialog(
   BuildContext context, {
   required String title,
@@ -299,12 +291,6 @@ Future<bool> confirmDialog(
   return ok ?? false;
 }
 
-/// Dialogo con un campo de texto. El dialogo es dueno de su controlador y lo
-/// libera en su propio dispose (cuando termina la animacion de cierre), lo
-/// que evita usar un controlador ya destruido.
-///
-/// [validate] devuelve un mensaje de error o null si el valor es correcto.
-/// Devuelve el texto aceptado, o null si se cancela.
 Future<String?> showTextInputDialog(
   BuildContext context, {
   required String title,

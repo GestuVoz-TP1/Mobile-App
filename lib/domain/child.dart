@@ -1,6 +1,3 @@
-/// NINO guarda los datos basicos del nino y PERFIL_NINO su configuracion
-/// comunicativa. Relacion NINO 1:1 PERFIL_NINO y PADRE_TUTOR 1:N PERFIL_NINO Un
-/// tutor administra uno o varios perfiles.
 library;
 
 import 'dart:convert';
@@ -9,7 +6,6 @@ import 'shared.dart';
 
 export 'shared.dart' show DomainException;
 
-/// NINO
 class Child {
   final int? id;
   final String name;
@@ -23,7 +19,6 @@ class Child {
     this.gender,
   });
 
-  /// Valida los datos obligatorios.
   factory Child.create({
     int? id,
     required String name,
@@ -51,7 +46,6 @@ class Child {
 
   int get age => ageAt(birthDate, DateTime.now());
 
-  /// Iniciales para el avatar (el modelo no contempla avatar).
   String get initials {
     final parts =
         name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
@@ -75,29 +69,21 @@ extension on String {
   String get characters1 => isEmpty ? '' : String.fromCharCode(runes.first);
 }
 
-/// Opciones de genero ofrecidas en el formulario (NINO.genero es opcional).
 const kGenderOptions = ['Femenino', 'Masculino', 'Prefiero no indicar'];
 
-/// Opciones de tamano de pictogramas: columnas del tablero. Menos columnas =
-/// pictogramas mas grandes.
 const kPictogramSizeOptions = <int, String>{
   2: 'Grande',
   3: 'Mediano',
   4: 'Pequeño',
 };
 
-/// Contenido de PERFIL_NINO.preferencias_comunicacion (JSON).
 class CommunicationPreferences {
-  /// Modalidad de gestos activada para el perfil.
   final bool gesturesEnabled;
 
-  /// Gestos habilitados para el perfil (ids de GESTO).
   final List<int> enabledGestureIds;
 
-  /// Columnas del tablero (2 grande, 3 mediano, 4 pequeno).
   final int pictogramColumns;
 
-  /// Alto contraste.
   final bool highContrast;
 
   const CommunicationPreferences({
@@ -151,12 +137,10 @@ class CommunicationPreferences {
   }
 }
 
-/// PERFIL_NINO.estado_perfil
 abstract final class ProfileState {
   static const active = 'activo';
 }
 
-/// PERFIL_NINO
 class ChildProfile {
   final int? id;
   final int tutorId;
@@ -194,11 +178,8 @@ abstract interface class ChildProfileRepository {
   Future<List<ChildProfile>> forTutor(int tutorId);
   Future<ChildProfile?> byId(int profileId);
 
-  /// Crea NINO + PERFIL_NINO + datos iniciales del perfil (configuracion de
-  /// voz y pictogramas semilla seleccionados) en una sola transaccion.
   Future<ChildProfile> create(ChildProfile profile);
   Future<void> update(ChildProfile profile);
 
-  /// Borra en cascada los datos exclusivos del perfil.
   Future<void> delete(int profileId);
 }

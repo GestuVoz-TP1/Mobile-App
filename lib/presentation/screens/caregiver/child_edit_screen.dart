@@ -7,10 +7,7 @@ import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Formulario del perfil infantil: crear o actualizar. Campos del modelo: NINO
-/// (nombre, fecha de nacimiento, genero) y PERFIL_NINO (nivel de apoyo).
 class ChildEditScreen extends StatefulWidget {
-  /// null = crear un perfil nuevo.
   final ChildProfile? profile;
   const ChildEditScreen({super.key, this.profile});
 
@@ -72,7 +69,6 @@ class _ChildEditScreenState extends State<ChildEditScreen> {
     try {
       if (_isNew) {
         await session.createProfile(form);
-        // Vuelve a la raiz: el router muestra el consentimiento.
         if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
       } else {
         await session.updateProfile(widget.profile!, form);

@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import '../../domain/interaction.dart';
 import '../../domain/reporting.dart';
 
-/// Exporta el historial de interacciones a un CSV (abrible en Excel).
 class CsvReportExporter implements ReportExporter {
   @override
   Future<String> exportCsv(

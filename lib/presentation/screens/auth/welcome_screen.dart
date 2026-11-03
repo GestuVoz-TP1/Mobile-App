@@ -5,7 +5,6 @@ import '../../widgets/brand.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
-/// Bienvenida: iniciar sesion o crear cuenta de padre o tutor.
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 

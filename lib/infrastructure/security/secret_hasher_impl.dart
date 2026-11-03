@@ -5,10 +5,6 @@ import 'package:crypto/crypto.dart';
 
 import '../../domain/auth.dart';
 
-/// Implementacion de [SecretHasher] con SHA-256 + salt aleatorio.
-///
-/// Suficiente para el prototipo local (no viaja por red). En produccion se
-/// usaria Argon2/bcrypt/scrypt.
 class Sha256SecretHasher implements SecretHasher {
   final Random _rnd = Random.secure();
 

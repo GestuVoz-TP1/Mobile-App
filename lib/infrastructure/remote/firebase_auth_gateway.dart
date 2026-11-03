@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../domain/auth.dart';
 
-/// Adaptador de Firebase Authentication.
 class FirebaseAuthGateway implements RemoteAuthGateway {
   FirebaseAuthGateway([FirebaseAuth? auth])
       : _auth = auth ?? FirebaseAuth.instance;
@@ -47,7 +46,6 @@ class FirebaseAuthGateway implements RemoteAuthGateway {
       await _auth.setLanguageCode('es');
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      // Por seguridad no se revela si el correo esta registrado.
       if (e.code == 'user-not-found') return;
       throw DomainException(_message(e));
     }
@@ -69,7 +67,6 @@ class FirebaseAuthGateway implements RemoteAuthGateway {
       'user-disabled' => 'Esta cuenta está deshabilitada.',
       _ => registering
           ? 'No se pudo crear la cuenta. Inténtalo de nuevo.'
-          // Mismo mensaje para no revelar si el correo existe.
           : 'No se pudo iniciar sesión. Revisa tu correo y contraseña.',
     };
   }

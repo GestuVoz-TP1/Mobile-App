@@ -11,10 +11,7 @@ import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 import '../../widgets/usage_bar_chart.dart';
 
-/// Historial y reportes. Consulta descriptiva del uso; no realiza evaluaciones
-/// ni interpretaciones clinicas.
 class HistoryScreen extends StatefulWidget {
-  /// true = se muestra dentro de la pestana "Reportes" del panel del tutor.
   final bool embedded;
   const HistoryScreen({super.key, this.embedded = false});
 
@@ -243,7 +240,6 @@ class _WeekCard extends StatelessWidget {
       );
 }
 
-/// Mensajes y recursos mas usados en el periodo.
 class _FrequentCard extends StatelessWidget {
   final UsageSummary summary;
   const _FrequentCard({required this.summary});
@@ -388,7 +384,6 @@ class _RecordTile extends StatelessWidget {
   }
 }
 
-/// Detalle de una interaccion (fecha, hora y recurso utilizado).
 Future<void> showInteractionDetail(
     BuildContext context, InteractionRecord record) {
   return showModalBottomSheet<void>(

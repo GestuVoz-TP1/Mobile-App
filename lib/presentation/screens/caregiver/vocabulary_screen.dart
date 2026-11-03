@@ -13,8 +13,6 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 
-/// Gestion de pictogramas del perfil activo: consultar y buscar, crear, editar,
-/// cambiar de categoria, mostrar u ocultar en el tablero y ordenar.
 class VocabularyScreen extends StatefulWidget {
   const VocabularyScreen({super.key});
 
@@ -93,7 +91,6 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   }
 
   Future<void> _reorder(int oldIndex, int newIndex) async {
-    // onReorderItem ya entrega newIndex ajustado.
     final list = [..._items];
     list.insert(newIndex, list.removeAt(oldIndex));
     setState(() => _items = list);
@@ -355,9 +352,6 @@ class _PictogramRow extends StatelessWidget {
   }
 }
 
-/// Editor de pictogramas (existente, adaptado).
-/// - Personalizado: imagen + mensaje obligatorios, nombre y categoria. Cancelar conserva la version anterior.
-/// - Semilla: solo se puede cambiar su categoria.
 class _CustomEditor extends StatefulWidget {
   final Pictogram? existing;
   final List<PictogramCategory> categories;
