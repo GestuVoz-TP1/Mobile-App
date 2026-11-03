@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../application/profile_service.dart';
 import '../../../domain/child.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
@@ -89,7 +90,7 @@ class _ChildEditScreenState extends State<ChildEditScreen> {
           title: Text(_isNew ? 'Nuevo perfil' : 'Editar perfil')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(Insets.lg),
+          padding: contentPadding(context, base: Insets.lg),
           children: [
             TextField(
               controller: _name,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -9,7 +10,18 @@ import 'screens/caregiver/consent_screen.dart';
 import 'screens/caregiver/profiles_screen.dart';
 import 'screens/child/child_shell.dart';
 import 'screens/session/mode_selection_screen.dart';
+import 'responsive.dart';
 import 'theme.dart';
+
+bool _orientationApplied = false;
+
+void _applyOrientation(Size size) {
+  if (_orientationApplied || size.isEmpty) return;
+  _orientationApplied = true;
+  if (!isTabletSize(size)) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+}
 
 class GestuVozApp extends StatelessWidget {
   const GestuVozApp({super.key});
@@ -27,6 +39,7 @@ class GestuVozApp extends StatelessWidget {
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, child) {
         final mq = MediaQuery.of(context);
+        _applyOrientation(mq.size);
         final scale = (mq.textScaler.scale(1) * 1.04).clamp(1.0, 1.5);
         return MediaQuery(
           data: mq.copyWith(textScaler: TextScaler.linear(scale)),

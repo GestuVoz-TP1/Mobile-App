@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../domain/settings.dart';
 import '../../../infrastructure/tts/tts_service.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
@@ -99,7 +100,7 @@ class _VoiceSettingsScreenState extends State<VoiceSettingsScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(Insets.md),
+          padding: contentPadding(context),
           children: [
             if (!session.ttsAvailable) ...[
               const StatusNote(

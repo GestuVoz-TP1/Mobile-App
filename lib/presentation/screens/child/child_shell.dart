@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../category_style.dart';
 import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../capture/interaction_capture_screen.dart';
@@ -234,7 +235,7 @@ class _ChildHome extends StatelessWidget {
             )
           else
             GridView.count(
-              crossAxisCount: 2,
+              crossAxisCount: boardColumns(MediaQuery.sizeOf(context).width, 2),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: Insets.md,

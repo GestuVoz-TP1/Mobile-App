@@ -6,6 +6,7 @@ import '../../../domain/communication.dart';
 import '../../category_style.dart';
 import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_tile.dart';
@@ -70,6 +71,7 @@ class _CommunicatorScreenState extends State<CommunicatorScreen> {
       final catId = _effectiveCategory(board);
       final pictos = board.byCategory[catId] ?? const <Pictogram>[];
       final style = CategoryStyle.of(catId ?? 0);
+      final columns = boardColumns(MediaQuery.sizeOf(context).width, cols);
       content = Column(
         children: [
           _CategoryBar(
@@ -87,7 +89,7 @@ class _CommunicatorScreenState extends State<CommunicatorScreen> {
                     padding: const EdgeInsets.fromLTRB(
                         Insets.md, Insets.sm, Insets.md, Insets.md),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: cols,
+                      crossAxisCount: columns,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
                       childAspectRatio: cols == 2 ? 1.0 : 0.92,

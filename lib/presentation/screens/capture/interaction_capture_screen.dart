@@ -6,6 +6,7 @@ import '../../../domain/gesture.dart';
 import '../../../infrastructure/camera/camera_service.dart';
 import '../../category_style.dart';
 import '../../controllers/capture_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
@@ -81,7 +82,7 @@ class _Preparation extends StatelessWidget {
         children: [
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(Insets.md),
+              padding: contentPadding(context),
               children: [
                 const Text('Usar mis gestos',
                     style:
@@ -180,6 +181,8 @@ class _CameraStage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cam = controller.camera;
     final phase = controller.phase;
+    final landscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
     final status = switch (phase) {
       GesturePhase.startingCamera => 'Encendiendo la cámara…',
       GesturePhase.capturing => 'Buscando tus manos…',
@@ -203,10 +206,14 @@ class _CameraStage extends StatelessWidget {
                         FittedBox(
                           fit: BoxFit.cover,
                           child: SizedBox(
-                            width: cam.controller!.value.previewSize?.height ??
-                                300,
-                            height: cam.controller!.value.previewSize?.width ??
-                                400,
+                            width: landscape
+                                ? cam.controller!.value.previewSize?.width ?? 400
+                                : cam.controller!.value.previewSize?.height ??
+                                    300,
+                            height: landscape
+                                ? cam.controller!.value.previewSize?.height ?? 300
+                                : cam.controller!.value.previewSize?.width ??
+                                    400,
                             child: CameraPreview(cam.controller!),
                           ),
                         )
@@ -279,6 +286,19 @@ class _CameraStage extends StatelessWidget {
                               color: Colors.white),
                         ),
                       ),
+                      if (controller.canSwitchCamera)
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: IconButton.filled(
+                            style: IconButton.styleFrom(
+                                backgroundColor: Colors.black38),
+                            tooltip: 'Cambiar de cámara',
+                            onPressed: controller.switchCamera,
+                            icon: const Icon(Icons.cameraswitch_rounded,
+                                color: Colors.white),
+                          ),
+                        ),
                     ],
                   ),
                 ),

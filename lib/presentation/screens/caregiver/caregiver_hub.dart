@@ -6,6 +6,7 @@ import '../../../application/reporting_service.dart';
 import '../../../domain/child.dart';
 import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/sync_status_banner.dart';
@@ -71,7 +72,7 @@ class _HomeTab extends StatelessWidget {
     final profile = session.activeProfile!;
     final firstName = profile.child.name.split(' ').first;
     return ListView(
-      padding: const EdgeInsets.all(Insets.md),
+      padding: contentPadding(context),
       children: [
         Text(session.account?.email.value ?? '',
             style: TextStyle(

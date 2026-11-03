@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gestuvoz/domain/ml.dart';
+import 'package:gestuvoz/infrastructure/camera/camera_service.dart';
 import 'package:gestuvoz/infrastructure/ml/hand_detection.dart';
 
 GestureFrame _frame(int w, int h, int rotation, int Function(int x, int y) v) {
@@ -51,6 +52,21 @@ void main() {
       }
     });
   }
+
+  test('El giro combina el sensor con la rotación de la pantalla', () {
+    int front(int s, int d) => cameraRotation(
+        sensorOrientation: s, displayRotation: d, front: true);
+    int back(int s, int d) => cameraRotation(
+        sensorOrientation: s, displayRotation: d, front: false);
+    expect(front(270, 0), 270);
+    expect(back(90, 0), 90);
+    expect(front(270, 90), 0);
+    expect(front(270, 270), 180);
+    expect(back(90, 90), 0);
+    expect(back(90, 270), 180);
+    expect(front(0, 180), 180);
+    expect(back(0, 90), 270);
+  });
 
   test('Convierte YUV a RGB (rojo puro)', () {
     final f = GestureFrame(

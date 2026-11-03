@@ -175,6 +175,7 @@ ThemeData buildTheme({required bool highContrast}) {
           borderRadius: BorderRadius.circular(Radii.card)),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
+      constraints: BoxConstraints(maxWidth: 720),
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(26)),

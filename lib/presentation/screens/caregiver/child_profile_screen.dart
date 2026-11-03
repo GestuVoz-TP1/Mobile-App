@@ -8,6 +8,7 @@ import '../../../domain/gesture.dart';
 import '../../../infrastructure/camera/camera_service.dart';
 import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'child_edit_screen.dart';
@@ -133,7 +134,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
         ),
         body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.all(Insets.md),
+            padding: contentPadding(context),
             children: [
               Card(
                 child: Padding(

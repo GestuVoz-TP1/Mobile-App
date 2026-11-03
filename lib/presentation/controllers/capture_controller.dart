@@ -67,6 +67,10 @@ class CaptureController extends ChangeNotifier {
 
   static const searchTimeout = Duration(seconds: 10);
   Completer<GestureOutcome?>? _search;
+  Future<void>? _running;
+
+  bool get canSwitchCamera =>
+      camera.hasMultiple && _phase == GesturePhase.capturing;
 
   void _stopSearch() {
     final s = _search;
@@ -125,7 +129,7 @@ class CaptureController extends ChangeNotifier {
     _outcome = null;
     _set(GesturePhase.capturing);
     if (!testModeAvailable && _gestures.supportsContinuous) {
-      return _captureContinuous();
+      return _running = _captureContinuous();
     }
     final seq = await camera.captureSequence();
     if (_disposed || _phase != GesturePhase.capturing) return;
@@ -135,6 +139,20 @@ class CaptureController extends ChangeNotifier {
     } else {
       await _recognize();
     }
+  }
+
+  Future<void> switchCamera() async {
+    if (!canSwitchCamera) return;
+    _set(GesturePhase.startingCamera);
+    _stopSearch();
+    await _running;
+    await camera.switchCamera();
+    if (_disposed || _phase != GesturePhase.startingCamera) return;
+    if (!camera.isReady) {
+      _set(GesturePhase.cameraIssue);
+      return;
+    }
+    await _capture();
   }
 
   Future<void> chooseTestResult(String? recognitionClass) async {

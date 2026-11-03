@@ -9,6 +9,7 @@ import '../../../domain/communication.dart';
 import '../../category_style.dart';
 import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
@@ -144,7 +145,8 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         ],
       ),
       body: SafeArea(
-        child: _error != null
+        child: ContentWidth(
+          child: _error != null
             ? RetryPanel(message: _error!, onRetry: _load)
             : Column(
                 children: [
@@ -232,6 +234,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   ),
                 ],
               ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(

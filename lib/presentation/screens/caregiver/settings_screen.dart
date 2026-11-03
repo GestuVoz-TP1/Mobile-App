@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../domain/consent.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'child_profile_screen.dart';
@@ -22,7 +23,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final session = context.watch<SessionController>();
     return ListView(
-      padding: const EdgeInsets.all(Insets.md),
+      padding: contentPadding(context),
       children: [
         const Text('Ajustes',
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),

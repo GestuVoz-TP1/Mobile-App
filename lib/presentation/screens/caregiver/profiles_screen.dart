@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../domain/child.dart';
 import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'child_edit_screen.dart';
@@ -73,7 +74,7 @@ class ProfilesScreen extends StatelessWidget {
                 ),
               )
             : ListView(
-                padding: const EdgeInsets.all(Insets.md),
+                padding: contentPadding(context),
                 children: [
                   Text(
                     isRoot

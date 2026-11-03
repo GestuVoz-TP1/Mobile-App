@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../domain/consent.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
@@ -88,7 +89,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
                 onRetry: _reload,
               )
             : ListView(
-                padding: const EdgeInsets.all(Insets.lg),
+                padding: contentPadding(context, base: Insets.lg),
                 children: [
                   Center(
                     child: Container(

@@ -8,6 +8,7 @@ import '../../../domain/reporting.dart';
 import '../../category_style.dart';
 import '../../controllers/reporting_controller.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
@@ -99,7 +100,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         : RefreshIndicator(
             onRefresh: rc.refresh,
             child: ListView(
-              padding: const EdgeInsets.all(Insets.md),
+              padding: contentPadding(context),
               children: [
                 Row(
                   children: [

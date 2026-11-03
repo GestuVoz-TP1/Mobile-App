@@ -5,6 +5,7 @@ import '../../../application/gesture_service.dart';
 import '../../../domain/gesture.dart';
 import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
+import '../../responsive.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
@@ -89,7 +90,7 @@ class _GesturesCatalogScreenState extends State<GesturesCatalogScreen> {
                   emoji: '✋', title: 'Aún no hay gestos definidos');
             }
             return ListView(
-              padding: const EdgeInsets.all(Insets.md),
+              padding: contentPadding(context),
               children: [
                 for (final (g, chosen) in items)
                   Padding(

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../../domain/ml.dart';
 
@@ -22,7 +23,19 @@ extension CameraIssueX on CameraIssue {
       };
 }
 
+int cameraRotation({
+  required int sensorOrientation,
+  required int displayRotation,
+  required bool front,
+}) =>
+    front
+        ? (sensorOrientation + displayRotation) % 360
+        : (sensorOrientation - displayRotation + 360) % 360;
+
 class CameraService {
+  static const _pantalla = MethodChannel('gestuvoz/pantalla');
+
+  CameraLensDirection _lens = CameraLensDirection.front;
   CameraController? _controller;
   List<CameraDescription> _cameras = const [];
   int _index = 0;
@@ -41,9 +54,10 @@ class CameraService {
   Future<void> discover() async {
     try {
       _cameras = await availableCameras();
+      final chosen = _cameras.indexWhere((c) => c.lensDirection == _lens);
       final front = _cameras
           .indexWhere((c) => c.lensDirection == CameraLensDirection.front);
-      _index = front >= 0 ? front : 0;
+      _index = chosen >= 0 ? chosen : (front >= 0 ? front : 0);
       issue = _cameras.isEmpty ? CameraIssue.noCamera : CameraIssue.none;
     } on CameraException catch (e) {
       _cameras = const [];
@@ -62,7 +76,9 @@ class CameraService {
     }
     _initializing = true;
     try {
-      await _controller?.dispose();
+      final previous = _controller;
+      _controller = null;
+      await previous?.dispose();
       final c = CameraController(
         _cameras[_index],
         ResolutionPreset.medium,
@@ -86,6 +102,7 @@ class CameraService {
   Future<void> switchCamera() async {
     if (_cameras.length < 2) return;
     _index = (_index + 1) % _cameras.length;
+    _lens = _cameras[_index].lensDirection;
     await start();
   }
 
@@ -114,12 +131,15 @@ class CameraService {
     final c = _controller;
     if (c == null || !c.value.isInitialized) return false;
     var lastAt = DateTime.fromMillisecondsSinceEpoch(0);
-    final rotation = _cameras[_index].sensorOrientation;
+    final camera = _cameras[_index];
+    final front = camera.lensDirection == CameraLensDirection.front;
+    var displayRotation = await _displayRotation();
     try {
       await c.startImageStream((CameraImage img) {
         final now = DateTime.now();
         if (now.difference(lastAt) < step) return;
         lastAt = now;
+        _displayRotation().then((r) => displayRotation = r);
         final p = img.planes;
         final color = p.length >= 3;
         onFrame(GestureFrame(
@@ -132,13 +152,25 @@ class CameraService {
           yRowStride: p[0].bytesPerRow,
           uvRowStride: color ? p[1].bytesPerRow : 0,
           uvPixelStride: color ? (p[1].bytesPerPixel ?? 1) : 1,
-          rotation: rotation,
+          rotation: cameraRotation(
+            sensorOrientation: camera.sensorOrientation,
+            displayRotation: displayRotation,
+            front: front,
+          ),
         ));
       });
       return true;
     } catch (e) {
       debugPrint('No se pudo iniciar la captura: $e');
       return false;
+    }
+  }
+
+  Future<int> _displayRotation() async {
+    try {
+      return await _pantalla.invokeMethod<int>('rotacion') ?? 0;
+    } catch (_) {
+      return 0;
     }
   }
 
