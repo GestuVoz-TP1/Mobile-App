@@ -6,11 +6,11 @@ import '../../domain/communication.dart';
 import '../../infrastructure/tts/tts_service.dart';
 import 'session_controller.dart';
 
-/// Estado del tablero del nino (E2).
+/// Estado del tablero del nino.
 ///
-/// El nino elige UN pictograma: se muestra en "Mi mensaje" (mockup 6), se
-/// reproduce por voz y se registra la interaccion (si hay consentimiento).
-/// No se componen frases con varios pictogramas.
+/// El nino elige UN pictograma: se muestra en "Mi mensaje", se reproduce por
+/// voz y se registra la interaccion (si hay consentimiento). No se componen
+/// frases con varios pictogramas.
 class CommunicationController extends ChangeNotifier {
   CommunicationController({
     required CommunicationService communication,
@@ -42,13 +42,13 @@ class CommunicationController extends ChangeNotifier {
   Pictogram? _message;
   Pictogram? get message => _message;
 
-  /// HU009, criterio 2: la voz no pudo reproducirse.
+  /// La voz no pudo reproducirse.
   bool _voiceFailed = false;
   bool get voiceFailed => _voiceFailed;
 
   bool get voiceEnabled => _session.voice?.voiceEnabled ?? true;
 
-  /// HU007: carga los pictogramas disponibles para el perfil activo.
+  /// Carga los pictogramas disponibles para el perfil activo.
   Future<void> loadBoard({bool force = false}) async {
     final profile = _session.activeProfile;
     if (profile == null) return;
@@ -77,7 +77,7 @@ class CommunicationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// HU008: muestra el mensaje y lo comunica por voz; HU009.
+  /// Muestra el mensaje y lo comunica por voz.
   Future<void> pick(Pictogram p) async {
     final profile = _session.activeProfile;
     if (profile == null) return;

@@ -1,9 +1,5 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: COMUNICACION
-///
 /// Catalogo de pictogramas (PICTOGRAMA), sus categorias (CATEGORIA) y la
 /// seleccion/orden de pictogramas de cada perfil (PERFIL_PICTOGRAMA).
-/// -------------------------------------------------------------------------
 library;
 
 import 'dart:typed_data';
@@ -34,8 +30,8 @@ abstract final class Availability {
 
 /// PICTOGRAMA. [message] es la frase que se reproduce por voz.
 ///
-/// Un pictograma personalizado (HU012) siempre tiene [image]; los
-/// pictogramas semilla se representan con [emoji].
+/// Un pictograma personalizado siempre tiene [image]; los pictogramas semilla
+/// se representan con [emoji].
 class Pictogram {
   final int? id;
   final String name;
@@ -60,7 +56,7 @@ class Pictogram {
   /// Personalizado = creado por el tutor con imagen propia.
   bool get isCustom => hasImage;
 
-  /// Valida un pictograma personalizado (HU012 / HU013, criterio 2).
+  /// Valida un pictograma personalizado.
   factory Pictogram.custom({
     int? id,
     required String name,
@@ -135,10 +131,10 @@ abstract interface class PictogramRepository {
   Future<Pictogram> insertCustom(Pictogram pictogram, int profileId);
   Future<void> update(Pictogram pictogram);
 
-  /// HU015: mostrar/ocultar sin eliminar del catalogo.
+  /// Mostrar/ocultar sin eliminar del catalogo.
   Future<void> setSelected(int profileId, int pictogramId, bool selected);
 
-  /// RF-07: orden del tablero del perfil.
+  /// Orden del tablero del perfil.
   Future<void> reorder(int profileId, List<int> orderedPictogramIds);
 
   /// Elimina un pictograma personalizado si no tiene interacciones

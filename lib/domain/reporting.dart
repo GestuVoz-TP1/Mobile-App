@@ -1,14 +1,10 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: HISTORIAL Y CONSULTA DE USO (E6)
-///
 /// Resumenes DESCRIPTIVOS del uso de la aplicacion. No realiza evaluaciones ni
-/// interpretaciones clinicas (Product Backlog V6, E6).
-/// -------------------------------------------------------------------------
+/// interpretaciones clinicas.
 library;
 
 import 'interaction.dart';
 
-/// Recurso comunicativo y numero de usos (HU031).
+/// Recurso comunicativo y numero de usos.
 class FrequentResource {
   final int pictogramId;
   final String name;
@@ -44,13 +40,13 @@ class UsageSummary {
     required this.frequent,
   });
 
-  /// HU031, criterio 2: minimo de registros para mostrar frecuencias.
+  /// Minimo de registros para mostrar frecuencias.
   static const minRecordsForFrequencies = 3;
   bool get hasEnoughForFrequencies =>
       totalInteractions >= minRecordsForFrequencies;
 }
 
-/// Servicio de dominio: construye el resumen a partir del historial.
+/// Construye el resumen a partir del historial.
 class ReportBuilder {
   const ReportBuilder();
 
@@ -96,17 +92,17 @@ class ReportBuilder {
   }
 }
 
-/// Puerto: de donde se obtiene el historial y su resumen (E6).
-/// Local (SQLite) o remoto (backend, OB2 "Generacion de reportes").
+/// Puerto: de donde se obtiene el historial y su resumen. Local (SQLite) o
+/// remoto (backend).
 abstract interface class HistorySource {
-  /// HU030 / HU032: interacciones del periodo [from, to).
+  /// Interacciones del periodo [from, to).
   Future<List<InteractionRecord>> records(int profileId,
       {DateTime? from, DateTime? to});
 
-  /// HU031 y resumen del periodo [from, to).
+  /// Resumen del periodo [from, to).
   Future<UsageSummary> summary(int profileId, {DateTime? from, DateTime? to});
 
-  /// HU033: detalle de una interaccion; null si ya no esta disponible.
+  /// Detalle de una interaccion; null si ya no esta disponible.
   Future<InteractionRecord?> detail(int profileId, InteractionRecord record);
 }
 

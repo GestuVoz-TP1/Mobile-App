@@ -1,15 +1,11 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: MACHINE LEARNING (reconocimiento de gestos)
-///
-/// La app depende solo de este puerto. OB2 define un modelo MobileNet + LSTM
-/// ejecutado con TensorFlow Lite sobre SECUENCIAS de imagenes (RF-01).
+/// La app depende solo de este puerto. El modelo es MobileNet + LSTM ejecutado
+/// con TensorFlow Lite sobre SECUENCIAS de imagenes.
 ///
 ///   GestureRecognitionService
-///     ├─ TestModeGestureRecognitionService        (pruebas sin modelo)
-///     └─ TensorFlowLiteGestureRecognitionService  (modelo entrenado, en uso)
+///     ├─ TestModeGestureRecognitionService (pruebas sin modelo)
+///     └─ TensorFlowLiteGestureRecognitionService (modelo entrenado, en uso)
 ///
-/// Las imagenes se procesan solo en memoria y nunca se guardan (RNF-02).
-/// -------------------------------------------------------------------------
+/// Las imagenes se procesan solo en memoria y nunca se guardan.
 library;
 
 import 'dart:typed_data';

@@ -42,7 +42,6 @@ class Di {
 
     final db = await GestuVozDatabase.open();
 
-    // --- Repositorios SQLite ---
     final authRepo = SqliteAuthRepository(db);
     final profileRepo = SqliteChildProfileRepository(db);
     final pictoRepo = SqlitePictogramRepository(db);
@@ -60,9 +59,8 @@ class Di {
     final tts = TtsService();
     final camera = CameraService();
 
-    // --- Servicios de aplicacion ---
-    // Acceso con Firebase Authentication (OB2 RT-04) y sincronizacion con el
-    // backend Django por HTTPS/REST (OB2 RF-11).
+    // Acceso con Firebase Authentication y sincronizacion con el backend
+    // Django.
     final firebaseAuth = FirebaseAuthGateway();
     final auth = AuthService(authRepo, Sha256SecretHasher(), firebaseAuth);
     final api = ApiClient(token: firebaseAuth.idToken);
@@ -73,14 +71,13 @@ class Di {
     final communication = CommunicationService(pictoRepo);
     final interactions = InteractionService(interactionRepo, consentRepo);
     final gestures = GestureService(recognizer, gestureRepo, pictoRepo);
-    // Historial y reportes generados por el backend (OB2).
+    // Historial y reportes generados por el backend.
     final reporting = ReportingService(
       interactionRepo,
       CsvReportExporter(),
       history: RemoteHistorySource(db, api, beforeQuery: sync.pushPending),
     );
 
-    // --- Controladores de presentacion ---
     final session = SessionController(
       auth: auth,
       profiles: profiles,

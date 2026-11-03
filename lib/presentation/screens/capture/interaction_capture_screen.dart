@@ -12,12 +12,12 @@ import '../../widgets/picto_visual.dart';
 
 /// "Usar mis gestos":
 /// 1. Preparacion: gestos habilitados con su representacion e instrucciones.
-/// 2. "Comenzar" -> camara con "Buscando tus manos..." (mockup 7).
-/// 3. Reconocido (mockup 8) o no reconocido (mockup 9).
+/// 2. "Comenzar" -> camara con "Buscando tus manos...".
+/// 3. Reconocido o no reconocido.
 ///
 /// Reconocimiento abierto: el nino hace cualquiera de los gestos habilitados.
 class GestureRecognitionScreen extends StatefulWidget {
-  /// HU005: abrir el tablero de pictogramas.
+  /// Abrir el tablero de pictogramas.
   final VoidCallback onUsePictograms;
   const GestureRecognitionScreen({super.key, required this.onUsePictograms});
 
@@ -78,9 +78,7 @@ class _GestureRecognitionScreenState extends State<GestureRecognitionScreen>
   }
 }
 
-// ---------------------------------------------------------------------------
 // 1. Preparacion
-// ---------------------------------------------------------------------------
 class _Preparation extends StatelessWidget {
   final CaptureController controller;
   const _Preparation({required this.controller});
@@ -184,9 +182,7 @@ class _GestureCard extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// 2. Camara (mockup 7)
-// ---------------------------------------------------------------------------
+// 2. Camara
 class _CameraStage extends StatelessWidget {
   final CaptureController controller;
   const _CameraStage({required this.controller});
@@ -227,7 +223,7 @@ class _CameraStage extends StatelessWidget {
                         )
                       else
                         const ColoredBox(color: Colors.black26),
-                      // Recuadro guia: mantener las manos dentro (RF-02).
+                      // Recuadro guia: mantener las manos dentro.
                       Center(
                         child: FractionallySizedBox(
                           widthFactor: 0.82,
@@ -380,9 +376,7 @@ class _TestResultPanel extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// 3a. Reconocido (mockup 8)
-// ---------------------------------------------------------------------------
+// 3a. Reconocido
 class _Recognized extends StatelessWidget {
   final CaptureController controller;
   const _Recognized({required this.controller});
@@ -515,9 +509,7 @@ class _Recognized extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// 3b. No reconocido (mockup 9)
-// ---------------------------------------------------------------------------
+// 3b. No reconocido
 class _NotRecognized extends StatelessWidget {
   final CaptureController controller;
   final VoidCallback onUsePictograms;
@@ -580,13 +572,13 @@ class _NotRecognized extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 FilledButton.icon(
-                  onPressed: controller.retry, // HU011
+                  onPressed: controller.retry,
                   icon: const Icon(Icons.photo_camera_outlined),
                   label: const Text('Intentar de nuevo'),
                 ),
                 const SizedBox(height: Insets.sm),
                 OutlinedButton.icon(
-                  onPressed: onUsePictograms, // HU005
+                  onPressed: onUsePictograms,
                   icon: const Icon(Icons.grid_view_rounded),
                   label: const Text('Usar pictogramas'),
                 ),
@@ -599,9 +591,7 @@ class _NotRecognized extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Modalidad no disponible / problema de camara
-// ---------------------------------------------------------------------------
 class _Unavailable extends StatelessWidget {
   final CaptureController controller;
   final VoidCallback onUsePictograms;

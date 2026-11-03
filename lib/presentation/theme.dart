@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Sistema visual de GestuVoz (mockups vigentes 1-12): turquesa como color de
-/// accion, fondos claros y tarjetas pastel por categoria. Los estados se
-/// comunican con icono + texto, nunca solo con color (RNF-04).
+/// Sistema visual de GestuVoz: turquesa como color de accion, fondos claros y
+/// tarjetas pastel por categoria. Los estados se comunican con icono + texto,
+/// nunca solo con color.
 class AppColors {
   // Accion principal (botones, seleccion). Blanco sobre primary: 6.3:1.
   static const primary = Color(0xFF276B62);

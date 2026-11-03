@@ -29,7 +29,7 @@ enum GesturePhase {
 /// Por que la modalidad no esta disponible para el perfil.
 enum GestureUnavailableReason { disabled, noConsent, noGestures, error }
 
-/// Controla el reconocimiento de gestos del nino (E1):
+/// Controla el reconocimiento de gestos del nino:
 /// Camara -> GestureRecognitionService -> Gesto -> Intencion -> Pictograma
 /// -> Voz -> Interaccion.
 class CaptureController extends ChangeNotifier {
@@ -98,7 +98,7 @@ class CaptureController extends ChangeNotifier {
     if (profile == null) return;
     try {
       if (!profile.preferences.gesturesEnabled) {
-        _reason = GestureUnavailableReason.disabled; // HU004
+        _reason = GestureUnavailableReason.disabled;
       } else if (!_session.consentAllowsProcessing) {
         _reason = GestureUnavailableReason.noConsent; // sin consentimiento
       } else {
@@ -121,13 +121,13 @@ class CaptureController extends ChangeNotifier {
     }
     if (_disposed) return;
     if (!camera.isReady) {
-      _set(GesturePhase.cameraIssue); // HU002, criterio 2
+      _set(GesturePhase.cameraIssue);
       return;
     }
     await _capture();
   }
 
-  /// HU011: nuevo intento manteniendo la configuracion del perfil.
+  /// Nuevo intento manteniendo la configuracion del perfil.
   Future<void> retry() async {
     _outcome = null;
     _voiceFailed = false;
@@ -208,12 +208,12 @@ class CaptureController extends ChangeNotifier {
     final profile = _session.activeProfile;
     if (_disposed) return;
     if (out == null || profile == null) {
-      _set(GesturePhase.notRecognized); // HU001/HU006 criterio 2
+      _set(GesturePhase.notRecognized);
       return;
     }
     _outcome = out;
     _set(GesturePhase.recognized);
-    // HU006: reproduce automaticamente el mensaje por voz.
+    // Reproduce automaticamente el mensaje por voz.
     if (_session.voice?.voiceEnabled ?? true) {
       _voiceFailed = !await _tts.speak(out.intention.message);
       if (!_disposed) notifyListeners();
@@ -226,7 +226,7 @@ class CaptureController extends ChangeNotifier {
     );
   }
 
-  /// "Escuchar mensaje" (mockup 8).
+  /// "Escuchar mensaje".
   Future<void> speakAgain() async {
     final o = _outcome;
     if (o == null) return;

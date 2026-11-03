@@ -1,6 +1,6 @@
 import '../domain/auth.dart';
 
-/// Datos del registro (HU018): solo correo y contrasena.
+/// Datos del registro: solo correo y contrasena.
 class RegistrationForm {
   final String email;
   final String password;
@@ -13,7 +13,7 @@ class RegistrationForm {
   });
 }
 
-/// Servicio de aplicacion del contexto de autenticacion.
+/// Servicio del contexto de autenticacion.
 ///
 /// Con [RemoteAuthGateway] (Firebase Authentication) el registro, el inicio
 /// de sesion y la recuperacion de contrasena se hacen en Firebase; el tutor
@@ -26,7 +26,7 @@ class AuthService {
   final SecretHasher _hasher;
   final RemoteAuthGateway? _remote;
 
-  /// Longitud minima de contrasena (OB2, mockup "Crear cuenta").
+  /// Longitud minima de contrasena.
   static const minPasswordLength = 8;
 
   static const _invalidLogin = DomainException(
@@ -35,7 +35,7 @@ class AuthService {
   bool get usesRemoteAuth => _remote != null;
 
   Email _validateRegistration(RegistrationForm f) {
-    final email = Email(f.email); // valida formato (HU018, criterio 2)
+    final email = Email(f.email); // valida formato
     if (f.password.isEmpty) {
       throw const DomainException('Ingresa una contraseña.');
     }
@@ -66,8 +66,8 @@ class AuthService {
     ));
   }
 
-  /// HU019. Ante cualquier error devuelve el mismo mensaje para no revelar
-  /// si el correo existe (criterio 2: "mantiene protegida la informacion").
+  /// Ante cualquier error devuelve el mismo mensaje para no revelar si el
+  /// correo existe.
   Future<Account> login(String email, String password) async {
     final Email parsed;
     try {
@@ -100,9 +100,9 @@ class AuthService {
 
   Future<void> logout() async => _remote?.signOut();
 
-  /// HU020: envia el correo de restablecimiento (requiere Firebase).
+  /// Envia el correo de restablecimiento (requiere Firebase).
   Future<void> sendPasswordReset(String email) async {
-    final parsed = Email(email); // criterio 2: valida el formato
+    final parsed = Email(email); // valida el formato
     final remote = _remote;
     if (remote == null) {
       throw const DomainException(

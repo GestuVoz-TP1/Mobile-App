@@ -1,14 +1,14 @@
 import '../domain/consent.dart';
 
-/// Servicio de aplicacion: consentimiento por perfil (E5, HU027-HU028).
+/// Consentimiento por perfil.
 class PrivacyService {
   PrivacyService(this._consents);
   final ConsentRepository _consents;
 
   Future<Consent?> forProfile(int profileId) => _consents.forProfile(profileId);
 
-  /// HU027: registra la decision del tutor. Si no otorga el consentimiento,
-  /// queda registrado como "no otorgado" (criterio 2).
+  /// Registra la decision del tutor. Si no otorga el consentimiento, queda
+  /// registrado como "no otorgado".
   Future<Consent> decide(int profileId, {required bool granted}) =>
       _consents.save(Consent(
         profileId: profileId,
@@ -16,7 +16,7 @@ class PrivacyService {
         registeredAt: DateTime.now(),
       ));
 
-  /// HU028: registra el retiro. No borra datos existentes.
+  /// Registra el retiro. No borra datos existentes.
   Future<Consent> withdraw(int profileId) async {
     final current = await _consents.forProfile(profileId);
     if (current == null || current.state != ConsentState.granted) {

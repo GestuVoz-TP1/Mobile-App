@@ -1,10 +1,9 @@
 /// Datos iniciales (SEED) de SQLite.
 ///
 /// Son los pictogramas y categorias que ya tenia el prototipo (espanol,
-/// contexto Lima), representados con emojis para funcionar 100 % offline.
-/// Se insertan una sola vez al crear la base de datos. Un perfil nuevo
-/// los tiene todos seleccionados; el tutor puede ocultarlos sin
-/// eliminarlos del catalogo (HU015).
+/// contexto Lima), representados con emojis para funcionar 100 % offline. Se
+/// insertan una sola vez al crear la base de datos. Un perfil nuevo los tiene
+/// todos seleccionados; el tutor puede ocultarlos sin eliminarlos del catalogo.
 library;
 
 /// Categoria semilla. [id] es el `id_categoria` con el que se inserta.
@@ -46,7 +45,6 @@ const List<SeedCategory> kSeedCategories = [
 ];
 
 const List<SeedPictogram> kSeedPictograms = [
-  // ---------------- NECESIDADES BASICAS ----------------
   SeedPictogram(key: 'b_bano', label: 'Baño', emoji: '🚽', categoryKey: 'basicas', speech: 'Quiero ir al baño'),
   SeedPictogram(key: 'b_pipi', label: 'Hacer pipí', emoji: '💦', categoryKey: 'basicas', speech: 'Tengo que hacer pipí'),
   SeedPictogram(key: 'b_caca', label: 'Hacer caca', emoji: '💩', categoryKey: 'basicas', speech: 'Tengo que hacer caca'),
@@ -65,7 +63,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 'b_silencio', label: 'Silencio', emoji: '🤫', categoryKey: 'basicas', speech: 'Quiero silencio'),
   SeedPictogram(key: 'b_luz', label: 'Mucha luz', emoji: '💡', categoryKey: 'basicas', speech: 'Hay mucha luz'),
   SeedPictogram(key: 'b_solo', label: 'Estar solo', emoji: '🧍', categoryKey: 'basicas', speech: 'Quiero estar solo un rato'),
-  // ---------------- EMOCIONES ----------------
   SeedPictogram(key: 'e_feliz', label: 'Feliz', emoji: '😄', categoryKey: 'emociones', speech: 'Estoy feliz'),
   SeedPictogram(key: 'e_triste', label: 'Triste', emoji: '😢', categoryKey: 'emociones', speech: 'Estoy triste'),
   SeedPictogram(key: 'e_enojado', label: 'Enojado', emoji: '😠', categoryKey: 'emociones', speech: 'Estoy enojado'),
@@ -78,7 +75,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 'e_sorprendido', label: 'Sorprendido', emoji: '😮', categoryKey: 'emociones', speech: 'Estoy sorprendido'),
   SeedPictogram(key: 'e_verguenza', label: 'Con vergüenza', emoji: '😳', categoryKey: 'emociones', speech: 'Tengo vergüenza'),
   SeedPictogram(key: 'e_orgulloso', label: 'Orgulloso', emoji: '😎', categoryKey: 'emociones', speech: 'Estoy orgulloso de mí'),
-  // ---------------- SALUD Y DOLOR ----------------
   SeedPictogram(key: 's_dolor', label: 'Me duele', emoji: '🤕', categoryKey: 'salud', speech: 'Me duele algo'),
   SeedPictogram(key: 's_cabeza', label: 'Cabeza', emoji: '🧠', categoryKey: 'salud', speech: 'Me duele la cabeza'),
   SeedPictogram(key: 's_barriga', label: 'Barriga', emoji: '🤢', categoryKey: 'salud', speech: 'Me duele la barriga'),
@@ -91,7 +87,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 's_medicina', label: 'Medicina', emoji: '💊', categoryKey: 'salud', speech: 'Me toca la medicina'),
   SeedPictogram(key: 's_doctor', label: 'Doctor', emoji: '🩺', categoryKey: 'salud', speech: 'Quiero ver al doctor'),
   SeedPictogram(key: 's_vomito', label: 'Ganas de vomitar', emoji: '🤮', categoryKey: 'salud', speech: 'Tengo ganas de vomitar'),
-  // ---------------- HIGIENE ----------------
   SeedPictogram(key: 'h_manos', label: 'Lavar manos', emoji: '🧼', categoryKey: 'higiene', speech: 'Quiero lavarme las manos'),
   SeedPictogram(key: 'h_dientes', label: 'Cepillar dientes', emoji: '🪥', categoryKey: 'higiene', speech: 'Voy a cepillarme los dientes'),
   SeedPictogram(key: 'h_banarse', label: 'Bañarse', emoji: '🛁', categoryKey: 'higiene', speech: 'Quiero bañarme'),
@@ -100,7 +95,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 'h_panal', label: 'Cambiar pañal', emoji: '🧷', categoryKey: 'higiene', speech: 'Necesito que me cambien'),
   SeedPictogram(key: 'h_toalla', label: 'Toalla', emoji: '🧻', categoryKey: 'higiene', speech: 'Necesito una toalla'),
   SeedPictogram(key: 'h_secar', label: 'Secarse', emoji: '💨', categoryKey: 'higiene', speech: 'Quiero secarme'),
-  // ---------------- COMIDA Y BEBIDA ----------------
   SeedPictogram(key: 'c_comer', label: 'Comer', emoji: '🍴', categoryKey: 'comida', speech: 'Quiero comer'),
   SeedPictogram(key: 'c_pan', label: 'Pan', emoji: '🍞', categoryKey: 'comida', speech: 'Quiero pan'),
   SeedPictogram(key: 'c_leche', label: 'Leche', emoji: '🥛', categoryKey: 'comida', speech: 'Quiero leche'),
@@ -115,7 +109,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 'c_fruta', label: 'Fruta', emoji: '🍓', categoryKey: 'comida', speech: 'Quiero fruta'),
   SeedPictogram(key: 'c_mas', label: 'Más comida', emoji: '➕', categoryKey: 'comida', speech: 'Quiero más'),
   SeedPictogram(key: 'c_nomas', label: 'Ya no quiero', emoji: '🚫', categoryKey: 'comida', speech: 'Ya no quiero más'),
-  // ---------------- ACTIVIDADES ----------------
   SeedPictogram(key: 'a_jugar', label: 'Jugar', emoji: '🧸', categoryKey: 'actividades', speech: 'Quiero jugar'),
   SeedPictogram(key: 'a_pintar', label: 'Pintar', emoji: '🎨', categoryKey: 'actividades', speech: 'Quiero pintar'),
   SeedPictogram(key: 'a_musica', label: 'Música', emoji: '🎵', categoryKey: 'actividades', speech: 'Quiero escuchar música'),
@@ -129,7 +122,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 'a_salir', label: 'Salir', emoji: '🚶', categoryKey: 'actividades', speech: 'Quiero salir'),
   SeedPictogram(key: 'a_bailar', label: 'Bailar', emoji: '🕺', categoryKey: 'actividades', speech: 'Quiero bailar'),
   SeedPictogram(key: 'a_otra', label: 'Otra cosa', emoji: '🔄', categoryKey: 'actividades', speech: 'Quiero hacer otra cosa'),
-  // ---------------- PERSONAS ----------------
   SeedPictogram(key: 'p_mama', label: 'Mamá', emoji: '👩', categoryKey: 'personas', speech: 'Quiero a mamá'),
   SeedPictogram(key: 'p_papa', label: 'Papá', emoji: '👨', categoryKey: 'personas', speech: 'Quiero a papá'),
   SeedPictogram(key: 'p_hermano', label: 'Hermano', emoji: '👦', categoryKey: 'personas', speech: 'Quiero a mi hermano'),
@@ -141,7 +133,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 'p_amigo', label: 'Amigo', emoji: '🧒', categoryKey: 'personas', speech: 'Quiero jugar con mi amigo'),
   SeedPictogram(key: 'p_tia', label: 'Tía', emoji: '👩‍🦱', categoryKey: 'personas', speech: 'Quiero a mi tía'),
   SeedPictogram(key: 'p_tio', label: 'Tío', emoji: '👨‍🦱', categoryKey: 'personas', speech: 'Quiero a mi tío'),
-  // ---------------- LUGARES ----------------
   SeedPictogram(key: 'l_casa', label: 'Casa', emoji: '🏠', categoryKey: 'lugares', speech: 'Quiero ir a casa'),
   SeedPictogram(key: 'l_colegio', label: 'Colegio', emoji: '🏫', categoryKey: 'lugares', speech: 'Vamos al colegio'),
   SeedPictogram(key: 'l_aula', label: 'Aula', emoji: '🪑', categoryKey: 'lugares', speech: 'Vamos al aula'),
@@ -152,7 +143,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 'l_cuarto', label: 'Mi cuarto', emoji: '🚪', categoryKey: 'lugares', speech: 'Quiero ir a mi cuarto'),
   SeedPictogram(key: 'l_carro', label: 'Carro', emoji: '🚗', categoryKey: 'lugares', speech: 'Vamos en el carro'),
   SeedPictogram(key: 'l_calle', label: 'Calle', emoji: '🛣️', categoryKey: 'lugares', speech: 'Vamos a la calle'),
-  // ---------------- SOCIAL Y RESPUESTAS ----------------
   SeedPictogram(key: 'r_si', label: 'Sí', emoji: '👍', categoryKey: 'social', speech: 'Sí'),
   SeedPictogram(key: 'r_no', label: 'No', emoji: '👎', categoryKey: 'social', speech: 'No'),
   SeedPictogram(key: 'r_quiero', label: 'Quiero', emoji: '🙌', categoryKey: 'social', speech: 'Yo quiero'),
@@ -171,7 +161,6 @@ const List<SeedPictogram> kSeedPictograms = [
   SeedPictogram(key: 'r_porfavor', label: 'Por favor', emoji: '🫱', categoryKey: 'social', speech: 'Por favor'),
   SeedPictogram(key: 'r_noentiendo', label: 'No entiendo', emoji: '❓', categoryKey: 'social', speech: 'No entiendo'),
   SeedPictogram(key: 'r_nose', label: 'No sé', emoji: '🤷', categoryKey: 'social', speech: 'No sé'),
-  // ---------------- RUTINA Y TIEMPO ----------------
   SeedPictogram(key: 't_ahora', label: 'Ahora', emoji: '⏰', categoryKey: 'rutina', speech: 'Ahora'),
   SeedPictogram(key: 't_despues', label: 'Después', emoji: '⏭️', categoryKey: 'rutina', speech: 'Después'),
   SeedPictogram(key: 't_primero', label: 'Primero', emoji: '1️⃣', categoryKey: 'rutina', speech: 'Primero'),

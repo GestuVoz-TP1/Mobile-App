@@ -1,10 +1,6 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: INTERACCION (registro de uso)
-///
 /// Cada mensaje comunicado por el nino (pictograma tocado o gesto reconocido)
-/// se registra en INTERACCION (RF-13). Solo se registra si el perfil tiene un
+/// se registra en INTERACCION. Solo se registra si el perfil tiene un
 /// consentimiento vigente.
-/// -------------------------------------------------------------------------
 library;
 
 /// Recurso de comunicacion utilizado (se deduce de las FK).
@@ -75,7 +71,7 @@ abstract interface class InteractionRepository {
   Future<Interaction> add(Interaction interaction);
 
   /// Historial del perfil (mas reciente primero), opcionalmente filtrado por
-  /// rango de fechas [from, to) (HU032).
+  /// rango de fechas [from, to).
   Future<List<InteractionRecord>> recordsForProfile(
     int profileId, {
     DateTime? from,

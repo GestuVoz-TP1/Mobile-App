@@ -339,7 +339,7 @@ void main() {
     expect(summary.totalInteractions, 2);
     expect(summary.weekly[5], 2);
 
-    // HU033: registro que ya no existe en el backend.
+    // Registro que ya no existe en el backend.
     expect(await history.detail(profileId, records.first), isNull);
 
     env.backend.offline = true;

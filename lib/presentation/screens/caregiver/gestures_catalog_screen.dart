@@ -6,8 +6,8 @@ import '../../../domain/gesture.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Gestos que reconoce la aplicacion (HU003) con su referencia visual,
-/// intencion y mensaje. Las instrucciones son editables.
+/// Gestos que reconoce la aplicacion con su referencia visual, intencion y
+/// mensaje. Las instrucciones son editables.
 class GesturesCatalogScreen extends StatefulWidget {
   const GesturesCatalogScreen({super.key});
 

@@ -7,9 +7,8 @@ import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Formulario del perfil infantil: crear (HU021) o actualizar (HU022).
-/// Campos del modelo: NINO (nombre, fecha de nacimiento, genero) y
-/// PERFIL_NINO (nivel de apoyo).
+/// Formulario del perfil infantil: crear o actualizar. Campos del modelo: NINO
+/// (nombre, fecha de nacimiento, genero) y PERFIL_NINO (nivel de apoyo).
 class ChildEditScreen extends StatefulWidget {
   /// null = crear un perfil nuevo.
   final ChildProfile? profile;
@@ -80,7 +79,7 @@ class _ChildEditScreenState extends State<ChildEditScreen> {
         if (mounted) Navigator.of(context).pop();
       }
     } on DomainException catch (e) {
-      setState(() => _error = e.message); // HU021 / HU022, criterio 2
+      setState(() => _error = e.message);
     } catch (_) {
       setState(() => _error = 'No se pudo guardar el perfil.');
     } finally {

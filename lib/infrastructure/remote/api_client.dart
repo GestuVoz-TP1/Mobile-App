@@ -40,7 +40,7 @@ class ApiException implements Exception {
 
 typedef TokenProvider = Future<String?> Function({bool forceRefresh});
 
-/// Cliente HTTPS/REST del backend Django (OB2: integracion app - backend).
+/// Cliente HTTPS/REST del backend Django.
 class ApiClient {
   ApiClient({
     required TokenProvider token,

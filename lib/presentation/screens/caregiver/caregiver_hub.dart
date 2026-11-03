@@ -17,8 +17,8 @@ import 'settings_screen.dart';
 import 'vocabulary_screen.dart';
 import 'voice_settings_screen.dart';
 
-/// Panel del padre o tutor (mockup 3) con navegacion inferior:
-/// Inicio · Reportes · Ajustes.
+/// Panel del padre o tutor con navegacion inferior: Inicio · Reportes ·
+/// Ajustes.
 class CaregiverHub extends StatefulWidget {
   const CaregiverHub({super.key});
 
@@ -185,7 +185,7 @@ class _ActiveProfileCard extends StatelessWidget {
   }
 }
 
-/// "interacciones hoy" y "gestos reconocidos" (mockup 3).
+/// "interacciones hoy" y "gestos reconocidos".
 class _TodayStats extends StatelessWidget {
   final int profileId;
   const _TodayStats({required this.profileId});

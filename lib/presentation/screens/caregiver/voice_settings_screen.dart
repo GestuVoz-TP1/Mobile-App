@@ -7,8 +7,8 @@ import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Comunicacion · Voz y reproduccion (mockup 11, HU017): CONFIGURACION_VOZ
-/// del perfil activo. Los cambios se aplican al guardar.
+/// Comunicacion · Voz y reproduccion: CONFIGURACION_VOZ del perfil activo. Los
+/// cambios se aplican al guardar.
 class VoiceSettingsScreen extends StatefulWidget {
   const VoiceSettingsScreen({super.key});
 
@@ -70,7 +70,7 @@ class _VoiceSettingsScreenState extends State<VoiceSettingsScreen> {
         Navigator.of(context).pop();
       }
     } on DomainException catch (e) {
-      setState(() => _error = e.message); // HU017, criterio 2
+      setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

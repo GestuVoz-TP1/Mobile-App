@@ -9,9 +9,8 @@ import '../../widgets/common.dart';
 import '../capture/interaction_capture_screen.dart';
 import 'communicator_screen.dart';
 
-/// Experiencia del nino (mockup 5): Inicio · Hablar · Gestos.
-/// Interfaz sencilla, sin opciones administrativas. Para salir se pide la
-/// contrasena del tutor.
+/// Experiencia del nino: Inicio · Hablar · Gestos. Interfaz sencilla, sin
+/// opciones administrativas. Para salir se pide la contrasena del tutor.
 class ChildShell extends StatefulWidget {
   const ChildShell({super.key});
 
@@ -116,7 +115,7 @@ class _ChildShellState extends State<ChildShell> {
   }
 }
 
-/// Inicio del nino (mockup 5): saludo, "Usar mis gestos" y "Mis palabras".
+/// Inicio del nino: saludo, "Usar mis gestos" y "Mis palabras".
 class _ChildHome extends StatelessWidget {
   final ValueChanged<int> onCategory;
   final VoidCallback? onGestures;
@@ -232,7 +231,6 @@ class _ChildHome extends StatelessWidget {
               child: Center(child: CircularProgressIndicator()),
             )
           else if (board.isEmpty)
-            // HU007, criterio 2
             const EmptyState(
               emoji: '🗂️',
               title: 'Todavía no hay pictogramas disponibles',

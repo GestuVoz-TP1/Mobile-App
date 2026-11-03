@@ -25,10 +25,10 @@ class LocalHistorySource implements HistorySource {
       _interactions.recordById(record.interaction.id!);
 }
 
-/// Servicio de aplicacion del historial (E6, HU030-HU033).
+/// Servicio del historial.
 ///
-/// [history] define el origen del historial y los reportes: el backend
-/// (OB2, "Generacion de reportes") o, por defecto, los datos locales.
+/// [history] define el origen del historial y los reportes: el backend o, por
+/// defecto, los datos locales.
 class ReportingService {
   ReportingService(
     this._interactions,
@@ -52,12 +52,12 @@ class ReportingService {
   UsageSummary summarize(List<InteractionRecord> records) =>
       _builder.build(records);
 
-  /// HU030 / HU032: historial del perfil en el periodo [from, to).
+  /// Historial del perfil en el periodo [from, to).
   Future<List<InteractionRecord>> historyRecords(int profileId,
           {DateTime? from, DateTime? to}) =>
       _history.records(profileId, from: from, to: to);
 
-  /// HU031 y resumen del mockup 12.
+  /// Resumen del periodo.
   Future<UsageSummary> historySummary(int profileId,
           {DateTime? from, DateTime? to}) =>
       _history.summary(profileId, from: from, to: to);
@@ -71,7 +71,6 @@ class ReportingService {
         to: today.add(const Duration(days: 1)));
   }
 
-  /// HU033.
   Future<InteractionRecord?> detail(int profileId, InteractionRecord record) =>
       _history.detail(profileId, record);
 

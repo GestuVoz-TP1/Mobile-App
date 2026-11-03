@@ -1,10 +1,6 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: GESTOS E INTENCIONES COMUNICATIVAS
-///
-/// GESTO 1:1 INTENCION_COMUNICATIVA 1:1 PICTOGRAMA (OB2, 5.2). El modelo de
-/// reconocimiento devuelve una `clase_reconocimiento`; con ella se obtiene el
-/// gesto, su intencion y el pictograma que la representa.
-/// -------------------------------------------------------------------------
+/// GESTO 1:1 INTENCION_COMUNICATIVA 1:1 PICTOGRAMA. El modelo de reconocimiento
+/// devuelve una `clase_reconocimiento`; con ella se obtiene el gesto, su
+/// intencion y el pictograma que la representa.
 library;
 
 export 'shared.dart' show DomainException;

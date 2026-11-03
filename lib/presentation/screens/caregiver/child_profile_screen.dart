@@ -14,8 +14,8 @@ import 'child_edit_screen.dart';
 import 'consent_screen.dart';
 import 'gestures_catalog_screen.dart';
 
-/// Perfil del nino (mockup 4): informacion basica y preferencias de
-/// comunicacion del perfil activo.
+/// Perfil del nino: informacion basica y preferencias de comunicacion del
+/// perfil activo.
 class ChildProfileScreen extends StatefulWidget {
   const ChildProfileScreen({super.key});
 
@@ -48,7 +48,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
         (s.voice?.voiceEnabled ?? true) != _voiceEnabled;
   }
 
-  /// HU002 / HU004: preparar la modalidad de gestos.
+  /// Preparar la modalidad de gestos.
   Future<void> _toggleGestures(bool on) async {
     setState(() => _gestureIssue = null);
     if (!on) {
@@ -75,7 +75,7 @@ class _ChildProfileScreenState extends State<ChildProfileScreen> {
       if (issue == CameraIssue.none) {
         _prefs = _prefs.copyWith(gesturesEnabled: true);
       } else {
-        _gestureIssue = issue.howToFix; // HU002, criterio 2
+        _gestureIssue = issue.howToFix;
       }
     });
   }

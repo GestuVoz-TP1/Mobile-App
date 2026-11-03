@@ -1,10 +1,6 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: NINO / PERFIL DEL NINO
-///
 /// NINO guarda los datos basicos del nino y PERFIL_NINO su configuracion
-/// comunicativa. Relacion NINO 1:1 PERFIL_NINO y PADRE_TUTOR 1:N PERFIL_NINO
-/// (OB2, 5.2): un tutor administra uno o varios perfiles (HU021).
-/// -------------------------------------------------------------------------
+/// comunicativa. Relacion NINO 1:1 PERFIL_NINO y PADRE_TUTOR 1:N PERFIL_NINO Un
+/// tutor administra uno o varios perfiles.
 library;
 
 import 'dart:convert';
@@ -27,7 +23,7 @@ class Child {
     this.gender,
   });
 
-  /// Valida los datos obligatorios (HU021 / HU022, criterio 2).
+  /// Valida los datos obligatorios.
   factory Child.create({
     int? id,
     required String name,
@@ -82,8 +78,8 @@ extension on String {
 /// Opciones de genero ofrecidas en el formulario (NINO.genero es opcional).
 const kGenderOptions = ['Femenino', 'Masculino', 'Prefiero no indicar'];
 
-/// Opciones de tamano de pictogramas (HU016): columnas del tablero.
-/// Menos columnas = pictogramas mas grandes.
+/// Opciones de tamano de pictogramas: columnas del tablero. Menos columnas =
+/// pictogramas mas grandes.
 const kPictogramSizeOptions = <int, String>{
   2: 'Grande',
   3: 'Mediano',
@@ -92,16 +88,16 @@ const kPictogramSizeOptions = <int, String>{
 
 /// Contenido de PERFIL_NINO.preferencias_comunicacion (JSON).
 class CommunicationPreferences {
-  /// HU004: modalidad de gestos activada para el perfil.
+  /// Modalidad de gestos activada para el perfil.
   final bool gesturesEnabled;
 
-  /// RF-15: gestos habilitados para el perfil (ids de GESTO).
+  /// Gestos habilitados para el perfil (ids de GESTO).
   final List<int> enabledGestureIds;
 
-  /// HU016: columnas del tablero (2 grande, 3 mediano, 4 pequeno).
+  /// Columnas del tablero (2 grande, 3 mediano, 4 pequeno).
   final int pictogramColumns;
 
-  /// RNF-04 / WCAG 2.1 AA: alto contraste.
+  /// Alto contraste.
   final bool highContrast;
 
   const CommunicationPreferences({

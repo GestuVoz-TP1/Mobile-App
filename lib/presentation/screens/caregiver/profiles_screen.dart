@@ -8,11 +8,10 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import 'child_edit_screen.dart';
 
-/// Perfiles infantiles del tutor: seleccionar (HU023), cambiar (HU024),
-/// crear (HU021) y eliminar (HU025).
+/// Perfiles infantiles del tutor: seleccionar, cambiar, crear y eliminar.
 ///
 /// [isRoot] = se muestra como primera pantalla cuando aun no hay un perfil
-/// activo (HU023, criterio 2).
+/// activo.
 class ProfilesScreen extends StatelessWidget {
   final bool isRoot;
   const ProfilesScreen({super.key, this.isRoot = false});
@@ -37,7 +36,7 @@ class ProfilesScreen extends StatelessWidget {
       confirmLabel: 'Eliminar',
       destructive: true,
     );
-    if (!ok || !context.mounted) return; // HU025, criterio 2
+    if (!ok || !context.mounted) return;
     await context.read<SessionController>().deleteProfile(p);
     if (context.mounted) {
       context.read<CommunicationController>().invalidate();

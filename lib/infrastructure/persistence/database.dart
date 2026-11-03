@@ -8,12 +8,12 @@ import '../seed/gesture_seed.dart';
 import '../seed/pictogram_seed.dart';
 import '../sync/sync_log.dart';
 
-/// Base de datos local SQLite de GestuVoz (OB2, RT-06).
+/// Base de datos local SQLite de GestuVoz.
 ///
-/// El esquema sigue el diagrama fisico de OB2 (Fig. 6). Cambios respecto al
-/// diagrama: contrasena local en PADRE_TUTOR (hasta integrar Firebase), FK
-/// opcionales PICTOGRAMA.id_intencion e INTERACCION.id_gesto/id_intencion,
-/// y columnas `emoji`, `orden`, `instrucciones` y `voz_activada`.
+/// Particularidades del esquema: contrasena local en PADRE_TUTOR (hasta
+/// integrar Firebase), FK opcionales PICTOGRAMA.id_intencion e
+/// INTERACCION.id_gesto/id_intencion, y columnas `emoji`, `orden`,
+/// `instrucciones` y `voz_activada`.
 class GestuVozDatabase {
   GestuVozDatabase._(this.db);
   final Database db;

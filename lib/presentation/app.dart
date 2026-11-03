@@ -38,7 +38,7 @@ class GestuVozApp extends StatelessWidget {
   }
 }
 
-/// Navegacion principal (OB2, Fig. 8):
+/// Navegacion principal:
 /// acceso -> perfil -> consentimiento -> panel del nino / panel del tutor.
 class _Router extends StatelessWidget {
   const _Router();
@@ -50,7 +50,7 @@ class _Router extends StatelessWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (!s.isLoggedIn) return const WelcomeScreen();
-    // HU023: sin perfil activo se elige o se crea el primero.
+    // Sin perfil activo se elige o se crea el primero.
     if (s.activeProfile == null) return const ProfilesScreen(isRoot: true);
     // El consentimiento se registra al crear el perfil.
     if (s.consent == null) return const ConsentScreen(onboarding: true);
