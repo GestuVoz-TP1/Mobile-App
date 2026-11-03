@@ -84,7 +84,7 @@ class SettingsScreen extends StatelessWidget {
         const SizedBox(height: Insets.sm),
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(foregroundColor: AppColors.coral),
-          onPressed: session.logout, // HU026
+          onPressed: session.logout,
           icon: const Icon(Icons.logout_rounded),
           label: const Text('Cerrar sesión'),
         ),

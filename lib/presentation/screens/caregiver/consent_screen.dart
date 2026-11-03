@@ -7,9 +7,9 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 
 /// Privacidad del perfil activo:
-/// - HU029: informacion sobre los datos tratados y su finalidad (OB2).
-/// - HU027: otorgar / no otorgar el consentimiento.
-/// - HU028: retirar el consentimiento (con confirmacion).
+/// - Informacion sobre los datos tratados y su finalidad.
+/// - Otorgar / no otorgar el consentimiento.
+/// - Retirar el consentimiento (con confirmacion).
 ///
 /// [onboarding] = se muestra justo despues de crear el perfil.
 class ConsentScreen extends StatefulWidget {
@@ -32,7 +32,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
     }
   }
 
-  /// HU029, criterio 2: si no puede cargarse, se informa y se reintenta.
+  /// Si no puede cargarse, se informa y se reintenta.
   Future<void> _reload() async {
     setState(() => _loadError = false);
     try {
@@ -68,7 +68,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
       confirmLabel: 'Retirar',
       destructive: true,
     );
-    if (!ok || !mounted) return; // HU028, criterio 2
+    if (!ok || !mounted) return;
     setState(() => _busy = true);
     try {
       await context.read<SessionController>().withdrawConsent();
@@ -165,9 +165,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
   }
 }
 
-/// Informacion sobre los datos tratados y su finalidad (HU029). Contenido
-/// tomado de OB2 (mockup de consentimiento, seccion 8.3 y RNF-02) y del
-/// Project Charter (Ley N.º 29733).
+/// Informacion sobre los datos tratados y su finalidad (Ley N.º 29733).
 class _InfoCard extends StatelessWidget {
   const _InfoCard();
 

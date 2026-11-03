@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import '../domain/communication.dart';
 
 /// Tablero listo para pintar: categorias -> pictogramas del perfil, en el
-/// orden que definio el tutor (HU007, HU010, HU015).
+/// orden que definio el tutor.
 class Board {
   final List<PictogramCategory> categories;
   final Map<int, List<Pictogram>> byCategory;
@@ -15,7 +15,7 @@ class Board {
       byCategory.values.fold(0, (sum, l) => sum + l.length);
 }
 
-/// Servicio de aplicacion del contexto de comunicacion (E2, E3).
+/// Servicio del contexto de comunicacion.
 class CommunicationService {
   CommunicationService(this._pictos);
   final PictogramRepository _pictos;
@@ -25,7 +25,7 @@ class CommunicationService {
           .where((c) => c.availability == Availability.available)
           .toList();
 
-  /// HU007: pictogramas disponibles para el perfil, agrupados por categoria.
+  /// Pictogramas disponibles para el perfil, agrupados por categoria.
   Future<Board> buildBoard(int profileId) async {
     final cats = await categories();
     final board = await _pictos.boardForProfile(profileId);
@@ -42,12 +42,10 @@ class CommunicationService {
   Future<Pictogram?> byIntention(int intentionId) =>
       _pictos.byIntention(intentionId);
 
-  // --- Gestion del tutor (E3) ----------------------------------------------
-
   Future<List<ProfilePictogram>> catalog(int profileId) =>
       _pictos.catalogForProfile(profileId);
 
-  /// HU012: imagen y mensaje obligatorios; queda disponible en el tablero.
+  /// Imagen y mensaje obligatorios; queda disponible en el tablero.
   Future<Pictogram> addCustom({
     required int profileId,
     required String name,
@@ -61,7 +59,7 @@ class CommunicationService {
         profileId,
       );
 
-  /// HU013 (imagen/mensaje) y HU014 (categoria).
+  /// Actualiza imagen, mensaje y categoria.
   Future<void> updatePictogram(
     Pictogram current, {
     required int profileId,
@@ -80,8 +78,8 @@ class CommunicationService {
         image: image ?? current.image,
       );
     } else {
-      // Pictograma semilla: solo se permite cambiar su categoria (HU014), y
-      // solo para este perfil, porque los demas perfiles lo comparten.
+      // Pictograma semilla: solo se permite cambiar su categoria, y solo para
+      // este perfil, porque los demas perfiles lo comparten.
       if (categoryId == null) {
         throw const DomainException('Selecciona una categoría.');
       }
@@ -90,7 +88,7 @@ class CommunicationService {
     await _pictos.update(updated);
   }
 
-  /// HU015: mostrar u ocultar en el tablero sin eliminar del catalogo.
+  /// Mostrar u ocultar en el tablero sin eliminar del catalogo.
   Future<void> setSelected(int profileId, int pictogramId, bool selected) =>
       _pictos.setSelected(profileId, pictogramId, selected);
 

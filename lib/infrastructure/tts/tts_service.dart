@@ -45,7 +45,7 @@ class TtsService {
     }
   }
 
-  /// Voces en espanol del dispositivo (selector del mockup 11).
+  /// Voces en espanol del dispositivo.
   Future<List<TtsVoice>> spanishVoices() async {
     if (!_ready) return const [];
     try {
@@ -68,8 +68,7 @@ class TtsService {
     }
   }
 
-  /// Reproduce [text]. Devuelve false si no se pudo reproducir (HU009,
-  /// criterio 2: la app debe informarlo).
+  /// Reproduce [text]. Devuelve false si no se pudo reproducir.
   Future<bool> speak(String text) async {
     if (!_ready || text.trim().isEmpty) return false;
     try {

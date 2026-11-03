@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../domain/auth.dart';
 
-/// Adaptador de Firebase Authentication (OB2 RT-04, RF-10).
+/// Adaptador de Firebase Authentication.
 class FirebaseAuthGateway implements RemoteAuthGateway {
   FirebaseAuthGateway([FirebaseAuth? auth])
       : _auth = auth ?? FirebaseAuth.instance;
@@ -69,7 +69,7 @@ class FirebaseAuthGateway implements RemoteAuthGateway {
       'user-disabled' => 'Esta cuenta está deshabilitada.',
       _ => registering
           ? 'No se pudo crear la cuenta. Inténtalo de nuevo.'
-          // HU019 criterio 2: mismo mensaje para no revelar si el correo existe.
+          // Mismo mensaje para no revelar si el correo existe.
           : 'No se pudo iniciar sesión. Revisa tu correo y contraseña.',
     };
   }

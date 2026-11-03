@@ -12,8 +12,8 @@ import '../../domain/consent.dart';
 import '../../domain/settings.dart';
 import '../../infrastructure/tts/tts_service.dart';
 
-/// Experiencia activa tras iniciar sesion (OB2, Fig. 8: panel del nino o
-/// panel del padre/tutor).
+/// Experiencia activa tras iniciar sesion (panel del nino o panel del
+/// padre/tutor).
 enum AppMode { none, child, caregiver }
 
 /// Estado de sesion global: tutor autenticado, perfiles, perfil activo, modo,
@@ -105,9 +105,7 @@ class SessionController extends ChangeNotifier {
     wait ? await run() : unawaited(run());
   }
 
-  // --- Acceso (E4) -------------------------------------------------------
-
-  /// HU018: crea la cuenta e inicia la sesion para continuar la configuracion.
+  /// Crea la cuenta e inicia la sesion para continuar la configuracion.
   Future<void> register(RegistrationForm form) async {
     _account = await _auth.register(form);
     await _loadProfiles();
@@ -115,7 +113,7 @@ class SessionController extends ChangeNotifier {
     await _runAfterSignIn(_account!, wait: true);
   }
 
-  /// HU019. Recupera del backend los perfiles y la configuracion del tutor.
+  /// Recupera del backend los perfiles y la configuracion del tutor.
   Future<void> login(String email, String password) async {
     final account = await _auth.login(email, password);
     await _runAfterSignIn(account, wait: true);
@@ -124,13 +122,12 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// HU020.
   Future<void> sendPasswordReset(String email) =>
       _auth.sendPasswordReset(email);
 
   bool get usesRemoteAuth => _auth.usesRemoteAuth;
 
-  /// HU026: termina la sesion y vuelve a la pantalla de acceso.
+  /// Termina la sesion y vuelve a la pantalla de acceso.
   Future<void> logout() async {
     await _tts.stop();
     await _auth.logout();
@@ -143,8 +140,6 @@ class SessionController extends ChangeNotifier {
     _mode = AppMode.none;
     notifyListeners();
   }
-
-  // --- Perfiles (HU021-HU025) ----------------------------------------------
 
   Future<void> _loadProfiles() async {
     final acc = _account;
@@ -172,14 +167,14 @@ class SessionController extends ChangeNotifier {
     await _tts.configure(_voice!);
   }
 
-  /// HU023 / HU024: carga unicamente los recursos del perfil elegido.
+  /// Carga unicamente los recursos del perfil elegido.
   Future<void> selectProfile(ChildProfile p) async {
     await _activate(p);
     _mode = AppMode.none;
     notifyListeners();
   }
 
-  /// HU021. El nuevo perfil queda activo para registrar su consentimiento.
+  /// El nuevo perfil queda activo para registrar su consentimiento.
   Future<ChildProfile> createProfile(ProfileForm form) async {
     final created = await _profiles.create(_account!.id!, form);
     _profileList = await _profiles.forTutor(_account!.id!);
@@ -188,7 +183,6 @@ class SessionController extends ChangeNotifier {
     return created;
   }
 
-  /// HU022.
   Future<void> updateProfile(ChildProfile current, ProfileForm form) async {
     final updated = await _profiles.update(current, form);
     _profileList = await _profiles.forTutor(_account!.id!);
@@ -196,7 +190,7 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// HU004, HU016, RF-15 y alto contraste.
+  /// Preferencias de comunicacion.
   Future<void> savePreferences(CommunicationPreferences prefs) async {
     final p = _active;
     if (p == null) return;
@@ -207,7 +201,6 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// HU025.
   Future<void> deleteProfile(ChildProfile p) async {
     await _profiles.delete(p.id!);
     if (_active?.id == p.id) {
@@ -220,8 +213,6 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- Voz (HU017) -----------------------------------------------------------
-
   Future<void> saveVoice(VoiceConfiguration v) async {
     await _settings.saveVoice(v);
     _voice = v;
@@ -229,7 +220,7 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// "Probar voz" (mockup 11) con valores aun no guardados.
+  /// "Probar voz" con valores aun no guardados.
   Future<bool> previewVoice(VoiceConfiguration v, String text) async {
     await _tts.configure(v);
     final ok = await _tts.speak(text);
@@ -242,8 +233,6 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<List<TtsVoice>> availableVoices() => _tts.spanishVoices();
-
-  // --- Consentimiento (HU027, HU028) ----------------------------------------
 
   Future<void> decideConsent({required bool granted}) async {
     final p = _active;
@@ -266,8 +255,6 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
     return _consent;
   }
-
-  // --- Modo (OB2, Fig. 8) ------------------------------------------------------
 
   void enterChildMode() {
     if (_active == null) return;

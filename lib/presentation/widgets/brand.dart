@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Isotipo de GestuVoz (mockup 1): mano sobre un cuadrado turquesa.
+/// Isotipo de GestuVoz: mano sobre un cuadrado turquesa.
 class GestuVozLogo extends StatelessWidget {
   final double size;
   const GestuVozLogo({super.key, this.size = 56});

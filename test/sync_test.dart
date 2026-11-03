@@ -131,7 +131,7 @@ void main() {
               name: 'Valentina López', birthDate: DateTime(2019, 5, 14))))
       .id!;
 
-  test('HU014: la categoría por perfil se envía al backend', () async {
+  test('La categoría por perfil se envía al backend', () async {
     final env = await _Env.open(path);
     final profileId = await newProfile(env);
     await env.privacy.decide(profileId, granted: true);
@@ -320,7 +320,7 @@ void main() {
     final custom = profiles.single.preferences.gestureCustomizations[2]!;
     expect(custom.message, 'Tengo sed');
     expect(custom.pictogramId, 5);
-    // HU014: el pictograma inicial llega en la categoria elegida en el perfil.
+    // El pictograma inicial llega en la categoria elegida en el perfil.
     expect(board.byCategory[3]!.where((p) => p.id == 5), hasLength(1));
     expect((await env.privacy.forProfile(profiles.single.id!))!
         .allowsProcessing, isTrue);
@@ -394,7 +394,7 @@ void main() {
     expect(summary.totalInteractions, 2);
     expect(summary.weekly[5], 2);
 
-    // HU033: registro que ya no existe en el backend.
+    // Registro que ya no existe en el backend.
     expect(await history.detail(profileId, records.first), isNull);
 
     env.backend.offline = true;

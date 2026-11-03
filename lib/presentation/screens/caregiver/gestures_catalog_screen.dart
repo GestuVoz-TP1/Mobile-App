@@ -10,9 +10,9 @@ import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 import 'gesture_message_sheet.dart';
 
-/// Gestos que reconoce la aplicacion (HU003) con su referencia visual,
-/// intencion y mensaje. Las instrucciones, y el mensaje y el pictograma de cada
-/// gesto en el perfil activo, son editables.
+/// Gestos que reconoce la aplicacion con su referencia visual, intencion y
+/// mensaje. Las instrucciones, y el mensaje y el pictograma de cada gesto en el
+/// perfil activo, son editables.
 class GesturesCatalogScreen extends StatefulWidget {
   const GesturesCatalogScreen({super.key});
 

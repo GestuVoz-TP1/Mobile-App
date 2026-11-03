@@ -13,9 +13,8 @@ import '../../theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 
-/// Gestion de pictogramas del perfil activo (mockup 10):
-/// consultar y buscar, crear (HU012), editar (HU013), cambiar de categoria
-/// (HU014), mostrar u ocultar en el tablero (HU015) y ordenar (RF-07).
+/// Gestion de pictogramas del perfil activo: consultar y buscar, crear, editar,
+/// cambiar de categoria, mostrar u ocultar en el tablero y ordenar.
 class VocabularyScreen extends StatefulWidget {
   const VocabularyScreen({super.key});
 
@@ -358,9 +357,8 @@ class _PictogramRow extends StatelessWidget {
 }
 
 /// Editor de pictogramas (existente, adaptado).
-/// - Personalizado: imagen + mensaje obligatorios, nombre y categoria
-///   (HU012 / HU013 / HU014). Cancelar conserva la version anterior.
-/// - Semilla: solo se puede cambiar su categoria (HU014).
+/// - Personalizado: imagen + mensaje obligatorios, nombre y categoria. Cancelar conserva la version anterior.
+/// - Semilla: solo se puede cambiar su categoria.
 class PictogramEditorSheet extends StatefulWidget {
   final Pictogram? existing;
   final List<PictogramCategory> categories;
@@ -456,7 +454,7 @@ class _PictogramEditorSheetState extends State<PictogramEditorSheet> {
       }
       if (mounted) Navigator.pop(context, true);
     } on DomainException catch (e) {
-      setState(() => _error = e.message); // HU012, criterio 2
+      setState(() => _error = e.message);
     } catch (_) {
       setState(() => _error = 'No se pudo guardar el pictograma.');
     } finally {

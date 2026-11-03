@@ -13,8 +13,8 @@ import '../../widgets/common.dart';
 import '../../widgets/picto_visual.dart';
 import '../../widgets/usage_bar_chart.dart';
 
-/// Historial y reportes (mockup 12, E6). Consulta descriptiva del uso; no
-/// realiza evaluaciones ni interpretaciones clinicas.
+/// Historial y reportes. Consulta descriptiva del uso; no realiza evaluaciones
+/// ni interpretaciones clinicas.
 class HistoryScreen extends StatefulWidget {
   /// true = se muestra dentro de la pestana "Reportes" del panel del tutor.
   final bool embedded;
@@ -177,13 +177,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   )
                 else if (rc.records.isEmpty)
                   rc.period == HistoryPeriod.all
-                      // HU030, criterio 2
                       ? const EmptyState(
                           emoji: '🗒️',
                           title: 'Todavía no hay registros',
                           message: 'Las interacciones aparecerán aquí cuando '
                               'el niño use pictogramas o gestos.')
-                      // HU032, criterio 2
                       : EmptyState(
                           emoji: '📅',
                           title: 'No hay resultados en este período',
@@ -281,7 +279,7 @@ class _WeekCard extends StatelessWidget {
       );
 }
 
-/// HU031: mensajes y recursos mas usados en el periodo.
+/// Mensajes y recursos mas usados en el periodo.
 class _FrequentCard extends StatelessWidget {
   final UsageSummary summary;
   const _FrequentCard({required this.summary});
@@ -426,7 +424,7 @@ class _RecordTile extends StatelessWidget {
   }
 }
 
-/// HU033: detalle de una interaccion (fecha, hora y recurso utilizado).
+/// Detalle de una interaccion (fecha, hora y recurso utilizado).
 Future<void> showInteractionDetail(
     BuildContext context, InteractionRecord record) {
   return showModalBottomSheet<void>(
@@ -442,7 +440,7 @@ Future<void> showInteractionDetail(
             child: Center(child: CircularProgressIndicator()),
           );
         } else if (snap.hasError) {
-          // RNF-05: p. ej. sin conexion; el registro puede seguir existiendo.
+          // P. ej. sin conexion; el registro puede seguir existiendo.
           final error = snap.error;
           child = Column(
             mainAxisSize: MainAxisSize.min,
@@ -461,7 +459,6 @@ Future<void> showInteractionDetail(
             ],
           );
         } else if (snap.data == null) {
-          // HU033, criterio 2
           child = Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,

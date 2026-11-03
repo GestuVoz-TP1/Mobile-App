@@ -11,8 +11,7 @@ import '../../widgets/common.dart';
 import '../../widgets/picto_tile.dart';
 import '../../widgets/picto_visual.dart';
 
-/// Tablero del nino (mockup 6): categorias (HU010) -> pictogramas del perfil
-/// (HU007) -> "Mi mensaje" con UN pictograma, voz (HU008, HU009) y "Limpiar".
+/// Tablero del nino: categorias -> pictogramas del perfil -> "Mi mensaje" con UN pictograma, voz y "Limpiar".
 class CommunicatorScreen extends StatefulWidget {
   final int? initialCategoryId;
   final VoidCallback onBack;
@@ -64,7 +63,6 @@ class _CommunicatorScreenState extends State<CommunicatorScreen> {
     } else if (board == null) {
       content = const Center(child: CircularProgressIndicator());
     } else if (board.isEmpty) {
-      // HU007, criterio 2
       content = const EmptyState(
         emoji: '🗂️',
         title: 'Todavía no hay pictogramas disponibles',
@@ -83,7 +81,6 @@ class _CommunicatorScreenState extends State<CommunicatorScreen> {
           ),
           Expanded(
             child: pictos.isEmpty
-                // HU010, criterio 2
                 ? const EmptyState(
                     emoji: '📭',
                     title: 'No hay opciones disponibles en esta categoría',
@@ -210,7 +207,7 @@ class _CategoryBar extends StatelessWidget {
   }
 }
 
-/// "MI MENSAJE" (mockup 6): un solo pictograma/mensaje a la vez.
+/// "MI MENSAJE": un solo pictograma/mensaje a la vez.
 class _MyMessage extends StatelessWidget {
   final CommunicationController controller;
   const _MyMessage({required this.controller});
@@ -281,7 +278,6 @@ class _MyMessage extends StatelessWidget {
             ),
             if (controller.voiceFailed) ...[
               const SizedBox(height: Insets.sm),
-              // HU009, criterio 2
               const StatusNote('No se pudo reproducir la voz.',
                   kind: NoteKind.error),
             ],

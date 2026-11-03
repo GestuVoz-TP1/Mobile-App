@@ -38,7 +38,7 @@ class GestureOutcome {
   });
 }
 
-/// Servicio de aplicacion: comunicacion mediante gestos (E1).
+/// Comunicacion mediante gestos.
 ///
 /// Camara -> [GestureRecognitionService] -> GESTO -> INTENCION_COMUNICATIVA
 /// -> PICTOGRAMA. La voz y el registro los coordina el controlador.
@@ -58,13 +58,13 @@ class GestureService {
     if (!_recognizer.isLoaded) await _recognizer.load();
   }
 
-  /// HU003: catalogo de gestos definidos.
+  /// Catalogo de gestos definidos.
   Future<List<Gesture>> catalog() => _gestures.all();
 
   Future<CommunicativeIntention?> intentionFor(Gesture g) =>
       _gestures.intentionForGesture(g.id);
 
-  /// Gestos habilitados para el perfil (RF-15) y disponibles.
+  /// Gestos habilitados para el perfil y disponibles.
   Future<List<Gesture>> enabledFor(ChildProfile profile) async {
     final ids = profile.preferences.enabledGestureIds.toSet();
     return (await _gestures.all())
@@ -160,8 +160,8 @@ class GestureService {
     return _outcomeFor(result, enabled, profileId);
   }
 
-  /// HU001 / HU006: devuelve null si el gesto no se reconoce o no puede
-  /// asociarse a un mensaje (no se comunica un mensaje incorrecto).
+  /// Devuelve null si el gesto no se reconoce o no puede asociarse a un mensaje
+  /// (no se comunica un mensaje incorrecto).
   Future<GestureOutcome?> recognize(
     GestureSequence sequence,
     List<Gesture> enabled, {

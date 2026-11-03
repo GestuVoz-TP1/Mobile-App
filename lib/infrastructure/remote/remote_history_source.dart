@@ -5,8 +5,7 @@ import '../persistence/database.dart';
 import '../sync/sync_service.dart' show RemoteIds;
 import 'api_client.dart';
 
-/// Historial y reportes consultados al backend (OB2, "Generacion de
-/// reportes"; E6, HU030-HU033).
+/// Historial y reportes consultados al backend.
 ///
 /// Los identificadores remotos se traducen a los nombres guardados en el
 /// telefono (pictogramas, gestos e intenciones).
@@ -82,7 +81,7 @@ class RemoteHistorySource implements HistorySource {
     } on OfflineException {
       throw const DomainException(offlineMessage);
     } on ApiException catch (e) {
-      if (e.status == 404) return null; // HU033: ya no esta disponible
+      if (e.status == 404) return null; // ya no esta disponible
       rethrow;
     }
   }

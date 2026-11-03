@@ -28,9 +28,7 @@ bool _sameBytes(Uint8List? a, Uint8List? b) {
 }
 DateTime _parse(Object? v) => DateTime.parse(v as String);
 
-// --------------------------------------------------------------------------
 // PADRE_TUTOR
-// --------------------------------------------------------------------------
 class SqliteAuthRepository implements AuthRepository {
   SqliteAuthRepository(this._db);
   final GestuVozDatabase _db;
@@ -118,9 +116,7 @@ class SqliteAuthRepository implements AuthRepository {
   }
 }
 
-// --------------------------------------------------------------------------
 // NINO + PERFIL_NINO
-// --------------------------------------------------------------------------
 class SqliteChildProfileRepository implements ChildProfileRepository {
   SqliteChildProfileRepository(this._db);
   final GestuVozDatabase _db;
@@ -260,8 +256,8 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
           whereArgs: [profileId]);
       if (rows.isEmpty) return;
       final childId = rows.first['id_nino'] as int;
-      // HU025: tambien se elimina en la nube. Se descartan los envios
-      // pendientes de este perfil.
+      // Tambien se elimina en la nube. Se descartan los envios pendientes de
+      // este perfil.
       for (final entity in [SyncEntity.consent, SyncEntity.voice]) {
         await txn.delete('sync_pendiente',
             where: 'entidad = ? AND id_local = ?',
@@ -314,9 +310,7 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
   }
 }
 
-// --------------------------------------------------------------------------
 // CATEGORIA + PICTOGRAMA + PERFIL_PICTOGRAMA
-// --------------------------------------------------------------------------
 class SqlitePictogramRepository implements PictogramRepository {
   SqlitePictogramRepository(this._db);
   final GestuVozDatabase _db;
@@ -605,9 +599,7 @@ class SqlitePictogramRepository implements PictogramRepository {
   }
 }
 
-// --------------------------------------------------------------------------
 // GESTO + INTENCION_COMUNICATIVA
-// --------------------------------------------------------------------------
 class SqliteGestureRepository implements GestureRepository {
   SqliteGestureRepository(this._db);
   final GestuVozDatabase _db;
@@ -716,9 +708,7 @@ class SqliteGestureRepository implements GestureRepository {
   }
 }
 
-// --------------------------------------------------------------------------
 // INTERACCION
-// --------------------------------------------------------------------------
 class SqliteInteractionRepository implements InteractionRepository {
   SqliteInteractionRepository(this._db);
   final GestuVozDatabase _db;
@@ -808,9 +798,7 @@ class SqliteInteractionRepository implements InteractionRepository {
   }
 }
 
-// --------------------------------------------------------------------------
 // CONFIGURACION_VOZ
-// --------------------------------------------------------------------------
 class SqliteVoiceConfigurationRepository
     implements VoiceConfigurationRepository {
   SqliteVoiceConfigurationRepository(this._db);
@@ -854,9 +842,7 @@ class SqliteVoiceConfigurationRepository
   }
 }
 
-// --------------------------------------------------------------------------
 // CONSENTIMIENTO
-// --------------------------------------------------------------------------
 class SqliteConsentRepository implements ConsentRepository {
   SqliteConsentRepository(this._db);
   final GestuVozDatabase _db;

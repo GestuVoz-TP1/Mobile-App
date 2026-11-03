@@ -7,9 +7,8 @@ import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
 
-/// Registro de la cuenta del padre o tutor (HU018, mockup 2).
-/// Solo correo y contrasena (modelo PADRE_TUTOR). El consentimiento se
-/// registra al crear cada perfil infantil.
+/// Registro de la cuenta del padre o tutor. Solo correo y contrasena (modelo
+/// PADRE_TUTOR). El consentimiento se registra al crear cada perfil infantil.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -46,7 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ));
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
     } on DomainException catch (e) {
-      setState(() => _error = e.message); // HU018, criterio 2
+      setState(() => _error = e.message);
     } catch (_) {
       setState(() => _error = 'No se pudo crear la cuenta.');
     } finally {

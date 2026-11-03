@@ -7,7 +7,7 @@ import '../../theme.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/common.dart';
 
-/// Inicio de sesion con correo y contrasena (HU019).
+/// Inicio de sesion con correo y contrasena.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -46,8 +46,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// HU020: envia el correo de restablecimiento de Firebase Authentication.
-  /// Criterio 2: valida el correo antes de continuar.
+  /// Envia el correo de restablecimiento de Firebase Authentication. Criterio
+  /// 2: valida el correo antes de continuar.
   Future<void> _recover() async {
     final session = context.read<SessionController>();
     final email = await showTextInputDialog(

@@ -5,8 +5,8 @@ import '../../infrastructure/sync/sync_service.dart';
 import '../theme.dart';
 import 'common.dart';
 
-/// Aviso de conexion con el servidor (RNF-05). Solo aparece si no hay
-/// conexion; los cambios quedan guardados en el telefono.
+/// Aviso de conexion con el servidor. Solo aparece si no hay conexion; los
+/// cambios quedan guardados en el telefono.
 class SyncStatusBanner extends StatelessWidget {
   const SyncStatusBanner({super.key});
 

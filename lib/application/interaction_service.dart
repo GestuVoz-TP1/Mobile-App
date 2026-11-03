@@ -3,7 +3,7 @@ import '../domain/consent.dart';
 import '../domain/gesture.dart';
 import '../domain/interaction.dart';
 
-/// Servicio de aplicacion: registro de interacciones (RF-13).
+/// Registro de interacciones.
 ///
 /// Solo registra si el perfil tiene un consentimiento vigente.
 class InteractionService {
@@ -11,7 +11,7 @@ class InteractionService {
   final InteractionRepository _interactions;
   final ConsentRepository _consents;
 
-  /// Registra la seleccion de un pictograma del tablero (HU008).
+  /// Registra la seleccion de un pictograma del tablero.
   Future<bool> recordPictogram(int profileId, Pictogram p) => _record(
         Interaction(
           at: DateTime.now(),
@@ -21,7 +21,7 @@ class InteractionService {
         ),
       );
 
-  /// Registra un gesto reconocido (HU006).
+  /// Registra un gesto reconocido.
   Future<bool> recordGesture(
     int profileId, {
     required Gesture gesture,

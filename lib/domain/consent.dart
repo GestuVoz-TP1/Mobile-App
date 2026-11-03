@@ -1,9 +1,5 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: PRIVACIDAD (CONSENTIMIENTO)
-///
-/// Decision del padre o tutor sobre el tratamiento de los datos del nino
-/// (Ley N.º 29733). PERFIL_NINO 1:1 CONSENTIMIENTO (OB2, 5.2). HU027-HU029.
-/// -------------------------------------------------------------------------
+/// Decision del padre o tutor sobre el tratamiento de los datos del nino (Ley
+/// N.º 29733). PERFIL_NINO 1:1 CONSENTIMIENTO.
 library;
 
 /// CONSENTIMIENTO.estado_consentimiento

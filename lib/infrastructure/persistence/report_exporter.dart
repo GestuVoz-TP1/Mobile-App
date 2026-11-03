@@ -93,7 +93,7 @@ const _inkSoft = PdfColor.fromInt(0xFF44544E);
 const _line = PdfColor.fromInt(0xFFDDE5E2);
 const _coral = PdfColor.fromInt(0xFFD9584A);
 
-/// Reporte descriptivo de uso (E6): resumen, graficos y detalle.
+/// Reporte descriptivo de uso: resumen, graficos y detalle.
 Future<Uint8List> buildReportPdf({
   required String profileName,
   required String periodLabel,

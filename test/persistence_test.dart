@@ -190,7 +190,7 @@ void main() {
     await again.db.close();
   });
 
-  test('HU014: la categoría de un pictograma inicial es por perfil', () async {
+  test('La categoría de un pictograma inicial es por perfil', () async {
     final (app, tutorId, luisId) = await withProfile();
     final ana = await app.profiles.create(
         tutorId, ProfileForm(name: 'Ana', birthDate: DateTime(2018, 2, 3)));
@@ -338,7 +338,7 @@ void main() {
     await app.db.close();
   });
 
-  test('HU018/HU019: registro y login con correo; credenciales inválidas',
+  test('Registro y login con correo; credenciales inválidas',
       () async {
     final app = await _App.open(path);
     expect(
@@ -392,7 +392,7 @@ void main() {
     await reopened.db.close();
   });
 
-  test('HU012: pictograma personalizado exige imagen y mensaje', () async {
+  test('Pictograma personalizado exige imagen y mensaje', () async {
     final (app, _, profileId) = await withProfile();
     final cat = (await app.communication.categories()).first.id;
     expect(
@@ -414,7 +414,7 @@ void main() {
     await app.db.close();
   });
 
-  test('HU015: ocultar quita del tablero sin borrar del catálogo', () async {
+  test('Ocultar quita del tablero sin borrar del catálogo', () async {
     final (app, _, profileId) = await withProfile();
     final catalog = await app.communication.catalog(profileId);
     final first = catalog.first.pictogram;
@@ -530,7 +530,7 @@ void main() {
     await app.db.close();
   });
 
-  test('HU017: valores de voz fuera de rango se rechazan', () async {
+  test('Valores de voz fuera de rango se rechazan', () async {
     final (app, _, profileId) = await withProfile();
     final v = await app.voice.voiceFor(profileId);
     expect(() => app.voice.saveVoice(v.copyWith(rate: 2)),

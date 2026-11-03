@@ -1,7 +1,7 @@
 import '../domain/child.dart';
 import '../domain/gesture.dart';
 
-/// Datos del formulario de perfil infantil (HU021 / HU022).
+/// Datos del formulario de perfil infantil.
 class ProfileForm {
   final String name;
   final DateTime? birthDate;
@@ -16,8 +16,7 @@ class ProfileForm {
   });
 }
 
-/// Servicio de aplicacion: perfiles infantiles del tutor (E4) y sus
-/// preferencias de comunicacion.
+/// Perfiles infantiles del tutor y sus preferencias de comunicacion.
 class ProfileService {
   ProfileService(this._profiles, this._gestures);
   final ChildProfileRepository _profiles;
@@ -28,7 +27,7 @@ class ProfileService {
 
   Future<ChildProfile?> byId(int id) => _profiles.byId(id);
 
-  /// HU021. Lanza [DomainException] si faltan datos obligatorios.
+  /// Lanza [DomainException] si faltan datos obligatorios.
   Future<ChildProfile> create(int tutorId, ProfileForm f) async {
     final child = Child.create(
         name: f.name, birthDate: f.birthDate, gender: f.gender);
@@ -37,15 +36,15 @@ class ProfileService {
       tutorId: tutorId,
       child: child,
       supportLevel: _clean(f.supportLevel),
-      // RF-15: por defecto se habilitan los gestos disponibles; la modalidad
-      // queda desactivada hasta que el tutor la prepare (HU002 / HU004).
+      // Por defecto se habilitan los gestos disponibles; la modalidad queda
+      // desactivada hasta que el tutor la prepare.
       preferences: CommunicationPreferences(
         enabledGestureIds: gestures.map((g) => g.id).toList(),
       ),
     ));
   }
 
-  /// HU022: actualiza solo ese perfil.
+  /// Actualiza solo ese perfil.
   Future<ChildProfile> update(ChildProfile current, ProfileForm f) async {
     final child = Child.create(
       id: current.child.id,
@@ -72,7 +71,6 @@ class ProfileService {
     return updated;
   }
 
-  /// HU025.
   Future<void> delete(int profileId) => _profiles.delete(profileId);
 
   static String? _clean(String? v) =>

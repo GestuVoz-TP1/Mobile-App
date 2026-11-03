@@ -25,7 +25,7 @@ class InitialsAvatar extends StatelessWidget {
 
 enum NoteKind { info, success, warning, error }
 
-/// Mensaje de estado con icono + texto (nunca solo color, RNF-04).
+/// Mensaje de estado con icono + texto (nunca solo color).
 class StatusNote extends StatelessWidget {
   final NoteKind kind;
   final String text;
@@ -127,7 +127,7 @@ class SectionTitle extends StatelessWidget {
       );
 }
 
-/// Fila de menu del tutor (mockup 3, "Administrar").
+/// Fila de menu del tutor.
 class MenuRow extends StatelessWidget {
   final IconData icon;
   final Color iconBg;
@@ -191,7 +191,7 @@ class MenuRow extends StatelessWidget {
       );
 }
 
-/// Pantalla de "algo salio mal" con reintento (HU003/HU029/HU033 crit. 2).
+/// Pantalla de "algo salio mal" con reintento.
 class RetryPanel extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -269,7 +269,7 @@ class EmptyState extends StatelessWidget {
       );
 }
 
-/// Confirmacion generica (HU025, HU028: confirmar / cancelar).
+/// Confirmacion generica (confirmar / cancelar).
 Future<bool> confirmDialog(
   BuildContext context, {
   required String title,

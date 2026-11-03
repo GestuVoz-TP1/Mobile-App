@@ -22,8 +22,8 @@ abstract final class RemoteIds {
           : null;
 }
 
-/// Estado visible de la sincronizacion (RNF-05: informar si no hay
-/// conexion con los servicios remotos).
+/// Estado visible de la sincronizacion (informa si no hay conexion con los
+/// servicios remotos).
 class SyncStatus {
   const SyncStatus({
     this.online = true,
@@ -51,7 +51,7 @@ class SyncStatus {
       );
 }
 
-/// Sincroniza SQLite (telefono) con el backend Django (RF-11, RF-13, RNF-06).
+/// Sincroniza SQLite (telefono) con el backend Django.
 ///
 /// - Subida: envia la cola `sync_pendiente` y las interacciones pendientes.
 /// - Descarga: al iniciar sesion trae perfiles, ninos, consentimiento, voz y
@@ -80,9 +80,7 @@ class SyncService {
 
   Database get _sql => _db.db;
 
-  // ---------------------------------------------------------------------
   // Ciclo de vida
-  // ---------------------------------------------------------------------
 
   /// Comienza a sincronizar para el tutor con sesion iniciada.
   void start(int tutorId) {
@@ -115,9 +113,7 @@ class SyncService {
     _debounce = Timer(delay, () => unawaited(pushPending()));
   }
 
-  // ---------------------------------------------------------------------
   // Subida
-  // ---------------------------------------------------------------------
 
   static const _order = {
     '${SyncEntity.consent}:${SyncOp.upsert}': 1,
@@ -460,9 +456,7 @@ class SyncService {
     return true;
   }
 
-  // ---------------------------------------------------------------------
   // Descarga
-  // ---------------------------------------------------------------------
 
   /// Trae del backend los datos del tutor (nuevo telefono o reinstalacion).
   /// No sobrescribe cambios locales mas recientes ni pendientes de envio.
@@ -590,7 +584,6 @@ class SyncService {
     return null;
   }
 
-
   Future<int?> _localPictogram(Transaction txn, String remoteId) async {
     final base = RemoteIds.localFromKey(remoteId, 'base');
     final rows = base != null
@@ -692,7 +685,7 @@ class SyncService {
       await txn.update('perfil_nino', profileValues,
           where: 'id_perfil = ?', whereArgs: [profileId]);
     }
-    // Pictogramas visibles y su orden (HU015).
+    // Pictogramas visibles y su orden.
     await txn.delete('perfil_pictograma',
         where: 'id_perfil = ?', whereArgs: [profileId]);
     for (final v in (remotePrefs['pictogramas'] as List? ?? const [])

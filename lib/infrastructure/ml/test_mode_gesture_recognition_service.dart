@@ -9,7 +9,7 @@ import '../../domain/ml.dart';
 /// "no reconocido". Nunca informa porcentajes de confianza.
 ///
 /// Se reemplazara por [TensorFlowLiteGestureRecognitionService] cuando exista
-/// el modelo MobileNet + LSTM entrenado (OB2, seccion 8).
+/// el modelo MobileNet + LSTM entrenado.
 class TestModeGestureRecognitionService
     implements GestureRecognitionService, TestOutcomeRecognition {
   bool _loaded = false;

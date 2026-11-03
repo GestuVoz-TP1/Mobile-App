@@ -7,7 +7,7 @@ import '../../domain/ml.dart';
 import '../../domain/shared.dart';
 import 'hand_detection.dart';
 
-/// Modelo real (OB2, secciones 8.1-8.3), ejecutado en el dispositivo:
+/// Modelo real, ejecutado en el dispositivo:
 ///
 ///   fotograma -> detector de palmas (MediaPipe) -> recorte de la mano
 ///             -> MobileNetV3 (caracteristicas de 128 valores)
@@ -15,8 +15,7 @@ import 'hand_detection.dart';
 ///
 /// Los modelos se entrenaron con HaGRIDv2 en el repositorio ML
 /// (`entrenamiento/`). Las etiquetas (`etiquetas.txt`) son los valores de
-/// GESTO.clase_reconocimiento. Las imagenes solo se procesan en memoria
-/// (RNF-02).
+/// GESTO.clase_reconocimiento. Las imagenes solo se procesan en memoria.
 class TensorFlowLiteGestureRecognitionService
     implements GestureRecognitionService, ContinuousGestureRecognition {
   TensorFlowLiteGestureRecognitionService({
@@ -26,7 +25,7 @@ class TensorFlowLiteGestureRecognitionService
 
   final String modelDir;
 
-  /// Umbral para no comunicar un mensaje incorrecto (HU006, criterio 2).
+  /// Umbral para no comunicar un mensaje incorrecto.
   final double minConfidence;
 
   static const _cropSize = 224;
@@ -127,7 +126,7 @@ class TensorFlowLiteGestureRecognitionService
     GestureFrame frame, {
     required List<String> candidateClasses,
   }) async {
-    // Latencia: desde que llega el fotograma hasta la decision (OB2).
+    // Latencia: desde que llega el fotograma hasta la decision.
     final watch = Stopwatch()..start();
     await load();
     _window.add(_frameFeatures(frame));

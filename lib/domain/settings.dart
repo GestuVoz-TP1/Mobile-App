@@ -1,16 +1,12 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: CONFIGURACION DE VOZ (CONFIGURACION_VOZ)
-///
-/// Preferencias de reproduccion de mensajes de cada perfil (OB2: idioma, tipo
-/// de voz, velocidad y volumen; HU017). PERFIL_NINO 1:1 CONFIGURACION_VOZ.
-/// -------------------------------------------------------------------------
+/// Preferencias de reproduccion de mensajes de cada perfil (idioma, tipo de
+/// voz, velocidad y volumen). PERFIL_NINO 1:1 CONFIGURACION_VOZ.
 library;
 
 import 'shared.dart';
 
 export 'shared.dart' show DomainException;
 
-/// Valores permitidos (HU017, criterio 2).
+/// Valores permitidos.
 abstract final class VoiceLimits {
   static const minRate = 0.2;
   static const maxRate = 0.8;
@@ -18,7 +14,7 @@ abstract final class VoiceLimits {
   static const minVolume = 0.1;
   static const maxVolume = 1.0;
 
-  /// Solo espanol (Project Charter: sin soporte multi-idioma).
+  /// Solo espanol (sin soporte multi-idioma).
   static const defaultLanguage = 'es-ES';
 }
 
@@ -43,7 +39,7 @@ class VoiceConfiguration {
     this.voiceEnabled = true,
   });
 
-  /// Valida los valores antes de guardar (HU017, criterio 2).
+  /// Valida los valores antes de guardar.
   VoiceConfiguration validated() {
     if (rate < VoiceLimits.minRate || rate > VoiceLimits.maxRate) {
       throw const DomainException(

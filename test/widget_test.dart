@@ -16,13 +16,13 @@ import 'package:gestuvoz/presentation/widgets/picto_tile.dart';
 
 void main() {
   group('Value objects y entidades de dominio', () {
-    test('Email normaliza y valida (HU018)', () {
+    test('Email normaliza y valida', () {
       expect(Email('  Maria@Email.COM ').value, 'maria@email.com');
       expect(() => Email(''), throwsA(isA<DomainException>()));
       expect(() => Email('sin-arroba'), throwsA(isA<DomainException>()));
     });
 
-    test('Child.create valida nombre, fecha y edad (HU021)', () {
+    test('Child.create valida nombre, fecha y edad', () {
       final now = DateTime(2026, 10, 7);
       expect(
           () => Child.create(name: '', birthDate: DateTime(2019), now: now),
@@ -39,7 +39,7 @@ void main() {
       expect(c.initials, 'VL');
     });
 
-    test('Preferencias: JSON ida y vuelta y tamaños permitidos (HU016)', () {
+    test('Preferencias: JSON ida y vuelta y tamaños permitidos', () {
       const p = CommunicationPreferences(
           gesturesEnabled: true, enabledGestureIds: [1, 3], pictogramColumns: 2);
       final back = CommunicationPreferences.fromJson(p.toJson());
@@ -50,7 +50,7 @@ void main() {
           throwsA(isA<DomainException>()));
     });
 
-    test('Pictograma personalizado exige imagen y mensaje (HU012)', () {
+    test('Pictograma personalizado exige imagen y mensaje', () {
       expect(
           () => Pictogram.custom(
               name: 'x', message: 'Hola', categoryId: 1, image: null),
@@ -114,7 +114,7 @@ void main() {
     });
   });
 
-  test('ReportBuilder resume por recurso, gesto e intención (E6)', () {
+  test('ReportBuilder resume por recurso, gesto e intención', () {
     final now = DateTime(2026, 10, 7, 12);
     InteractionRecord rec(int picto, DateTime at, {int? gesture}) =>
         InteractionRecord(

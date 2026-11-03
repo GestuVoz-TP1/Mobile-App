@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../domain/ml.dart';
 
-/// Problema que impide usar la camara (HU002, criterio 2).
+/// Problema que impide usar la camara.
 enum CameraIssue { none, noCamera, permissionDenied, failure }
 
 extension CameraIssueX on CameraIssue {
@@ -26,8 +26,7 @@ extension CameraIssueX on CameraIssue {
 
 /// Envuelve el plugin `camera`. Usa la camara frontal (el nino mira la
 /// pantalla) y entrega SECUENCIAS de fotogramas en memoria para el
-/// reconocimiento de gestos (RF-01). Ninguna imagen se guarda en disco
-/// (RNF-02).
+/// reconocimiento de gestos. Ninguna imagen se guarda en disco.
 class CameraService {
   CameraController? _controller;
   List<CameraDescription> _cameras = const [];
@@ -134,7 +133,7 @@ class CameraService {
         if (now.difference(lastAt) < step) return;
         lastAt = now;
         // Planos YUV copiados en memoria; el reconocedor hace su propio
-        // preprocesamiento (OB2, 8.2).
+        // preprocesamiento.
         final p = img.planes;
         final color = p.length >= 3;
         onFrame(GestureFrame(

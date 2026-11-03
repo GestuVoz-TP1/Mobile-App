@@ -8,8 +8,7 @@ import '../../widgets/brand.dart';
 import '../../widgets/common.dart';
 import '../caregiver/profiles_screen.dart';
 
-/// Tras iniciar sesion: panel del nino o panel del padre/tutor (OB2, Fig. 8
-/// "¿Panel seleccionado?").
+/// Tras iniciar sesion: panel del nino o panel del padre/tutor.
 class ModeSelectionScreen extends StatelessWidget {
   const ModeSelectionScreen({super.key});
 
@@ -22,7 +21,7 @@ class ModeSelectionScreen extends StatelessWidget {
         title: const GestuVozBrand(size: 36),
         actions: [
           TextButton.icon(
-            onPressed: session.logout, // HU026
+            onPressed: session.logout,
             icon: const Icon(Icons.logout_rounded),
             label: const Text('Cerrar sesión'),
           ),

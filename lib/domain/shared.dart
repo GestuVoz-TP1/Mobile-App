@@ -1,9 +1,7 @@
-/// -------------------------------------------------------------------------
 /// SHARED KERNEL del dominio
 ///
 /// Tipos compartidos por varios bounded contexts. Se mantiene minimo a
 /// proposito: solo lo que de verdad cruza fronteras.
-/// -------------------------------------------------------------------------
 library;
 
 /// Error de regla de negocio. La capa de presentacion lo traduce a mensajes.

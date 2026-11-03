@@ -1,10 +1,6 @@
-/// -------------------------------------------------------------------------
-/// Bounded context: AUTENTICACION (entidad PADRE_TUTOR)
-///
-/// Acceso del padre o tutor. En esta etapa el acceso es LOCAL: la contrasena
-/// se guarda como hash con sal en SQLite. En una etapa posterior lo
-/// reemplazara Firebase Authentication (OB2, RT-04).
-/// -------------------------------------------------------------------------
+/// Acceso del padre o tutor. En esta etapa el acceso es LOCAL: la contrasena se
+/// guarda como hash con sal en SQLite. En una etapa posterior lo reemplazara
+/// Firebase Authentication.
 library;
 
 import 'shared.dart';
@@ -90,7 +86,7 @@ class RemoteUser {
   const RemoteUser({required this.uid, required this.email});
 }
 
-/// Puerto hacia el servicio de autenticacion remoto (OB2 RT-04).
+/// Puerto hacia el servicio de autenticacion remoto.
 abstract interface class RemoteAuthGateway {
   /// Usuario con sesion guardada en el dispositivo (funciona sin conexion).
   RemoteUser? get currentUser;
@@ -98,7 +94,7 @@ abstract interface class RemoteAuthGateway {
   Future<RemoteUser> signIn(String email, String password);
   Future<void> signOut();
 
-  /// HU020: envia el correo para restablecer la contrasena.
+  /// Envia el correo para restablecer la contrasena.
   Future<void> sendPasswordReset(String email);
 
   /// Token para llamar al backend; null si no hay sesion.
