@@ -212,6 +212,17 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
   @override
   Future<void> update(ChildProfile profile) async {
     await _db.db.transaction((txn) async {
+      // Las categorias por perfil solo cambian con setProfileCategory; asi no
+      // se pierden si esta copia del perfil se cargo antes de ese cambio.
+      final stored = await txn.query('perfil_nino',
+          columns: ['preferencias_comunicacion'],
+          where: 'id_perfil = ?',
+          whereArgs: [profile.id]);
+      final categories = stored.isEmpty
+          ? const <int, int>{}
+          : CommunicationPreferences.fromJson(
+                  stored.first['preferencias_comunicacion'] as String?)
+              .pictogramCategories;
       await txn.update(
         'nino',
         {
@@ -226,7 +237,9 @@ class SqliteChildProfileRepository implements ChildProfileRepository {
         'perfil_nino',
         {
           'nivel_apoyo': profile.supportLevel,
-          'preferencias_comunicacion': profile.preferences.toJson(),
+          'preferencias_comunicacion': profile.preferences
+              .copyWith(pictogramCategories: categories)
+              .toJson(),
           'estado_perfil': profile.state,
         },
         where: 'id_perfil = ?',
@@ -338,9 +351,10 @@ class SqlitePictogramRepository implements PictogramRepository {
       WHERE p.id_perfil_propietario IS NULL OR p.id_perfil_propietario = ?
       ORDER BY pp.orden IS NULL, pp.orden, p.id_pictograma''',
         [profileId, profileId]);
+    final categories = await _profileCategories(profileId);
     return rows
         .map((r) => ProfilePictogram(
-              pictogram: _map(r),
+              pictogram: _withProfileCategory(_map(r), categories),
               selected: r['orden'] != null,
               order: r['orden'] as int?,
             ))
@@ -355,7 +369,58 @@ class SqlitePictogramRepository implements PictogramRepository {
       JOIN categoria c ON c.id_categoria = p.id_categoria
       WHERE pp.id_perfil = ? AND c.estado_disponibilidad = 'disponible'
       ORDER BY pp.orden, p.id_pictograma''', [profileId]);
-    return rows.map(_map).toList();
+    final categories = await _profileCategories(profileId);
+    return rows.map((r) => _withProfileCategory(_map(r), categories)).toList();
+  }
+
+  Future<Map<int, int>> _profileCategories(int profileId) async {
+    final rows = await _db.db.query('perfil_nino',
+        columns: ['preferencias_comunicacion'],
+        where: 'id_perfil = ?',
+        whereArgs: [profileId]);
+    if (rows.isEmpty) return const {};
+    return CommunicationPreferences.fromJson(
+            rows.first['preferencias_comunicacion'] as String?)
+        .pictogramCategories;
+  }
+
+  Pictogram _withProfileCategory(Pictogram p, Map<int, int> categories) {
+    final category = categories[p.id];
+    return category == null ? p : p.copyWith(categoryId: category);
+  }
+
+  @override
+  Future<void> setProfileCategory(
+      int profileId, int pictogramId, int categoryId) async {
+    await _db.db.transaction((txn) async {
+      final profile = await txn.query('perfil_nino',
+          columns: ['preferencias_comunicacion'],
+          where: 'id_perfil = ?',
+          whereArgs: [profileId]);
+      final base = await txn.query('pictograma',
+          columns: ['id_categoria'],
+          where: 'id_pictograma = ?',
+          whereArgs: [pictogramId]);
+      if (profile.isEmpty || base.isEmpty) return;
+      final prefs = CommunicationPreferences.fromJson(
+          profile.first['preferencias_comunicacion'] as String?);
+      final categories = {...prefs.pictogramCategories};
+      // Volver a la categoria original no necesita guardarse.
+      if (base.first['id_categoria'] == categoryId) {
+        categories.remove(pictogramId);
+      } else {
+        categories[pictogramId] = categoryId;
+      }
+      await txn.update(
+          'perfil_nino',
+          {
+            'preferencias_comunicacion':
+                prefs.copyWith(pictogramCategories: categories).toJson(),
+          },
+          where: 'id_perfil = ?',
+          whereArgs: [profileId]);
+      await SyncLog.touchProfile(txn, profileId);
+    });
   }
 
   @override

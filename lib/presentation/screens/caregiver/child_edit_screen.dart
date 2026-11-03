@@ -21,9 +21,9 @@ class ChildEditScreen extends StatefulWidget {
 
 class _ChildEditScreenState extends State<ChildEditScreen> {
   late final TextEditingController _name;
-  late final TextEditingController _support;
   DateTime? _birth;
   String? _gender;
+  String? _support;
   bool _busy = false;
   String? _error;
 
@@ -34,7 +34,7 @@ class _ChildEditScreenState extends State<ChildEditScreen> {
     super.initState();
     final p = widget.profile;
     _name = TextEditingController(text: p?.child.name ?? '');
-    _support = TextEditingController(text: p?.supportLevel ?? '');
+    _support = p?.supportLevel;
     _birth = p?.child.birthDate;
     _gender = p?.child.gender;
   }
@@ -42,7 +42,6 @@ class _ChildEditScreenState extends State<ChildEditScreen> {
   @override
   void dispose() {
     _name.dispose();
-    _support.dispose();
     super.dispose();
   }
 
@@ -68,7 +67,7 @@ class _ChildEditScreenState extends State<ChildEditScreen> {
       name: _name.text,
       birthDate: _birth,
       gender: _gender,
-      supportLevel: _support.text,
+      supportLevel: _support,
     );
     try {
       if (_isNew) {
@@ -134,13 +133,25 @@ class _ChildEditScreenState extends State<ChildEditScreen> {
               onChanged: (v) => setState(() => _gender = v),
             ),
             const SizedBox(height: Insets.md),
-            TextField(
-              controller: _support,
-              textCapitalization: TextCapitalization.sentences,
+            DropdownButtonFormField<String?>(
+              initialValue: _support,
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Nivel de apoyo (opcional)',
+                helperText: 'Según la evaluación de un especialista. Si no lo '
+                    'sabes, déjalo sin especificar.',
+                helperMaxLines: 2,
                 prefixIcon: Icon(Icons.support_outlined),
               ),
+              items: [
+                const DropdownMenuItem(value: null, child: Text('Sin especificar')),
+                for (final level in kSupportLevelOptions)
+                  DropdownMenuItem(value: level, child: Text(level)),
+                // Un texto escrito antes de existir la lista se conserva.
+                if (_support != null && !kSupportLevelOptions.contains(_support))
+                  DropdownMenuItem(value: _support, child: Text(_support!)),
+              ],
+              onChanged: (v) => setState(() => _support = v),
             ),
             const SizedBox(height: Insets.sm),
             Text('* Campos obligatorios',

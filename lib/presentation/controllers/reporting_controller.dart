@@ -82,13 +82,21 @@ class ReportingController extends ChangeNotifier {
           await _service.historySummary(profile.id!, from: from, to: to);
       _week = await _service.weekSummary(profile.id!);
     } on DomainException catch (e) {
-      _error = e.message; // p. ej. sin conexion con el servidor (RNF-05)
+      _failed(e.message); // p. ej. sin conexion con el servidor (RNF-05)
     } catch (_) {
-      _error = 'No se pudo cargar el historial.';
+      _failed('No se pudo cargar el historial.');
     } finally {
       _busy = false;
       notifyListeners();
     }
+  }
+
+  /// No se conservan los datos anteriores: serian de otro periodo (HU032).
+  void _failed(String message) {
+    _error = message;
+    _records = const [];
+    _summary = null;
+    _week = null;
   }
 
   Future<void> setPeriod(HistoryPeriod p, {DateTimeRange? range}) async {

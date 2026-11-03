@@ -135,6 +135,10 @@ abstract interface class PictogramRepository {
   Future<Pictogram> insertCustom(Pictogram pictogram, int profileId);
   Future<void> update(Pictogram pictogram);
 
+  /// HU014: categoria de un pictograma inicial solo para este perfil.
+  Future<void> setProfileCategory(
+      int profileId, int pictogramId, int categoryId);
+
   /// HU015: mostrar/ocultar sin eliminar del catalogo.
   Future<void> setSelected(int profileId, int pictogramId, bool selected);
 

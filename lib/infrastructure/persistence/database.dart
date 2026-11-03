@@ -26,7 +26,8 @@ class GestuVozDatabase {
   /// Firebase del tutor). v6: gestos que reconoce el modelo entrenado.
   /// v7: instrucciones sugeridas y emoji con la forma de la mano. v8: las
   /// instrucciones ya no piden quedarse quieto (reconocimiento continuo).
-  static const schemaVersion = 8;
+  /// v9: instrucciones de Agua.
+  static const schemaVersion = 9;
 
   /// Abre (o crea) la base de datos. [path] permite usar una base en memoria
   /// en las pruebas (`inMemoryDatabasePath`).

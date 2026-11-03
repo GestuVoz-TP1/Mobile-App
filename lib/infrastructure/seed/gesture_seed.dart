@@ -52,6 +52,8 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_agua',
     intentionName: 'Pedir agua',
     pictogramKey: 'b_agua',
+    instructions: 'Forma una C con la mano, como sosteniendo un vaso.\n'
+        'Llévala a la boca.',
   ),
   SeedGesture(
     name: 'Ayuda',

@@ -152,6 +152,13 @@ Los modelos están en `assets/models/` y se entrenan en el repositorio
 probaron con imágenes de HaGRIDv2 que no se usaron para entrenar; **falta
 validarlos con videos propios y medir la latencia en el teléfono**.
 
+Para medir la latencia en el teléfono, se compila una versión que la muestra
+en la pantalla del resultado:
+
+```bash
+flutter build apk --release --dart-define=MOSTRAR_LATENCIA=true --dart-define=API_BASE_URL=https://<dominio>/api/v1/
+```
+
 `TestModeGestureRecognitionService` (el reconocedor de prueba, sin modelo)
 sigue disponible para pruebas: se activa en `lib/di.dart`.
 

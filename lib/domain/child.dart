@@ -82,6 +82,14 @@ extension on String {
 /// Opciones de genero ofrecidas en el formulario (NINO.genero es opcional).
 const kGenderOptions = ['Femenino', 'Masculino', 'Prefiero no indicar'];
 
+/// Niveles de apoyo del DSM-5 para el TEA. El tutor registra lo que indico el
+/// especialista: la aplicacion no diagnostica.
+const kSupportLevelOptions = [
+  'Nivel 1: necesita apoyo',
+  'Nivel 2: necesita apoyo sustancial',
+  'Nivel 3: necesita apoyo muy sustancial',
+];
+
 /// Opciones de tamano de pictogramas (HU016): columnas del tablero.
 /// Menos columnas = pictogramas mas grandes.
 const kPictogramSizeOptions = <int, String>{
@@ -104,11 +112,17 @@ class CommunicationPreferences {
   /// RNF-04 / WCAG 2.1 AA: alto contraste.
   final bool highContrast;
 
+  /// HU014: categoria elegida por el perfil para cada pictograma inicial
+  /// (id de pictograma -> id de categoria). Los pictogramas iniciales son
+  /// compartidos, asi que el cambio se guarda aqui y no afecta a otros perfiles.
+  final Map<int, int> pictogramCategories;
+
   const CommunicationPreferences({
     this.gesturesEnabled = false,
     this.enabledGestureIds = const [],
     this.pictogramColumns = 3,
     this.highContrast = false,
+    this.pictogramCategories = const {},
   });
 
   CommunicationPreferences copyWith({
@@ -116,6 +130,7 @@ class CommunicationPreferences {
     List<int>? enabledGestureIds,
     int? pictogramColumns,
     bool? highContrast,
+    Map<int, int>? pictogramCategories,
   }) {
     final cols = pictogramColumns ?? this.pictogramColumns;
     if (!kPictogramSizeOptions.containsKey(cols)) {
@@ -126,6 +141,7 @@ class CommunicationPreferences {
       enabledGestureIds: enabledGestureIds ?? this.enabledGestureIds,
       pictogramColumns: cols,
       highContrast: highContrast ?? this.highContrast,
+      pictogramCategories: pictogramCategories ?? this.pictogramCategories,
     );
   }
 
@@ -134,6 +150,10 @@ class CommunicationPreferences {
         'gestos_habilitados': enabledGestureIds,
         'columnas_tablero': pictogramColumns,
         'alto_contraste': highContrast,
+        'categorias_pictogramas': {
+          for (final e in pictogramCategories.entries)
+            e.key.toString(): e.value,
+        },
       });
 
   factory CommunicationPreferences.fromJson(String? raw) {
@@ -148,6 +168,12 @@ class CommunicationPreferences {
             .toList(),
         pictogramColumns: kPictogramSizeOptions.containsKey(cols) ? cols : 3,
         highContrast: j['alto_contraste'] as bool? ?? false,
+        pictogramCategories: {
+          for (final e in ((j['categorias_pictogramas'] as Map?) ?? const {})
+              .entries)
+            if (int.tryParse('${e.key}') != null && e.value is int)
+              int.parse('${e.key}'): e.value as int,
+        },
       );
     } catch (_) {
       return const CommunicationPreferences();

@@ -8,7 +8,7 @@ import 'package:gestuvoz/application/interaction_service.dart';
 import 'package:gestuvoz/application/privacy_service.dart';
 import 'package:gestuvoz/application/profile_service.dart';
 import 'package:gestuvoz/application/settings_service.dart';
-import 'package:gestuvoz/domain/auth.dart';
+import 'package:gestuvoz/domain/child.dart';
 import 'package:gestuvoz/domain/consent.dart';
 import 'package:gestuvoz/infrastructure/persistence/database.dart';
 import 'package:gestuvoz/infrastructure/persistence/repositories.dart';
@@ -77,7 +77,7 @@ void main() {
     expect(gestures.length, kSeedGestures.length);
     expect(gestures.every((g) => (g['clase_reconocimiento'] as String)
         .startsWith('gesto_')), isTrue);
-    expect(gestures.where((g) => g['instrucciones'] == null).length, 1);
+    expect(gestures.every((g) => g['instrucciones'] != null), isTrue);
     await app.db.close();
   });
 
@@ -185,6 +185,47 @@ void main() {
     final again = await _App.open(path);
     expect(await again.db.db.query('gesto'), hasLength(kSeedGestures.length));
     await again.db.close();
+  });
+
+  test('HU014: la categoría de un pictograma inicial es por perfil', () async {
+    final (app, tutorId, luisId) = await withProfile();
+    final ana = await app.profiles.create(
+        tutorId, ProfileForm(name: 'Ana', birthDate: DateTime(2018, 2, 3)));
+    Future<int> categoria(int perfil, int id) async =>
+        (await app.communication.catalog(perfil))
+            .firstWhere((i) => i.pictogram.id == id)
+            .pictogram
+            .categoryId;
+
+    final item = (await app.communication.catalog(luisId))
+        .firstWhere((i) => !i.pictogram.isCustom);
+    final id = item.pictogram.id!;
+    final original = item.pictogram.categoryId;
+    final otra = (await app.communication.categories())
+        .firstWhere((c) => c.id != original)
+        .id;
+
+    await app.communication.updatePictogram(item.pictogram,
+        profileId: luisId, name: '', message: '', categoryId: otra);
+
+    expect(await categoria(luisId, id), otra);
+    expect(await categoria(ana.id!, id), original); // no afecta a otro perfil
+    final tablero = await app.communication.buildBoard(luisId);
+    expect(tablero.byCategory[otra]!.where((p) => p.id == id), hasLength(1));
+    expect(tablero.byCategory[original]!.where((p) => p.id == id), isEmpty);
+
+    // Guardar el perfil con una copia anterior no borra el cambio.
+    final perfil = (await app.profiles.byId(luisId))!;
+    await SqliteChildProfileRepository(app.db).update(perfil.copyWith(
+        preferences: const CommunicationPreferences(pictogramColumns: 2)));
+    expect(await categoria(luisId, id), otra);
+
+    // Volver a la categoría original no deja nada guardado.
+    await SqlitePictogramRepository(app.db)
+        .setProfileCategory(luisId, id, original);
+    final limpio = (await app.profiles.byId(luisId))!.preferences;
+    expect(limpio.pictogramCategories, isEmpty);
+    await app.db.close();
   });
 
   test('HU018/HU019: registro y login con correo; credenciales inválidas',

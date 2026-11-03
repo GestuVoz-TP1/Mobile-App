@@ -383,6 +383,10 @@ class _TestResultPanel extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // 3a. Reconocido (mockup 8)
 // ---------------------------------------------------------------------------
+/// Solo en la version para medir la latencia en el telefono (OB2, Tabla 9):
+/// flutter build apk --dart-define=MOSTRAR_LATENCIA=true
+const _mostrarLatencia = bool.fromEnvironment('MOSTRAR_LATENCIA');
+
 class _Recognized extends StatelessWidget {
   final CaptureController controller;
   const _Recognized({required this.controller});
@@ -479,6 +483,11 @@ class _Recognized extends StatelessWidget {
                 if (confidence != null) ...[
                   const SizedBox(height: Insets.md),
                   Text('Coincidencia ${confidence.percent.round()} %',
+                      textAlign: TextAlign.center),
+                ],
+                if (_mostrarLatencia) ...[
+                  const SizedBox(height: Insets.sm),
+                  Text('Procesado en ${o.result.latencyMs} ms',
                       textAlign: TextAlign.center),
                 ],
                 if (controller.voiceFailed) ...[

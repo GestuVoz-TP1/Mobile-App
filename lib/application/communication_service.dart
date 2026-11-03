@@ -64,6 +64,7 @@ class CommunicationService {
   /// HU013 (imagen/mensaje) y HU014 (categoria).
   Future<void> updatePictogram(
     Pictogram current, {
+    required int profileId,
     required String name,
     required String message,
     required int? categoryId,
@@ -79,11 +80,12 @@ class CommunicationService {
         image: image ?? current.image,
       );
     } else {
-      // Pictograma semilla: solo se permite cambiar su categoria (HU014).
+      // Pictograma semilla: solo se permite cambiar su categoria (HU014), y
+      // solo para este perfil, porque los demas perfiles lo comparten.
       if (categoryId == null) {
         throw const DomainException('Selecciona una categoría.');
       }
-      updated = current.copyWith(categoryId: categoryId);
+      return _pictos.setProfileCategory(profileId, current.id!, categoryId);
     }
     await _pictos.update(updated);
   }

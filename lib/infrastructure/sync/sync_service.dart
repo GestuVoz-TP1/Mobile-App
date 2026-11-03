@@ -288,6 +288,10 @@ class SyncService {
             prefs.enabledGestureIds.map(RemoteIds.gesture).toList(),
         'columnas_tablero': prefs.pictogramColumns,
         'alto_contraste': prefs.highContrast,
+        'categorias_pictogramas': {
+          for (final e in prefs.pictogramCategories.entries)
+            RemoteIds.basePictogram(e.key): e.value,
+        },
         'pictogramas': [
           for (final v in visible)
             {
@@ -587,6 +591,10 @@ class SyncService {
     final nino = p['nino'] as Map<String, dynamic>?;
     if (nino == null) return null;
     final remotePrefs = p['preferencias_de_comunicacion'] as Map<String, dynamic>;
+    final rows = await txn.query('perfil_nino',
+        where: 'uuid = ?', whereArgs: [p['id_perfil']]);
+    // Si el servidor aun no maneja este dato, se conserva el del telefono.
+    final remoteCategories = remotePrefs['categorias_pictogramas'] as Map?;
     final prefs = CommunicationPreferences(
       gesturesEnabled: remotePrefs['gestos_activados'] as bool? ?? false,
       enabledGestureIds: [
@@ -595,6 +603,17 @@ class SyncService {
       ],
       pictogramColumns: remotePrefs['columnas_tablero'] as int? ?? 3,
       highContrast: remotePrefs['alto_contraste'] as bool? ?? false,
+      pictogramCategories: remoteCategories != null
+          ? {
+              for (final e in remoteCategories.entries)
+                if (RemoteIds.localFromKey('${e.key}', 'base') != null)
+                  RemoteIds.localFromKey('${e.key}', 'base')!: e.value as int,
+            }
+          : rows.isEmpty
+              ? const {}
+              : CommunicationPreferences.fromJson(
+                      rows.first['preferencias_comunicacion'] as String?)
+                  .pictogramCategories,
     );
     final ninoValues = {
       'nombre': nino['nombre'],
@@ -609,8 +628,6 @@ class SyncService {
       'actualizado_en': p['actualizado_en'],
     };
 
-    final rows = await txn.query('perfil_nino',
-        where: 'uuid = ?', whereArgs: [p['id_perfil']]);
     final int profileId;
     if (rows.isEmpty) {
       final childId = await txn.insert(

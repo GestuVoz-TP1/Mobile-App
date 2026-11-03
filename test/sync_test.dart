@@ -130,6 +130,31 @@ void main() {
               name: 'Valentina López', birthDate: DateTime(2019, 5, 14))))
       .id!;
 
+  test('HU014: la categoría por perfil se envía al backend', () async {
+    final env = await _Env.open(path);
+    final profileId = await newProfile(env);
+    await env.privacy.decide(profileId, granted: true);
+    final item = (await env.communication.catalog(profileId))
+        .firstWhere((i) => !i.pictogram.isCustom);
+    final otra = (await env.communication.categories())
+        .firstWhere((c) => c.id != item.pictogram.categoryId)
+        .id;
+    await env.sync.pushPending();
+    env.backend.requests.clear();
+
+    await env.communication.updatePictogram(item.pictogram,
+        profileId: profileId, name: '', message: '', categoryId: otra);
+    await env.sync.pushPending();
+
+    final uuid = (await env.db.db.query('perfil_nino')).first['uuid'];
+    final prefs =
+        env.backend.bodyOf('PUT perfiles/$uuid')['preferencias_de_comunicacion'];
+    expect(prefs['categorias_pictogramas'],
+        {'base-${item.pictogram.id}': otra});
+    await env.sync.stop();
+    await env.db.close();
+  });
+
   test('Sin conexión no se pierde nada y se informa', () async {
     final env = await _Env.open(path);
     final profileId = await newProfile(env);
@@ -230,6 +255,7 @@ void main() {
               'gestos_habilitados': ['gesto-2'],
               'columnas_tablero': 2,
               'alto_contraste': false,
+              'categorias_pictogramas': {'base-5': 3},
               'pictogramas': [
                 {'id_pictograma': 'p-osito', 'orden': 1},
                 {'id_pictograma': 'base-5', 'orden': 2},
@@ -267,6 +293,8 @@ void main() {
     expect(profiles.single.preferences.enabledGestureIds, [2]);
     final board = await env.communication.buildBoard(profiles.single.id!);
     expect(board.pictogramCount, 2);
+    // HU014: el pictograma inicial llega en la categoria elegida en el perfil.
+    expect(board.byCategory[3]!.where((p) => p.id == 5), hasLength(1));
     expect((await env.privacy.forProfile(profiles.single.id!))!
         .allowsProcessing, isTrue);
     final voz = await env.db.db.query('configuracion_voz');
@@ -382,12 +410,17 @@ void main() {
         .map((e) => e.pictogram)
         .firstWhere((p) => p.id == picto.id);
     await env.communication.updatePictogram(stored,
-        name: 'Mi osito', message: 'Dame mi osito', categoryId: 2, image: image);
+        profileId: profileId,
+        name: 'Mi osito',
+        message: 'Dame mi osito',
+        categoryId: 2,
+        image: image);
     await env.sync.pushPending();
     expect(env.backend.sent.where((s) => s.endsWith('/imagen')).length, 1);
 
     // Una imagen nueva sí se sube.
     await env.communication.updatePictogram(stored,
+        profileId: profileId,
         name: 'Mi osito',
         message: 'Dame mi osito',
         categoryId: 2,
