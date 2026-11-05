@@ -36,55 +36,48 @@ dispositivo (SQLite) y se sincroniza con el backend cuando hay conexión.
 
 ## Funcionalidades
 
-Organizadas según las épicas del Product Backlog.
+### Comunicación mediante gestos
 
-### E1 · Comunicación mediante gestos
+- Reconoce los gestos del niño con la cámara; si no se reconoce, no comunica
+  un mensaje incorrecto y ofrece repetir el gesto o usar los pictogramas.
+- Preparación de la modalidad: activar los gestos y otorgar el permiso de
+  cámara, con indicaciones de qué corregir si falla.
+- Consulta de los gestos disponibles con su referencia visual e
+  instrucciones.
+- Activación o desactivación de los gestos para cada perfil.
+- Mensaje y pictograma de cada gesto adaptables por perfil.
 
-| HU | Funcionalidad |
-|----|---------------|
-| HU001 | Reconocer los gestos del niño con la cámara; si no se reconoce, no se comunica un mensaje incorrecto |
-| HU002 | Preparar la modalidad: activar gestos y otorgar el permiso de cámara (indica qué corregir si falla) |
-| HU003 | Consultar los gestos disponibles con su referencia visual |
-| HU004 | Activar o desactivar la comunicación por gestos para cada perfil |
-| HU005 | Pasar al tablero de pictogramas cuando un gesto no se reconoce |
-| HU011 | Volver a intentar un gesto conservando la configuración del perfil |
+### Comunicación mediante pictogramas y voz
 
-### E2 · Comunicación mediante pictogramas y voz
+- Muestra el pictograma del gesto reconocido y dice el mensaje
+  automáticamente.
+- Tablero con los pictogramas del perfil, organizados por categorías.
+- Selección de pictogramas en "Mi mensaje" y lectura en voz alta en español,
+  con aviso si la voz no está disponible.
 
-| HU | Funcionalidad |
-|----|---------------|
-| HU006 | Mostrar el pictograma del gesto reconocido y decir el mensaje automáticamente |
-| HU007 | Tablero con los pictogramas del perfil (aviso si aún no hay ninguno) |
-| HU008 | Seleccionar un pictograma y verlo en "Mi mensaje" |
-| HU009 | Escuchar el mensaje en español (aviso si la voz no está disponible) |
-| HU010 | Explorar pictogramas por categorías |
+### Personalización
 
-### E3 · Personalización de la comunicación
+- Pictogramas propios con imagen (galería o cámara) y mensaje.
+- Edición de la imagen, el mensaje y la categoría de los pictogramas.
+- Elección de los pictogramas del tablero, su orden y su tamaño.
+- Voz automática según el género indicado en el perfil del niño, o femenina o
+  masculina a elección del tutor, con velocidad, volumen y prueba de voz.
 
-| HU | Funcionalidad |
-|----|---------------|
-| HU012 | Crear pictogramas propios con imagen (galería o cámara) y mensaje |
-| HU013 | Editar la imagen o el mensaje de un pictograma propio |
-| HU014 | Cambiar la categoría de un pictograma |
-| HU015 | Elegir qué pictogramas aparecen en el tablero y en qué orden |
-| HU016 | Ajustar el tamaño de los pictogramas |
-| HU017 | Configurar la voz: tipo, velocidad, volumen y prueba de voz |
+### Perfiles, privacidad e historial
 
-### E4 a E6 · Perfiles, privacidad e historial
-
-- **Cuenta y perfiles (E4):** registro e inicio de sesión con correo y
+- **Cuenta y perfiles:** registro e inicio de sesión con correo y
   contraseña (Firebase Authentication), recuperación de contraseña por
   correo, varios perfiles infantiles por tutor (crear, editar, cambiar y
   eliminar) y cierre de sesión.
-- **Privacidad (E5):** consentimiento por perfil (otorgar, rechazar o retirar)
+- **Privacidad:** consentimiento por perfil (otorgar, rechazar o retirar)
   e información sobre los datos tratados (Ley N.º 29733). Sin consentimiento
   vigente no se registran interacciones ni se usa la cámara; el tablero sigue
   disponible.
-- **Historial (E6):** registro de cada mensaje comunicado, filtros por fecha,
+- **Historial:** registro de cada mensaje comunicado, filtros por fecha,
   detalle de cada interacción, mensajes más usados, actividad semanal y
-  exportación a CSV. El historial y los reportes los genera el backend, por
-  lo que su consulta requiere conexión. Es una consulta descriptiva: no
-  realiza evaluaciones clínicas.
+  reportes en PDF con gráficos y en CSV. El historial y los reportes los
+  genera el backend, por lo que su consulta requiere conexión. Es una
+  consulta descriptiva: no realiza evaluaciones clínicas.
 
 ---
 
