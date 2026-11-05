@@ -6,6 +6,7 @@ import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
 import '../../responsive.dart';
 import '../../theme.dart';
+import '../../widgets/brand.dart';
 import '../../widgets/common.dart';
 import '../capture/interaction_capture_screen.dart';
 import 'communicator_screen.dart';
@@ -187,17 +188,7 @@ class _ChildHome extends StatelessWidget {
                   padding: const EdgeInsets.all(Insets.md),
                   child: Row(
                     children: [
-                      Container(
-                        width: 76,
-                        height: 76,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        alignment: Alignment.center,
-                        child:
-                            const Text('🤟', style: TextStyle(fontSize: 42)),
-                      ),
+                      const GestuVozLogo(size: 76),
                       const SizedBox(width: Insets.md),
                       const Expanded(
                         child: Column(

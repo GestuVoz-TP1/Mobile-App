@@ -39,7 +39,7 @@ class WelcomeScreen extends StatelessWidget {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('🤟', style: TextStyle(fontSize: 72)),
+                                const GestuVozLogo(size: 104),
                                 const SizedBox(height: Insets.sm),
                                 Container(
                                   padding: const EdgeInsets.symmetric(

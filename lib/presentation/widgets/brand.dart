@@ -8,15 +8,16 @@ class GestuVozLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(size * 0.3),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.24),
+      child: Image.asset(
+        'assets/brand/logo.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.medium,
+        semanticLabel: 'GestuVoz',
       ),
-      alignment: Alignment.center,
-      child: Text('🤟', style: TextStyle(fontSize: size * 0.52)),
     );
   }
 }
