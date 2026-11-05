@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../application/communication_service.dart';
 import '../../../application/reporting_service.dart';
 import '../../../domain/child.dart';
+import '../../../domain/reporting.dart';
+import '../../../infrastructure/sync/sync_service.dart';
 import '../../controllers/communication_controller.dart';
 import '../../controllers/session_controller.dart';
 import '../../responsive.dart';
@@ -184,43 +186,90 @@ class _ActiveProfileCard extends StatelessWidget {
   }
 }
 
-class _TodayStats extends StatelessWidget {
+class _TodayStats extends StatefulWidget {
   final int profileId;
   const _TodayStats({required this.profileId});
 
   @override
+  State<_TodayStats> createState() => _TodayStatsState();
+}
+
+class _TodayStatsState extends State<_TodayStats> {
+  late final SyncService _sync;
+  late final AppLifecycleListener _lifecycle;
+  late int _pending;
+  UsageSummary? _summary;
+  int _request = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync = context.read<SyncService>();
+    _pending = _sync.status.value.pending;
+    _sync.status.addListener(_onSyncChanged);
+    _lifecycle = AppLifecycleListener(onResume: _load);
+    _load();
+  }
+
+  @override
+  void didUpdateWidget(_TodayStats oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.profileId != widget.profileId) {
+      _summary = null;
+      _load();
+    }
+  }
+
+  @override
+  void dispose() {
+    _sync.status.removeListener(_onSyncChanged);
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  void _onSyncChanged() {
+    final pending = _sync.status.value.pending;
+    if (pending == _pending) return;
+    _pending = pending;
+    _load();
+  }
+
+  Future<void> _load() async {
+    final request = ++_request;
+    final reporting = context.read<ReportingService>();
+    void show(UsageSummary summary) {
+      if (mounted && request == _request) setState(() => _summary = summary);
+    }
+
+    show(await reporting.todayLocalSummary(widget.profileId));
+    if (request != _request) return;
+    show(await reporting.todaySummary(widget.profileId));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    return FutureBuilder(
-      future: context.read<ReportingService>().records(profileId,
-          from: today, to: today.add(const Duration(days: 1))),
-      builder: (context, snap) {
-        final records = snap.data ?? const [];
-        final summary = context.read<ReportingService>().summarize(records);
-        return IntrinsicHeight(
-          child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: _Stat(
-                value: snap.hasData ? '${summary.totalInteractions}' : '–',
-                label: 'interacciones hoy',
-                color: AppColors.primary,
-              ),
+    final summary = _summary;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _Stat(
+              value: summary == null ? '–' : '${summary.totalInteractions}',
+              label: 'interacciones hoy',
+              color: AppColors.primary,
             ),
-            const SizedBox(width: Insets.sm),
-            Expanded(
-              child: _Stat(
-                value: snap.hasData ? '${summary.gestureInteractions}' : '–',
-                label: 'gestos reconocidos hoy',
-                color: AppColors.coral,
-              ),
-            ),
-          ],
           ),
-        );
-      },
+          const SizedBox(width: Insets.sm),
+          Expanded(
+            child: _Stat(
+              value: summary == null ? '–' : '${summary.gestureInteractions}',
+              label: 'gestos reconocidos hoy',
+              color: AppColors.coral,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

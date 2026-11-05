@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -7,9 +8,11 @@ import 'package:gestuvoz/application/communication_service.dart';
 import 'package:gestuvoz/application/interaction_service.dart';
 import 'package:gestuvoz/application/privacy_service.dart';
 import 'package:gestuvoz/application/profile_service.dart';
+import 'package:gestuvoz/application/reporting_service.dart';
 import 'package:gestuvoz/domain/auth.dart';
 import 'package:gestuvoz/domain/child.dart';
 import 'package:gestuvoz/infrastructure/persistence/database.dart';
+import 'package:gestuvoz/infrastructure/persistence/report_exporter.dart';
 import 'package:gestuvoz/infrastructure/persistence/repositories.dart';
 import 'package:gestuvoz/infrastructure/remote/api_client.dart';
 import 'package:gestuvoz/infrastructure/remote/remote_history_source.dart';
@@ -25,9 +28,11 @@ class FakeBackend {
   final fileResponses = <String, List<int>>{};
   var _uploads = 0;
   bool offline = false;
+  Completer<void>? gate;
 
   late final client = MockClient((request) async {
     if (offline) throw const SocketException('sin red');
+    await gate?.future;
     requests.add(request);
     final path = request.url.path.replaceFirst('/api/v1/', '');
     switch (request.method) {
@@ -169,6 +174,85 @@ void main() {
             'id_pictograma': 'base-${item.pictogram.id}',
           }
         });
+    await env.sync.stop();
+    await env.db.close();
+  });
+
+  test('Quien consulta durante una subida espera a que termine', () async {
+    final env = await _Env.open(path);
+    final profileId = await newProfile(env);
+    await env.privacy.decide(profileId, granted: true);
+    await env.sync.pushPending();
+    final picto = (await env.communication.catalog(profileId)).first.pictogram;
+    await env.interactions.recordPictogram(profileId, picto);
+
+    final gate = Completer<void>();
+    env.backend.gate = gate;
+    final first = env.sync.pushPending();
+    var joined = false;
+    final second = env.sync.pushPending().then((_) => joined = true);
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(joined, isFalse);
+
+    gate.complete();
+    await first;
+    await second;
+    expect(await env.count(
+        'SELECT COUNT(*) FROM interaccion WHERE sincronizada = 0'), 0);
+    await env.sync.stop();
+    await env.db.close();
+  });
+
+  test('El resumen de hoy usa el servidor y sin red usa el dispositivo',
+      () async {
+    final env = await _Env.open(path);
+    final profileId = await newProfile(env);
+    await env.privacy.decide(profileId, granted: true);
+    await env.sync.pushPending();
+    final picto = (await env.communication.catalog(profileId)).first.pictogram;
+    await env.interactions.recordPictogram(profileId, picto);
+    await env.sync.pushPending();
+    final uuid = (await env.db.db.query('perfil_nino')).first['uuid'];
+    env.backend.getResponses['perfiles/$uuid/reportes'] = {
+      'total_interacciones': 13,
+      'interacciones_por_gesto': 5,
+      'interacciones_por_pictograma': 8,
+      'intenciones_distintas': 2,
+      'actividad_semanal': [],
+      'mas_frecuentes': [],
+    };
+    final reporting = ReportingService(
+      SqliteInteractionRepository(env.db),
+      FileReportExporter(),
+      history: RemoteHistorySource(
+        env.db,
+        ApiClient(
+          token: ({bool forceRefresh = false}) async => 'token',
+          baseUrl: 'http://backend.test/api/v1/',
+          client: env.backend.client,
+        ),
+      ),
+    );
+
+    final remote = await reporting.todaySummary(profileId);
+    expect(remote.totalInteractions, 13);
+    expect(remote.gestureInteractions, 5);
+
+    env.backend.offline = true;
+    final local = await reporting.todaySummary(profileId);
+    expect(local.totalInteractions, 1);
+
+    env.backend.offline = false;
+    env.backend.getResponses['perfiles/$uuid/reportes'] = {
+      'total_interacciones': 0,
+      'interacciones_por_gesto': 0,
+      'interacciones_por_pictograma': 0,
+      'intenciones_distintas': 0,
+      'actividad_semanal': [],
+      'mas_frecuentes': [],
+    };
+    final behind = await reporting.todaySummary(profileId);
+    expect(behind.totalInteractions, 1);
     await env.sync.stop();
     await env.db.close();
   });

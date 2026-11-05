@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../infrastructure/sync/sync_service.dart';
 import 'controllers/session_controller.dart';
 import 'screens/auth/welcome_screen.dart';
 import 'screens/caregiver/caregiver_hub.dart';
@@ -51,8 +52,30 @@ class GestuVozApp extends StatelessWidget {
   }
 }
 
-class _Router extends StatelessWidget {
+class _Router extends StatefulWidget {
   const _Router();
+
+  @override
+  State<_Router> createState() => _RouterState();
+}
+
+class _RouterState extends State<_Router> {
+  late final AppLifecycleListener _lifecycle;
+
+  void _syncNow() =>
+      context.read<SyncService>().requestSync(delay: Duration.zero);
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _syncNow, onPause: _syncNow);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

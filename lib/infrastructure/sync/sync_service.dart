@@ -58,8 +58,7 @@ class SyncService {
   final status = ValueNotifier(const SyncStatus());
 
   int? _tutorId;
-  bool _running = false;
-  bool _again = false;
+  Future<bool>? _current;
   Timer? _debounce;
   Timer? _periodic;
   StreamSubscription<void>? _changesSub;
@@ -105,12 +104,14 @@ class SyncService {
   };
 
   Future<bool> pushPending() async {
-    if (_tutorId == null) return false;
-    if (_running) {
-      _again = true;
-      return true;
+    while (_current != null) {
+      await _current;
     }
-    _running = true;
+    if (_tutorId == null) return false;
+    return _current = _runPush();
+  }
+
+  Future<bool> _runPush() async {
     status.value = status.value.copyWith(syncing: true);
     var online = true;
     var needsPull = false;
@@ -143,17 +144,16 @@ class SyncService {
     } catch (e) {
       debugPrint('Error de sincronizacion: $e');
     } finally {
-      _running = false;
-      status.value = status.value.copyWith(
-        syncing: false,
-        online: online,
-        pending: await pendingCount(),
-        lastSync: online ? DateTime.now() : null,
-      );
-    }
-    if (_again) {
-      _again = false;
-      requestSync();
+      try {
+        status.value = status.value.copyWith(
+          syncing: false,
+          online: online,
+          pending: await pendingCount(),
+          lastSync: online ? DateTime.now() : null,
+        );
+      } finally {
+        _current = null;
+      }
     }
     return online;
   }
@@ -415,6 +415,7 @@ class SyncService {
           return false;
         } on ApiException catch (e) {
           if (e.status == 401 || e.status >= 500) return false;
+          debugPrint('Interacciones no enviadas: $e');
           break;
         }
         final ids = rows.map((r) => r['id_interaccion']).toList();

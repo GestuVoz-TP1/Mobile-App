@@ -62,6 +62,30 @@ class ReportingService {
         to: today.add(const Duration(days: 1)));
   }
 
+  (DateTime, DateTime) _today() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return (today, today.add(const Duration(days: 1)));
+  }
+
+  Future<UsageSummary> todayLocalSummary(int profileId) async {
+    final (from, to) = _today();
+    return summarize(await records(profileId, from: from, to: to));
+  }
+
+  Future<UsageSummary> todaySummary(int profileId) async {
+    final (from, to) = _today();
+    final local = await todayLocalSummary(profileId);
+    try {
+      final remote = await _history.summary(profileId, from: from, to: to);
+      return remote.totalInteractions >= local.totalInteractions
+          ? remote
+          : local;
+    } catch (_) {
+      return local;
+    }
+  }
+
   Future<InteractionRecord?> detail(int profileId, InteractionRecord record) =>
       _history.detail(profileId, record);
 
