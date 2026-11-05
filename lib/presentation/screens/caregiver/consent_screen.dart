@@ -176,6 +176,14 @@ class _InfoCard extends StatelessWidget {
                   'comunicativas.',
             ),
             _InfoRow(
+              icon: Icons.cloud_outlined,
+              title: 'Almacenamiento en la nube',
+              text: 'El perfil, la configuración, los pictogramas propios y '
+                  'las interacciones se guardan en el dispositivo y se '
+                  'sincronizan con un servidor seguro vinculado a tu cuenta, '
+                  'para que puedas consultarlos desde otro dispositivo.',
+            ),
+            _InfoRow(
               icon: Icons.auto_awesome_outlined,
               title: 'Uso para brindar apoyo',
               text: 'Los datos permiten personalizar la experiencia de '
