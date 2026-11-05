@@ -150,7 +150,7 @@ class SessionController extends ChangeNotifier {
     _active = p;
     _voice = await _settings.voiceFor(p.id!);
     _consent = await _privacy.forProfile(p.id!);
-    await _tts.configure(_voice!);
+    await _tts.configure(_voice!, childGender: _active?.child.gender);
   }
 
   Future<void> selectProfile(ChildProfile p) async {
@@ -170,7 +170,13 @@ class SessionController extends ChangeNotifier {
   Future<void> updateProfile(ChildProfile current, ProfileForm form) async {
     final updated = await _profiles.update(current, form);
     _profileList = await _profiles.forTutor(_account!.id!);
-    if (_active?.id == updated.id) _active = updated;
+    if (_active?.id == updated.id) {
+      _active = updated;
+      final voice = _voice;
+      if (voice != null) {
+        await _tts.configure(voice, childGender: updated.child.gender);
+      }
+    }
     notifyListeners();
   }
 
@@ -199,18 +205,18 @@ class SessionController extends ChangeNotifier {
   Future<void> saveVoice(VoiceConfiguration v) async {
     await _settings.saveVoice(v);
     _voice = v;
-    await _tts.configure(v);
+    await _tts.configure(v, childGender: _active?.child.gender);
     notifyListeners();
   }
 
   Future<bool> previewVoice(VoiceConfiguration v, String text) async {
-    await _tts.configure(v);
+    await _tts.configure(v, childGender: _active?.child.gender);
     final ok = await _tts.speak(text);
     return ok;
   }
 
   Future<void> restoreVoice() async {
-    if (_voice != null) await _tts.configure(_voice!);
+    if (_voice != null) await _tts.configure(_voice!, childGender: _active?.child.gender);
   }
 
   Future<List<TtsVoice>> availableVoices() => _tts.spanishVoices();

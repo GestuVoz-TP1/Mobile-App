@@ -78,15 +78,21 @@ class _VoiceSettingsScreenState extends State<VoiceSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionController>();
-    final voiceItems = [
-      const DropdownMenuItem<String?>(
-          value: null, child: Text('Voz del dispositivo')),
-      for (final v in _voices)
-        DropdownMenuItem<String?>(
-            value: v.name, child: Text('${v.name} · ${v.locale}')),
-    ];
-    final selectedVoice =
-        _voices.any((v) => v.name == _draft.voiceType) ? _draft.voiceType : null;
+    final profile = session.activeProfile;
+    final childName = profile?.child.name.split(' ').first ?? '';
+    final childGender = profile?.child.gender;
+    final selected = switch (_draft.voiceType) {
+      VoiceTypes.female => VoiceTypes.female,
+      VoiceTypes.male => VoiceTypes.male,
+      _ => VoiceTypes.automatic,
+    };
+    final gender = _draft.genderFor(childGender);
+    final choice = chooseVoice(_voices, gender, _draft.language);
+    final genderName = switch (gender) {
+      VoiceGender.female => 'femenina',
+      VoiceGender.male => 'masculina',
+      null => null,
+    };
     return Scaffold(
       appBar: AppBar(
         title: const Column(
@@ -110,26 +116,54 @@ class _VoiceSettingsScreenState extends State<VoiceSettingsScreen> {
               ),
               const SizedBox(height: Insets.md),
             ],
-            const SectionTitle('Voz del mensaje'),
+            const SectionTitle('Tipo de voz'),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(Insets.md),
-                child: DropdownButtonFormField<String?>(
-                  initialValue: selectedVoice,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Voz seleccionada',
-                    prefixIcon: Icon(Icons.graphic_eq_rounded),
-                  ),
-                  items: voiceItems,
-                  onChanged: (v) {
-                    final voice =
-                        _voices.where((x) => x.name == v).firstOrNull;
-                    setState(() => _draft = v == null
-                        ? _draft.copyWith(clearVoiceType: true)
-                        : _draft.copyWith(
-                            voiceType: v, language: voice?.locale));
-                  },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SegmentedButton<String>(
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(
+                            value: VoiceTypes.automatic,
+                            label: Text('Automática')),
+                        ButtonSegment(
+                            value: VoiceTypes.female, label: Text('Femenina')),
+                        ButtonSegment(
+                            value: VoiceTypes.male, label: Text('Masculina')),
+                      ],
+                      selected: {selected},
+                      onSelectionChanged: (v) => setState(() => _draft =
+                          _draft.copyWith(
+                              voiceType: v.first,
+                              language: VoiceLimits.defaultLanguage)),
+                    ),
+                    const SizedBox(height: Insets.sm),
+                    Text(
+                      selected != VoiceTypes.automatic
+                          ? 'Se usará siempre la voz $genderName.'
+                          : genderName != null
+                              ? 'Según el perfil de $childName se usa la voz '
+                                  '$genderName. Si cambias el género en el '
+                                  'perfil, la voz se ajusta sola.'
+                              : 'El perfil de $childName no indica el género, '
+                                  'así que se usa la voz del dispositivo. '
+                                  'Puedes indicarlo en Perfil del niño.',
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                    if (_voices.isNotEmpty && choice.usesPitchOnly) ...[
+                      const SizedBox(height: Insets.sm),
+                      StatusNote(
+                        'Este dispositivo no tiene una voz $genderName en '
+                        'español. Se usará la voz disponible con un tono '
+                        '${gender == VoiceGender.male ? 'más grave' : 'más agudo'}.',
+                        kind: NoteKind.warning,
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),

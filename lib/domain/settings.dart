@@ -14,6 +14,20 @@ abstract final class VoiceLimits {
   static const defaultLanguage = 'es-ES';
 }
 
+enum VoiceGender { female, male }
+
+abstract final class VoiceTypes {
+  static const automatic = 'automatica';
+  static const female = 'femenina';
+  static const male = 'masculina';
+}
+
+VoiceGender? voiceGenderForChild(String? childGender) => switch (childGender) {
+      'Femenino' => VoiceGender.female,
+      'Masculino' => VoiceGender.male,
+      _ => null,
+    };
+
 class VoiceConfiguration {
   final int? id;
   final int profileId;
@@ -33,6 +47,15 @@ class VoiceConfiguration {
     this.volume = 1.0,
     this.voiceEnabled = true,
   });
+
+  bool get isAutomatic =>
+      voiceType != VoiceTypes.female && voiceType != VoiceTypes.male;
+
+  VoiceGender? genderFor(String? childGender) => switch (voiceType) {
+        VoiceTypes.female => VoiceGender.female,
+        VoiceTypes.male => VoiceGender.male,
+        _ => voiceGenderForChild(childGender),
+      };
 
   VoiceConfiguration validated() {
     if (rate < VoiceLimits.minRate || rate > VoiceLimits.maxRate) {
