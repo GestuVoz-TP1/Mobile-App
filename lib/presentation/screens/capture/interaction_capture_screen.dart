@@ -189,146 +189,175 @@ class _CameraStage extends StatelessWidget {
       GesturePhase.analyzing => 'Entendiendo tu gesto…',
       _ => 'Listo',
     };
-    return ColoredBox(
-      color: AppColors.primaryDark,
-      child: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(Insets.md),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: Stack(
-                    fit: StackFit.expand,
+    final previewSize =
+        cam.isReady ? cam.controller?.value.previewSize : null;
+    final stage = ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (cam.isReady && cam.controller != null)
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: landscape
+                    ? cam.controller!.value.previewSize?.width ?? 400
+                    : cam.controller!.value.previewSize?.height ??
+                        300,
+                height: landscape
+                    ? cam.controller!.value.previewSize?.height ?? 300
+                    : cam.controller!.value.previewSize?.width ??
+                        400,
+                child: CameraPreview(cam.controller!),
+              ),
+            )
+          else
+            const ColoredBox(color: Colors.black26),
+          Center(
+            child: FractionallySizedBox(
+              widthFactor: 0.82,
+              heightFactor: 0.72,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(26),
+                  border:
+                      Border.all(color: Colors.white, width: 3),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 20,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Semantics(
+                liveRegion: true,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryDark
+                        .withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (cam.isReady && cam.controller != null)
-                        FittedBox(
-                          fit: BoxFit.cover,
-                          child: SizedBox(
-                            width: landscape
-                                ? cam.controller!.value.previewSize?.width ?? 400
-                                : cam.controller!.value.previewSize?.height ??
-                                    300,
-                            height: landscape
-                                ? cam.controller!.value.previewSize?.height ?? 300
-                                : cam.controller!.value.previewSize?.width ??
-                                    400,
-                            child: CameraPreview(cam.controller!),
-                          ),
+                      if (phase == GesturePhase.capturing ||
+                          phase == GesturePhase.analyzing ||
+                          phase == GesturePhase.startingCamera)
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.yellowAccent),
                         )
                       else
-                        const ColoredBox(color: Colors.black26),
-                      Center(
-                        child: FractionallySizedBox(
-                          widthFactor: 0.82,
-                          heightFactor: 0.72,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(26),
-                              border:
-                                  Border.all(color: Colors.white, width: 3),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 20,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                          child: Semantics(
-                            liveRegion: true,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryDark
-                                    .withValues(alpha: 0.85),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (phase == GesturePhase.capturing ||
-                                      phase == GesturePhase.analyzing ||
-                                      phase == GesturePhase.startingCamera)
-                                    const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: AppColors.yellowAccent),
-                                    )
-                                  else
-                                    const Icon(Icons.check_circle_rounded,
-                                        size: 16, color: Colors.white),
-                                  const SizedBox(width: 8),
-                                  Text(status,
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 10,
-                        left: 10,
-                        child: IconButton.filled(
-                          style: IconButton.styleFrom(
-                              backgroundColor: Colors.black38),
-                          tooltip: 'Cerrar',
-                          onPressed: controller.backToPreparation,
-                          icon: const Icon(Icons.close_rounded,
-                              color: Colors.white),
-                        ),
-                      ),
-                      if (controller.canSwitchCamera)
-                        Positioned(
-                          top: 10,
-                          right: 10,
-                          child: IconButton.filled(
-                            style: IconButton.styleFrom(
-                                backgroundColor: Colors.black38),
-                            tooltip: 'Cambiar de cámara',
-                            onPressed: controller.switchCamera,
-                            icon: const Icon(Icons.cameraswitch_rounded,
-                                color: Colors.white),
-                          ),
-                        ),
+                        const Icon(Icons.check_circle_rounded,
+                            size: 16, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(status,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
               ),
             ),
-            if (phase == GesturePhase.choosingTestResult)
-              _TestResultPanel(controller: controller)
-            else
-              const Padding(
-                padding: EdgeInsets.fromLTRB(
-                    Insets.lg, 0, Insets.lg, Insets.lg),
-                child: Column(
-                  children: [
-                    Text('Colócate frente a la cámara',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700)),
-                    SizedBox(height: 4),
-                    Text(
-                        'Muestra tu cara y tus manos. Luego realiza un gesto '
-                        'con calma.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white, fontSize: 16)),
-                  ],
-                ),
+          ),
+          Positioned(
+            top: 10,
+            left: 10,
+            child: IconButton.filled(
+              style: IconButton.styleFrom(
+                  backgroundColor: Colors.black38),
+              tooltip: 'Cerrar',
+              onPressed: controller.backToPreparation,
+              icon: const Icon(Icons.close_rounded,
+                  color: Colors.white),
+            ),
+          ),
+          if (controller.canSwitchCamera)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: IconButton.filled(
+                style: IconButton.styleFrom(
+                    backgroundColor: Colors.black38),
+                tooltip: 'Cambiar de cámara',
+                onPressed: controller.switchCamera,
+                icon: const Icon(Icons.cameraswitch_rounded,
+                    color: Colors.white),
               ),
-          ],
-        ),
+            ),
+        ],
+      ),
+    );
+    final instructions = phase == GesturePhase.choosingTestResult
+        ? _TestResultPanel(controller: controller)
+        : Padding(
+            padding: landscape
+                ? const EdgeInsets.fromLTRB(0, Insets.lg, Insets.lg, Insets.lg)
+                : const EdgeInsets.fromLTRB(
+                    Insets.lg, 0, Insets.lg, Insets.lg),
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Colócate frente a la cámara',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700)),
+                SizedBox(height: 4),
+                Text(
+                    'Muestra tu cara y tus manos. Luego realiza un gesto '
+                    'con calma.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white, fontSize: 16)),
+              ],
+            ),
+          );
+    return ColoredBox(
+      color: AppColors.primaryDark,
+      child: SafeArea(
+        child: landscape
+            ? Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(Insets.md),
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: previewSize == null
+                              ? 4 / 3
+                              : previewSize.width / previewSize.height,
+                          child: stage,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 300,
+                    child: Center(
+                        child: SingleChildScrollView(child: instructions)),
+                  ),
+                ],
+              )
+            : Column(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(Insets.md),
+                      child: stage,
+                    ),
+                  ),
+                  instructions,
+                ],
+              ),
       ),
     );
   }
