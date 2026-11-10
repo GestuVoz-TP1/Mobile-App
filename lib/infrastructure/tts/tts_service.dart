@@ -47,8 +47,13 @@ VoiceChoice chooseVoice(
     List<TtsVoice> voices, VoiceGender? gender, String language) {
   if (gender == null) return const VoiceChoice(null, 1.0);
   final lang = language.toLowerCase();
-  int score(TtsVoice v) =>
-      (v.locale.toLowerCase() == lang ? 0 : 2) + (v.needsNetwork ? 1 : 0);
+  int region(TtsVoice v) {
+    final l = v.locale.toLowerCase();
+    if (l == lang) return 0;
+    return l.startsWith('es-es') || l.startsWith('es_es') ? 2 : 1;
+  }
+
+  int score(TtsVoice v) => (v.needsNetwork ? 3 : 0) + region(v);
   final matching = voices.where((v) => v.gender == gender).toList()
     ..sort((a, b) => score(a).compareTo(score(b)));
   if (matching.isNotEmpty) return VoiceChoice(matching.first, 1.0);
@@ -60,10 +65,22 @@ class TtsService {
   bool _ready = false;
   bool available = true;
   List<TtsVoice>? _voices;
+  String _language = VoiceLimits.defaultLanguage;
+
+  Future<String> _pickLanguage() async {
+    for (final l in VoiceLimits.preferredLanguages) {
+      try {
+        final ok = await _tts.isLanguageAvailable(l);
+        if (ok == true || ok == 1) return l;
+      } catch (_) {}
+    }
+    return VoiceLimits.defaultLanguage;
+  }
 
   Future<void> init() async {
     try {
-      await _tts.setLanguage(VoiceLimits.defaultLanguage);
+      _language = await _pickLanguage();
+      await _tts.setLanguage(_language);
       await _tts.setSpeechRate(VoiceLimits.defaultRate);
       await _tts.setVolume(1.0);
       await _tts.setPitch(1.0);
@@ -77,9 +94,9 @@ class TtsService {
   Future<void> configure(VoiceConfiguration c, {String? childGender}) async {
     if (!_ready) return;
     try {
-      await _tts.setLanguage(c.language);
+      await _tts.setLanguage(_language);
       final choice = chooseVoice(
-          await spanishVoices(), c.genderFor(childGender), c.language);
+          await spanishVoices(), c.genderFor(childGender), _language);
       final voice = choice.voice;
       if (voice != null) {
         await _tts.setVoice({'name': voice.name, 'locale': voice.locale});

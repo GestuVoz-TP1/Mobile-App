@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../domain/child.dart';
+import '../../domain/settings.dart';
 import '../persistence/database.dart';
 import '../remote/api_client.dart';
 import 'sync_log.dart';
@@ -625,7 +626,8 @@ class SyncService {
         'id_tutor': tutorId,
         'id_nino': childId,
       });
-      const v = (idioma: 'es-ES', velocidad: 0.45, volumen: 1.0);
+      const v = (
+          idioma: VoiceLimits.defaultLanguage, velocidad: 0.45, volumen: 1.0);
       await txn.insert('configuracion_voz', {
         'idioma': v.idioma,
         'velocidad': v.velocidad,

@@ -33,7 +33,7 @@ void main() {
     expect(voiceGenderOf('SMTl02'), isNull);
   });
 
-  test('Elige una voz del género pedido, primero del mismo idioma y local',
+  test('Elige una voz del género pedido, primero sin internet y del mismo idioma',
       () {
     const voices = [
       TtsVoice('es-us-x-esd-network', 'es-US', needsNetwork: true),
@@ -42,6 +42,8 @@ void main() {
       TtsVoice('es-es-x-eea-local', 'es-ES'),
     ];
     expect(chooseVoice(voices, VoiceGender.male, 'es-ES').voice?.name,
+        'es-us-x-esd-local');
+    expect(chooseVoice(voices.sublist(2), VoiceGender.male, 'es-ES').voice?.name,
         'es-es-x-eed-network');
     expect(chooseVoice(voices, VoiceGender.female, 'es-ES').voice?.name,
         'es-es-x-eea-local');
@@ -51,6 +53,20 @@ void main() {
     final none = chooseVoice(voices, null, 'es-ES');
     expect(none.voice, isNull);
     expect(none.pitch, 1.0);
+  });
+
+  test('Prefiere una voz latinoamericana antes que una de España', () {
+    const voices = [
+      TtsVoice('es-es-x-eea-local', 'es-ES'),
+      TtsVoice('es-mx-x-female-local', 'es-MX'),
+      TtsVoice('es-us-x-esc-network', 'es-US', needsNetwork: true),
+    ];
+    expect(VoiceLimits.defaultLanguage, 'es-US');
+    expect(chooseVoice(voices, VoiceGender.female, 'es-US').voice?.name,
+        'es-mx-x-female-local');
+    expect(chooseVoice(voices.sublist(0, 1), VoiceGender.female, 'es-US')
+        .voice
+        ?.name, 'es-es-x-eea-local');
   });
 
   test('Sin una voz del género pedido ajusta el tono', () {

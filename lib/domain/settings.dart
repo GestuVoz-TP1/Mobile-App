@@ -11,7 +11,8 @@ abstract final class VoiceLimits {
   static const minVolume = 0.1;
   static const maxVolume = 1.0;
 
-  static const defaultLanguage = 'es-ES';
+  static const defaultLanguage = 'es-US';
+  static const preferredLanguages = ['es-US', 'es-MX', 'es-419', 'es-ES'];
 }
 
 enum VoiceGender { female, male }
