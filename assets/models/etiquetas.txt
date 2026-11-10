@@ -2,10 +2,14 @@ gesto_ayuda
 gesto_parar
 gesto_no
 gesto_si
+gesto_bano
 gesto_descanso
+gesto_agua
+gesto_hambre
 gesto_silencio
 gesto_porfavor
 gesto_termine
 gesto_hola
 gesto_abrazo
+gesto_dormir
 ninguno

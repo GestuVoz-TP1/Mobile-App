@@ -11,7 +11,7 @@ class TensorFlowLiteGestureRecognitionService
     implements GestureRecognitionService, ContinuousGestureRecognition {
   TensorFlowLiteGestureRecognitionService({
     this.modelDir = 'assets/models',
-    this.minConfidence = 0.85,
+    this.minConfidence = 0.95,
   });
 
   final String modelDir;
@@ -21,14 +21,17 @@ class TensorFlowLiteGestureRecognitionService
   static const _cropSize = 224;
   static const _sequenceLength = 16;
   static const _noGesture = 'ninguno';
+  static const _geometrySize = 4;
 
   Interpreter? _palm;
   Interpreter? _frame;
   Interpreter? _sequence;
   List<String> _labels = const [];
+  List<String> _frameLabels = const [];
   final _decoder = PalmDecoder();
   int _featureOutput = 0;
   int _featureSize = 0;
+  int _stepSize = 0;
   int _palmBoxOutput = 0;
 
   final List<Float32List> _window = [];
@@ -38,8 +41,7 @@ class TensorFlowLiteGestureRecognitionService
   RecognizerInfo get info => const RecognizerInfo(
         name: 'MobileNet + LSTM (TensorFlow Lite)',
         isRealModel: true,
-        notes: 'Entrenado con HaGRIDv2; pendiente de validar con videos '
-            'propios.',
+        notes: 'Entrenado con HaGRIDv2 y videos propios de 6 personas.',
       );
 
   @override
@@ -56,16 +58,21 @@ class TensorFlowLiteGestureRecognitionService
     _sequence = await Interpreter.fromAsset(
         '$modelDir/gestos_secuencia.tflite',
         options: options);
-    _labels = (await rootBundle.loadString('$modelDir/etiquetas.txt'))
-        .split('\n')
-        .map((l) => l.trim())
-        .where((l) => l.isNotEmpty)
-        .toList();
+    _labels = await _readLabels('$modelDir/etiquetas.txt');
+    _frameLabels = await _readLabels('$modelDir/etiquetas_fotograma.txt');
     final outs = _frame!.getOutputTensors();
-    _featureOutput = outs[0].shape.last == _labels.length ? 1 : 0;
+    _featureOutput = outs[0].shape.last == _frameLabels.length ? 1 : 0;
     _featureSize = outs[_featureOutput].shape.last;
+    _stepSize = _sequence!.getInputTensors()[0].shape.last;
     _palmBoxOutput = _palm!.getOutputTensors()[0].shape.last == 18 ? 0 : 1;
   }
+
+  Future<List<String>> _readLabels(String path) async =>
+      (await rootBundle.loadString(path))
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .toList();
 
   @override
   Future<GestureRecognitionResult> recognize(
@@ -78,11 +85,11 @@ class TensorFlowLiteGestureRecognitionService
     }
     await load();
 
-    final features = Float32List(_sequenceLength * _featureSize);
+    final features = Float32List(_sequenceLength * _stepSize);
     final frames = sequence.frames;
     for (var t = 0; t < _sequenceLength; t++) {
       final frame = frames[t < frames.length ? t : frames.length - 1];
-      features.setAll(t * _featureSize, _frameFeatures(frame));
+      features.setAll(t * _stepSize, _frameFeatures(frame));
       await Future<void>.delayed(Duration.zero);
     }
 
@@ -114,9 +121,9 @@ class TensorFlowLiteGestureRecognitionService
     _window.add(_frameFeatures(frame));
     if (_window.length > _sequenceLength) _window.removeAt(0);
     if (_window.length < _sequenceLength) return null;
-    final features = Float32List(_sequenceLength * _featureSize);
+    final features = Float32List(_sequenceLength * _stepSize);
     for (var t = 0; t < _sequenceLength; t++) {
-      features.setAll(t * _featureSize, _window[t]);
+      features.setAll(t * _stepSize, _window[t]);
     }
     final (label, confidence) = _decide(features, candidateClasses);
     final stable = label != null && label == _previous;
@@ -156,10 +163,12 @@ class TensorFlowLiteGestureRecognitionService
           .toDouble();
       boxes.add((img.width / 2, img.height / 2, side));
     }
-    final noGesture = _labels.indexOf(_noGesture);
+    final noGesture = _frameLabels.indexOf(_noGesture);
     Float32List? bestFeatures;
+    var bestBox = boxes.first;
     var bestScore = -1.0;
-    for (final (cx, cy, side) in boxes) {
+    for (final box in boxes) {
+      final (cx, cy, side) = box;
       final (feat, probs) =
           _classify(img.squareCrop(cx, cy, side, _cropSize));
       var score = 0.0;
@@ -169,9 +178,21 @@ class TensorFlowLiteGestureRecognitionService
       if (score > bestScore) {
         bestScore = score;
         bestFeatures = feat;
+        bestBox = box;
       }
     }
-    return bestFeatures!;
+    final step = Float32List(_stepSize)..setAll(0, bestFeatures!);
+    if (_stepSize >= _featureSize + _geometrySize) {
+      final (cx, cy, side) = bestBox;
+      final longest = img.width > img.height ? img.width : img.height;
+      step.setAll(_featureSize, [
+        cx / img.width,
+        cy / img.height,
+        side / longest,
+        palms.isEmpty ? 0.0 : 1.0,
+      ]);
+    }
+    return step;
   }
 
   List<Palm> _detectPalms(UprightImage img) {
@@ -189,7 +210,7 @@ class TensorFlowLiteGestureRecognitionService
 
   (Float32List, Float32List) _classify(Float32List crop) {
     final feat = Float32List(_featureSize);
-    final probs = Float32List(_labels.length);
+    final probs = Float32List(_frameLabels.length);
     _frame!.runForMultipleInputs([crop.buffer.asUint8List()], {
       _featureOutput: feat.buffer.asUint8List(),
       1 - _featureOutput: probs.buffer.asUint8List(),
