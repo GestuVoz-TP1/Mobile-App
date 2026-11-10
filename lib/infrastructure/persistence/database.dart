@@ -14,7 +14,7 @@ class GestuVozDatabase {
 
   static const fileName = 'gestuvoz.db';
 
-  static const schemaVersion = 9;
+  static const schemaVersion = 10;
 
   static Future<GestuVozDatabase> open({
     String? path,

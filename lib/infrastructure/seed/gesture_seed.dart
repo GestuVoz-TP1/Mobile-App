@@ -118,4 +118,31 @@ const List<SeedGesture> kSeedGestures = [
     instructions: 'Junta las dos manos formando un corazón.\n'
         'Los pulgares abajo y los dedos curvos arriba.',
   ),
+  SeedGesture(
+    name: 'Baño',
+    visual: '✌️',
+    recognitionClass: 'gesto_bano',
+    intentionName: 'Pedir ir al baño',
+    pictogramKey: 'b_bano',
+    instructions: 'Levanta los dedos índice y medio en forma de V.\n'
+        'Ponlos frente al pecho.',
+  ),
+  SeedGesture(
+    name: 'Hambre',
+    visual: '🍽️',
+    recognitionClass: 'gesto_hambre',
+    intentionName: 'Pedir comida',
+    pictogramKey: 'b_hambre',
+    instructions: 'Apoya la mano abierta en la barriga.\n'
+        'Muévela en círculos dos o tres vueltas.',
+  ),
+  SeedGesture(
+    name: 'Dormir',
+    visual: '😴',
+    recognitionClass: 'gesto_dormir',
+    intentionName: 'Expresar sueño',
+    pictogramKey: 'b_dormir',
+    instructions: 'Pon la mano abierta debajo de la mejilla, como una almohada.\n'
+        'Inclina la cabeza hacia la mano.',
+  ),
 ];
