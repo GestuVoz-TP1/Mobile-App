@@ -119,7 +119,9 @@ Cámara ─► secuencia de imágenes (solo en memoria)
    imagen e instrucciones, y pulsa **Comenzar**.
 2. **Cámara:** un recuadro guía indica dónde colocar las manos ("Buscando tus
    manos…").
-3. **Resultado:** se muestra el pictograma y se dice el mensaje; si no se
+3. **Confirmación:** se muestra el pictograma detectado durante 2 segundos con
+   **Sí, decirlo** y **No es esto**; si nadie lo cancela, se dice el mensaje.
+4. **Resultado:** se dice el mensaje y se guarda en el historial; si no se
    reconoce, se ofrece **Intentar de nuevo** o **Usar pictogramas**.
 
 Las imágenes de la cámara **nunca se guardan** ni salen del dispositivo.
@@ -133,17 +135,22 @@ dispositivo (`lib/infrastructure/ml/`). Por cada fotograma de la secuencia:
    las manos.
 2. Se recorta la mano (o las dos manos) y MobileNetV3
    (`gestos_fotograma.tflite`) extrae sus características.
-3. Con los 16 fotogramas, el LSTM (`gestos_secuencia.tflite`) decide el
-   gesto o "ninguno".
+3. A esas características se suman la posición y el tamaño de la mano en la
+   imagen y si se detectó una mano.
+4. Con 16 fotogramas tomados cada 150 ms, el LSTM (`gestos_secuencia.tflite`)
+   decide el gesto o "ninguno".
 
-El resultado solo se acepta con una confianza de al menos 85 % y si el gesto
-está habilitado en el perfil; si no, se muestra "No reconocido".
+El resultado solo se acepta si dos lecturas seguidas dan el mismo gesto con
+una confianza de al menos 95 % y si el gesto está habilitado en el perfil; si
+no, se muestra "No reconocido".
 
 Los modelos están en `assets/models/` y se entrenan en el repositorio
 [ML](https://github.com/GestuVoz-TP1/ML) con
-[HaGRIDv2](https://github.com/hukenovs/hagrid) (CC BY-SA 4.0). Se
-probaron con imágenes de HaGRIDv2 que no se usaron para entrenar; **falta
-validarlos con videos propios y medir la latencia en el teléfono**.
+[HaGRIDv2](https://github.com/hukenovs/hagrid) (CC BY-SA 4.0) y con 1116
+videos propios de 6 personas. Al evaluar dejando fuera a una persona cada
+vez, el 78 % de los gestos se reconoce bien, el 4 % se confunde con otro y el
+19 % de los videos sin gesto produce una detección. **Falta medir la latencia
+en el teléfono.**
 
 Para medir la latencia en el teléfono, se compila una versión que la muestra
 en la pantalla del resultado:
@@ -160,7 +167,7 @@ sigue disponible para pruebas: se activa en `lib/di.dart`.
 | Gesto | Mensaje | Lo reconoce el modelo |
 |-------|---------|:---------------------:|
 | Hola 👋 | Hola | Sí |
-| Agua 💧 | Quiero agua | No (sin datos de entrenamiento) |
+| Agua 💧 | Quiero agua | Sí |
 | Ayuda 🆘 | Necesito ayuda | Sí |
 | Parar ✋ | Para, por favor | Sí |
 | Sí 👍 | Sí | Sí |
@@ -170,6 +177,9 @@ sigue disponible para pruebas: se activa en `lib/di.dart`.
 | Silencio 🤫 | Quiero silencio | Sí |
 | Descanso ⏸️ | Necesito un descanso | Sí |
 | Abrazo 🫶 | Quiero un abrazo | Sí |
+| Baño ✌️ | Quiero ir al baño | Sí |
+| Hambre 🍽️ | Tengo hambre | Sí |
+| Dormir 😴 | Quiero dormir | Sí |
 
 Cada gesto está asociado a una intención y a un pictograma del tablero. Desde
 **Ajustes → Gestos disponibles** se escriben sus instrucciones y, para cada
