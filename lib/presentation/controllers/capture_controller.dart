@@ -66,8 +66,19 @@ class CaptureController extends ChangeNotifier {
   bool _disposed = false;
 
   static const searchTimeout = Duration(seconds: 10);
+  static const confirmDelay = Duration(seconds: 2);
   Completer<GestureOutcome?>? _search;
   Future<void>? _running;
+  Timer? _confirmTimer;
+
+  bool _confirming = false;
+  bool get confirming => _confirming;
+
+  void _cancelConfirmation() {
+    _confirmTimer?.cancel();
+    _confirmTimer = null;
+    _confirming = false;
+  }
 
   bool get canSwitchCamera =>
       camera.hasMultiple && _phase == GesturePhase.capturing;
@@ -119,6 +130,7 @@ class CaptureController extends ChangeNotifier {
   }
 
   Future<void> retry() async {
+    _cancelConfirmation();
     _outcome = null;
     _voiceFailed = false;
     if (!camera.isReady) return start();
@@ -212,13 +224,31 @@ class CaptureController extends ChangeNotifier {
       return;
     }
     _outcome = out;
+    _voiceFailed = false;
+    _confirming = true;
     _set(GesturePhase.recognized);
+    _confirmTimer = Timer(confirmDelay, () => _deliver(profile.id!, out));
+  }
+
+  Future<void> confirmNow() async {
+    final o = _outcome;
+    final profile = _session.activeProfile;
+    if (!_confirming || o == null || profile == null) return;
+    await _deliver(profile.id!, o);
+  }
+
+  Future<void> rejectOutcome() => retry();
+
+  Future<void> _deliver(int profileId, GestureOutcome out) async {
+    if (_disposed || !_confirming || _outcome != out) return;
+    _cancelConfirmation();
+    notifyListeners();
     if (_session.voice?.voiceEnabled ?? true) {
       _voiceFailed = !await _tts.speak(out.intention.message);
       if (!_disposed) notifyListeners();
     }
     await _interactions.recordGesture(
-      profile.id!,
+      profileId,
       gesture: out.gesture,
       intention: out.intention,
       pictogram: out.pictogram,
@@ -233,6 +263,7 @@ class CaptureController extends ChangeNotifier {
   }
 
   void backToPreparation() {
+    _cancelConfirmation();
     _stopSearch();
     _outcome = null;
     _set(GesturePhase.preparation);
@@ -248,6 +279,7 @@ class CaptureController extends ChangeNotifier {
   }
 
   Future<void> close() async {
+    _cancelConfirmation();
     _stopSearch();
     await camera.dispose();
     _outcome = null;
@@ -258,6 +290,7 @@ class CaptureController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _cancelConfirmation();
     _stopSearch();
     camera.dispose();
     super.dispose();
