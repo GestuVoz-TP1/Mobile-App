@@ -7,6 +7,7 @@ class SeedGesture {
   final String intentionName;
   final String pictogramKey;
   final String? instructions;
+  final List<String> previousInstructions;
 
   const SeedGesture({
     required this.name,
@@ -15,6 +16,7 @@ class SeedGesture {
     required this.intentionName,
     required this.pictogramKey,
     this.instructions,
+    this.previousInstructions = const [],
   });
 }
 
@@ -43,8 +45,13 @@ const List<SeedGesture> kSeedGestures = [
     recognitionClass: 'gesto_ayuda',
     intentionName: 'Pedir ayuda',
     pictogramKey: 'b_ayuda',
-    instructions: 'Levanta solo el dedo índice.\n'
+    instructions: 'Levanta el brazo y muestra solo el dedo índice hacia '
+        'arriba.\n'
         'Dobla los otros dedos.',
+    previousInstructions: [
+      'Levanta solo el dedo índice.\n'
+          'Dobla los otros dedos.',
+    ],
   ),
   SeedGesture(
     name: 'Parar',

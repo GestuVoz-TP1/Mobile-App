@@ -14,7 +14,7 @@ class GestuVozDatabase {
 
   static const fileName = 'gestuvoz.db';
 
-  static const schemaVersion = 10;
+  static const schemaVersion = 11;
 
   static Future<GestuVozDatabase> open({
     String? path,
@@ -392,14 +392,17 @@ class GestuVozDatabase {
         await txn.update('gesto', {'representacion_visual': g.visual},
             where: 'clase_reconocimiento = ?', whereArgs: [g.recognitionClass]);
         if (g.instructions == null) continue;
+        final old = [
+          for (final text in [g.instructions!, ...g.previousInstructions])
+            '$text\nMantén el gesto quieto unos 3 segundos.',
+          ...g.previousInstructions,
+        ];
+        final marks = List.filled(old.length, '?').join(', ');
         await txn.update('gesto', {'instrucciones': g.instructions},
             where: "clase_reconocimiento = ? AND "
                 "(instrucciones IS NULL OR TRIM(instrucciones) = '' "
-                'OR instrucciones = ?)',
-            whereArgs: [
-              g.recognitionClass,
-              '${g.instructions}\nMantén el gesto quieto unos 3 segundos.',
-            ]);
+                'OR instrucciones IN ($marks))',
+            whereArgs: [g.recognitionClass, ...old]);
       }
     });
   }
