@@ -62,6 +62,8 @@ dispositivo (SQLite) y se sincroniza con el backend cuando hay conexión.
 - Elección de los pictogramas del tablero, su orden y su tamaño.
 - Voz automática según el género indicado en el perfil del niño, o femenina o
   masculina a elección del tutor, con velocidad, volumen y prueba de voz.
+  Se prefiere el español latinoamericano (es-US, es-MX) y las voces que
+  funcionan sin internet; si el teléfono no las tiene, se usa la de España.
 
 ### Perfiles, privacidad e historial
 
