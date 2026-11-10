@@ -27,7 +27,7 @@ class WelcomeScreen extends StatelessWidget {
                       Column(
                         children: [
                           const SizedBox(height: Insets.md),
-                          const GestuVozBrand(),
+                          const GestuVozWordmark(fontSize: 30),
                           const SizedBox(height: Insets.lg),
                           Container(
                             height: 210,
