@@ -14,6 +14,7 @@ import '../../widgets/common.dart';
 import '../../widgets/sync_status_banner.dart';
 import 'child_profile_screen.dart';
 import 'consent_screen.dart';
+import 'metrics_screen.dart';
 import 'profiles_screen.dart';
 import 'reports_screen.dart';
 import 'settings_screen.dart';
@@ -126,6 +127,13 @@ class _HomeTab extends StatelessWidget {
           title: 'Historial',
           subtitle: 'Actividad reciente',
           onTap: onOpenHistory,
+        ),
+        MenuRow(
+          icon: Icons.analytics_outlined,
+          iconBg: AppColors.peach,
+          title: 'Métricas de reconocimiento',
+          subtitle: 'Pruebas de validación y exportación',
+          onTap: () => _go(context, const MetricsScreen()),
         ),
         const SizedBox(height: Insets.md),
         FilledButton.icon(

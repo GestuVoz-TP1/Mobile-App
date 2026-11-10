@@ -12,6 +12,7 @@ import 'application/reporting_service.dart';
 import 'application/settings_service.dart';
 import 'domain/ml.dart';
 import 'infrastructure/camera/camera_service.dart';
+import 'infrastructure/metrics/recognition_metrics.dart';
 import 'infrastructure/ml/tflite_gesture_recognition_service.dart';
 import 'infrastructure/persistence/report_exporter.dart';
 import 'infrastructure/persistence/database.dart';
@@ -91,12 +92,14 @@ class Di {
       session: session,
       tts: tts,
     );
+    final metrics = await RecognitionMetricsStore.open();
     final captureCtrl = CaptureController(
       camera: camera,
       gestures: gestures,
       interactions: interactions,
       session: session,
       tts: tts,
+      metrics: metrics,
     );
     final reportingCtrl = ReportingController(reporting, session);
 
@@ -106,6 +109,7 @@ class Di {
       Provider<ReportingService>.value(value: reporting),
       Provider<CameraService>.value(value: camera),
       Provider<SyncService>.value(value: sync),
+      Provider<RecognitionMetricsStore>.value(value: metrics),
       ChangeNotifierProvider<SessionController>.value(value: session),
       ChangeNotifierProvider<CommunicationController>.value(
           value: communicationCtrl),
