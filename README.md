@@ -121,9 +121,7 @@ Cámara ─► secuencia de imágenes (solo en memoria)
    imagen e instrucciones, y pulsa **Comenzar**.
 2. **Cámara:** un recuadro guía indica dónde colocar las manos ("Buscando tus
    manos…").
-3. **Confirmación:** se muestra el pictograma detectado durante 2 segundos con
-   **Sí, decirlo** y **No es esto**; si nadie lo cancela, se dice el mensaje.
-4. **Resultado:** se dice el mensaje y se guarda en el historial; si no se
+3. **Resultado:** se dice el mensaje y se guarda en el historial; si no se
    reconoce, se ofrece **Intentar de nuevo** o **Usar pictogramas**.
 
 Las imágenes de la cámara **nunca se guardan** ni salen del dispositivo.

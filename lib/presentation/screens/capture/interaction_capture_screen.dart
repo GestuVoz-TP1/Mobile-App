@@ -423,7 +423,6 @@ class _Recognized extends StatelessWidget {
     final confidence = controller.recognizerInfo.isRealModel
         ? o.result.confidence
         : null;
-    final confirming = controller.confirming;
     return SafeArea(
       child: Column(
         children: [
@@ -436,47 +435,23 @@ class _Recognized extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: confirming
-                          ? AppColors.primarySoft
-                          : AppColors.successSoft,
+                      color: AppColors.successSoft,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                            confirming
-                                ? Icons.help_rounded
-                                : Icons.check_circle_rounded,
-                            color: confirming
-                                ? AppColors.primary
-                                : AppColors.success,
-                            size: 20),
-                        const SizedBox(width: 6),
-                        Text(
-                            confirming
-                                ? '¿Quieres decir esto?'
-                                : '¡Gesto reconocido!',
+                        Icon(Icons.check_circle_rounded,
+                            color: AppColors.success, size: 20),
+                        SizedBox(width: 6),
+                        Text('¡Gesto reconocido!',
                             style: TextStyle(
                                 fontWeight: FontWeight.w800,
-                                color: confirming
-                                    ? AppColors.primary
-                                    : AppColors.success)),
+                                color: AppColors.success)),
                       ],
                     ),
                   ),
                 ),
-                if (confirming) ...[
-                  const SizedBox(height: Insets.md),
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1),
-                    duration: CaptureController.confirmDelay,
-                    builder: (context, value, _) => ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(value: value, minHeight: 8),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: Insets.lg),
                 Center(
                   child: Container(
@@ -553,33 +528,19 @@ class _Recognized extends StatelessWidget {
                 Insets.md, 0, Insets.md, Insets.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: confirming
-                  ? [
-                      FilledButton.icon(
-                        onPressed: controller.confirmNow,
-                        icon: const Icon(Icons.check_rounded),
-                        label: const Text('Sí, decirlo'),
-                      ),
-                      const SizedBox(height: Insets.sm),
-                      OutlinedButton.icon(
-                        onPressed: controller.rejectOutcome,
-                        icon: const Icon(Icons.close_rounded),
-                        label: const Text('No es esto'),
-                      ),
-                    ]
-                  : [
-                      FilledButton.icon(
-                        onPressed: controller.speakAgain,
-                        icon: const Icon(Icons.volume_up_rounded),
-                        label: const Text('Escuchar mensaje'),
-                      ),
-                      const SizedBox(height: Insets.sm),
-                      OutlinedButton.icon(
-                        onPressed: controller.retry,
-                        icon: const Icon(Icons.center_focus_strong_outlined),
-                        label: const Text('Hacer otro gesto'),
-                      ),
-                    ],
+              children: [
+                FilledButton.icon(
+                  onPressed: controller.speakAgain,
+                  icon: const Icon(Icons.volume_up_rounded),
+                  label: const Text('Escuchar mensaje'),
+                ),
+                const SizedBox(height: Insets.sm),
+                OutlinedButton.icon(
+                  onPressed: controller.retry,
+                  icon: const Icon(Icons.center_focus_strong_outlined),
+                  label: const Text('Hacer otro gesto'),
+                ),
+              ],
             ),
           ),
         ],
