@@ -49,8 +49,8 @@ VoiceChoice chooseVoice(
   final lang = language.toLowerCase();
   int region(TtsVoice v) {
     final l = v.locale.toLowerCase();
-    if (l == lang) return 0;
-    return l.startsWith('es-es') || l.startsWith('es_es') ? 2 : 1;
+    if (l.startsWith('es-es') || l.startsWith('es_es')) return 0;
+    return l == lang ? 1 : 2;
   }
 
   int score(TtsVoice v) => (v.needsNetwork ? 3 : 0) + region(v);

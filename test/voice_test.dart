@@ -55,7 +55,7 @@ void main() {
     expect(none.pitch, 1.0);
   });
 
-  test('Prefiere una voz latinoamericana antes que una de España', () {
+  test('Para elegir género prefiere las voces de España sin internet', () {
     const voices = [
       TtsVoice('es-es-x-eea-local', 'es-ES'),
       TtsVoice('es-mx-x-female-local', 'es-MX'),
@@ -63,7 +63,10 @@ void main() {
     ];
     expect(VoiceLimits.defaultLanguage, 'es-US');
     expect(chooseVoice(voices, VoiceGender.female, 'es-US').voice?.name,
-        'es-mx-x-female-local');
+        'es-es-x-eea-local');
+    expect(chooseVoice(voices.sublist(1), VoiceGender.female, 'es-US')
+        .voice
+        ?.name, 'es-mx-x-female-local');
     expect(chooseVoice(voices.sublist(0, 1), VoiceGender.female, 'es-US')
         .voice
         ?.name, 'es-es-x-eea-local');
