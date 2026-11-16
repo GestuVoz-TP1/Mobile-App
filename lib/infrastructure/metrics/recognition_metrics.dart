@@ -30,6 +30,7 @@ class RecognitionEvent {
   final double? meanFrameMs;
   final int? maxFrameMs;
   final int? frames;
+  final double? meanIntervalMs;
 
   const RecognitionEvent({
     this.id,
@@ -43,6 +44,7 @@ class RecognitionEvent {
     this.meanFrameMs,
     this.maxFrameMs,
     this.frames,
+    this.meanIntervalMs,
   });
 
   Map<String, Object?> toRow() => {
@@ -56,6 +58,7 @@ class RecognitionEvent {
         'latencia_media_ms': meanFrameMs,
         'latencia_max_ms': maxFrameMs,
         'fotogramas': frames,
+        'intervalo_medio_ms': meanIntervalMs,
       };
 
   static RecognitionEvent fromRow(Map<String, Object?> r) => RecognitionEvent(
@@ -70,6 +73,7 @@ class RecognitionEvent {
         meanFrameMs: (r['latencia_media_ms'] as num?)?.toDouble(),
         maxFrameMs: r['latencia_max_ms'] as int?,
         frames: r['fotogramas'] as int?,
+        meanIntervalMs: (r['intervalo_medio_ms'] as num?)?.toDouble(),
       );
 }
 
@@ -99,6 +103,7 @@ class MetricsSummary {
   final double? meanFrameMs;
   final int? maxFrameMs;
   final double? meanResponseMs;
+  final double? meanIntervalMs;
   final List<GestureMetrics> byGesture;
 
   const MetricsSummary({
@@ -111,6 +116,7 @@ class MetricsSummary {
     required this.meanFrameMs,
     required this.maxFrameMs,
     required this.meanResponseMs,
+    this.meanIntervalMs,
     required this.byGesture,
   });
 
@@ -141,6 +147,15 @@ class MetricsSummary {
         if (e.type == RecognitionEventType.detected && e.responseMs != null)
           e.responseMs!
     ];
+    final intervals = [
+      for (final e in attempts)
+        if (e.meanIntervalMs != null && (e.frames ?? 0) > 1) e
+    ];
+    final intervalWeight = intervals.fold<int>(0, (s, e) => s + e.frames! - 1);
+    final meanInterval = intervalWeight == 0
+        ? null
+        : intervals.fold<double>(0, (s, e) => s + e.meanIntervalMs! * (e.frames! - 1)) /
+            intervalWeight;
     final names = <String>{
       for (final e in events)
         if (e.gesture != null) e.gesture!
@@ -187,6 +202,7 @@ class MetricsSummary {
       meanResponseMs: responses.isEmpty
           ? null
           : responses.reduce((a, b) => a + b) / responses.length,
+      meanIntervalMs: meanInterval,
       byGesture: byGesture,
     );
   }
@@ -208,7 +224,7 @@ class RecognitionMetricsStore {
     final db = await f.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
-        version: 1,
+        version: 2,
         onCreate: (db, _) async {
           await db.execute('''
             CREATE TABLE evento_reconocimiento (
@@ -222,13 +238,20 @@ class RecognitionMetricsStore {
               tiempo_respuesta_ms  INTEGER,
               latencia_media_ms    REAL,
               latencia_max_ms      INTEGER,
-              fotogramas           INTEGER
+              fotogramas           INTEGER,
+              intervalo_medio_ms   REAL
             )''');
           await db.execute('''
             CREATE TABLE ajuste (
               clave  TEXT PRIMARY KEY,
               valor  TEXT NOT NULL
             )''');
+        },
+        onUpgrade: (db, oldVersion, _) async {
+          if (oldVersion < 2) {
+            await db.execute(
+                'ALTER TABLE evento_reconocimiento ADD COLUMN intervalo_medio_ms REAL');
+          }
         },
       ),
     );
@@ -293,6 +316,7 @@ class RecognitionMetricsStore {
       'latencia_media_ms',
       'latencia_max_ms',
       'fotogramas',
+      'intervalo_medio_ms',
     ];
     final lines = [
       header.join(','),
@@ -309,6 +333,7 @@ class RecognitionMetricsStore {
           e.meanFrameMs,
           e.maxFrameMs,
           e.frames,
+          e.meanIntervalMs,
         ].map(cell).join(','),
     ];
     return '﻿${lines.join('\n')}\n';

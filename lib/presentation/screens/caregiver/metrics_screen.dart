@@ -166,6 +166,8 @@ class _MetricsScreenState extends State<MetricsScreen> {
                   _Line('Latencia máxima por fotograma', _ms(s.maxFrameMs)),
                   _Line('Tiempo medio hasta detectar el gesto',
                       _ms(s.meanResponseMs)),
+                  _Line('Intervalo medio entre imágenes analizadas',
+                      _ms(s.meanIntervalMs)),
                   if (s.byGesture.isNotEmpty) ...[
                     const SectionTitle('Por gesto'),
                     SingleChildScrollView(

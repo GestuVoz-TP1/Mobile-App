@@ -123,4 +123,25 @@ void main() {
     expect(lines.last, contains('detectado'));
     expect(lines.last, contains('0.981'));
   });
+
+  test('El resumen calcula el intervalo medio entre imágenes analizadas', () {
+    final s = MetricsSummary.of([
+      RecognitionEvent(
+          at: DateTime(2026),
+          session: 'x',
+          profileId: 1,
+          type: RecognitionEventType.detected,
+          gesture: 'agua',
+          frames: 11,
+          meanIntervalMs: 150),
+      RecognitionEvent(
+          at: DateTime(2026),
+          session: 'x',
+          profileId: 1,
+          type: RecognitionEventType.notRecognized,
+          frames: 31,
+          meanIntervalMs: 200),
+    ]);
+    expect(s.meanIntervalMs, closeTo((150 * 10 + 200 * 30) / 40, 1e-9));
+  });
 }

@@ -183,11 +183,13 @@ class CaptureController extends ChangeNotifier {
     final timer = Timer(searchTimeout, _stopSearch);
     final elapsed = Stopwatch()..start();
     final frameMs = <int>[];
+    final frameAt = <DateTime>[];
     var busy = false;
     final started = await camera.startFrames((frame) async {
       if (busy || search.isCompleted || profileId == null) return;
       busy = true;
       final watch = Stopwatch()..start();
+      frameAt.add(frame.capturedAt);
       try {
         final out =
             await _gestures.addFrame(frame, _enabled, profileId: profileId);
@@ -206,11 +208,12 @@ class CaptureController extends ChangeNotifier {
     _search = null;
     await camera.stopFrames();
     if (_disposed || _phase != GesturePhase.capturing) return;
-    _recordAttempt(out, responseMs, frameMs);
+    _recordAttempt(out, responseMs, frameMs, frameAt);
     await _finish(out);
   }
 
-  void _recordAttempt(GestureOutcome? out, int responseMs, List<int> frameMs) {
+  void _recordAttempt(GestureOutcome? out, int responseMs, List<int> frameMs,
+      [List<DateTime> frameAt = const []]) {
     final store = _metrics;
     final profileId = _session.activeProfile?.id;
     if (store == null || profileId == null) return;
@@ -218,6 +221,10 @@ class CaptureController extends ChangeNotifier {
         ? null
         : frameMs.reduce((a, b) => a + b) / frameMs.length;
     final max = frameMs.isEmpty ? null : frameMs.reduce((a, b) => a > b ? a : b);
+    final interval = frameAt.length < 2
+        ? null
+        : frameAt.last.difference(frameAt.first).inMilliseconds /
+            (frameAt.length - 1);
     unawaited(_saveEvent(store, (session) => RecognitionEvent(
           at: DateTime.now(),
           session: session,
@@ -231,6 +238,7 @@ class CaptureController extends ChangeNotifier {
           meanFrameMs: mean,
           maxFrameMs: max,
           frames: frameMs.length,
+          meanIntervalMs: interval,
         )));
   }
 
