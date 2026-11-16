@@ -89,8 +89,7 @@ class TensorFlowLiteGestureRecognitionService
     final frames = sequence.frames;
     for (var t = 0; t < _sequenceLength; t++) {
       final frame = frames[t < frames.length ? t : frames.length - 1];
-      features.setAll(t * _stepSize, _frameFeatures(frame));
-      await Future<void>.delayed(Duration.zero);
+      features.setAll(t * _stepSize, await _frameFeatures(frame));
     }
 
     final (label, confidence) = _decide(features, candidateClasses);
@@ -118,13 +117,14 @@ class TensorFlowLiteGestureRecognitionService
   }) async {
     final watch = Stopwatch()..start();
     await load();
-    _window.add(_frameFeatures(frame));
+    _window.add(await _frameFeatures(frame));
     if (_window.length > _sequenceLength) _window.removeAt(0);
     if (_window.length < _sequenceLength) return null;
     final features = Float32List(_sequenceLength * _stepSize);
     for (var t = 0; t < _sequenceLength; t++) {
       features.setAll(t * _stepSize, _window[t]);
     }
+    await _yieldToUi();
     final (label, confidence) = _decide(features, candidateClasses);
     final stable = label != null && label == _previous;
     _previous = label;
@@ -153,9 +153,12 @@ class TensorFlowLiteGestureRecognitionService
     return (label, probs[best]);
   }
 
-  Float32List _frameFeatures(GestureFrame frame) {
+  static Future<void> _yieldToUi() => Future<void>.delayed(Duration.zero);
+
+  Future<Float32List> _frameFeatures(GestureFrame frame) async {
     final img = UprightImage(frame);
     final palms = _detectPalms(img);
+    await _yieldToUi();
     final boxes = [for (final p in palms) p.handBox()];
     if (boxes.length == 2) boxes.add(unionBox(boxes[0], boxes[1]));
     if (boxes.isEmpty) {
@@ -169,8 +172,10 @@ class TensorFlowLiteGestureRecognitionService
     var bestScore = -1.0;
     for (final box in boxes) {
       final (cx, cy, side) = box;
-      final (feat, probs) =
-          _classify(img.squareCrop(cx, cy, side, _cropSize));
+      final crop = img.squareCrop(cx, cy, side, _cropSize);
+      await _yieldToUi();
+      final (feat, probs) = _classify(crop);
+      await _yieldToUi();
       var score = 0.0;
       for (var i = 0; i < probs.length; i++) {
         if (i != noGesture && probs[i] > score) score = probs[i];
