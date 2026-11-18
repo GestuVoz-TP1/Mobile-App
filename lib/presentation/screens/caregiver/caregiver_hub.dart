@@ -83,6 +83,10 @@ class _HomeTab extends StatelessWidget {
             style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
         const SizedBox(height: Insets.md),
         const SyncStatusBanner(),
+        if (session.emailUnverified) ...[
+          const _VerifyEmailNote(),
+          const SizedBox(height: Insets.md),
+        ],
         _ActiveProfileCard(
           profile: profile,
           onTap: () => _go(context, const ProfilesScreen()),
@@ -322,4 +326,46 @@ class _PictogramsRow extends StatelessWidget {
       ),
     );
   }
+}
+
+class _VerifyEmailNote extends StatefulWidget {
+  const _VerifyEmailNote();
+
+  @override
+  State<_VerifyEmailNote> createState() => _VerifyEmailNoteState();
+}
+
+class _VerifyEmailNoteState extends State<_VerifyEmailNote> {
+  bool _sent = false;
+  bool _busy = false;
+
+  Future<void> _send() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await context.read<SessionController>().sendVerificationEmail();
+      if (mounted) setState(() => _sent = true);
+    } catch (_) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('No se pudo enviar el correo.')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => StatusNote(
+        _sent
+            ? 'Te enviamos el enlace. Ábrelo desde tu correo para confirmar '
+                'tu cuenta.'
+            : 'Tu correo aún no está confirmado. Confírmalo para poder '
+                'recuperar tu contraseña si la olvidas.',
+        kind: _sent ? NoteKind.success : NoteKind.warning,
+        action: _sent
+            ? null
+            : TextButton(
+                onPressed: _busy ? null : _send,
+                child: const Text('Enviar correo de confirmación'),
+              ),
+      );
 }

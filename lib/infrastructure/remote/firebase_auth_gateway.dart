@@ -7,7 +7,12 @@ class FirebaseAuthGateway implements RemoteAuthGateway {
       : _auth = auth ?? FirebaseAuth.instance;
   final FirebaseAuth _auth;
 
-  RemoteUser _map(User u) => RemoteUser(uid: u.uid, email: u.email ?? '');
+  RemoteUser _map(User u) => RemoteUser(
+        uid: u.uid,
+        email: u.email ?? '',
+        emailVerified: u.emailVerified,
+        createdAt: u.metadata.creationTime,
+      );
 
   @override
   RemoteUser? get currentUser {
@@ -47,6 +52,18 @@ class FirebaseAuthGateway implements RemoteAuthGateway {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') return;
+      throw DomainException(_message(e));
+    }
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      await _auth.setLanguageCode('es');
+      await user.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
       throw DomainException(_message(e));
     }
   }

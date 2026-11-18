@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscure = true;
   bool _busy = false;
   String? _error;
+  bool _unverified = false;
 
   @override
   void dispose() {
@@ -32,14 +33,38 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _busy = true;
       _error = null;
+      _unverified = false;
     });
     try {
       await context.read<SessionController>().login(_email.text, _pass.text);
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+    } on EmailNotVerifiedException catch (e) {
+      setState(() {
+        _error = e.message;
+        _unverified = true;
+      });
     } on DomainException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
       setState(() => _error = 'No se pudo iniciar sesión.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _resend() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await context
+          .read<SessionController>()
+          .resendVerification(_email.text, _pass.text);
+      messenger.showSnackBar(const SnackBar(
+          content: Text('Te reenviamos el correo de confirmación.')));
+    } on DomainException catch (e) {
+      setState(() => _error = e.message);
+    } catch (_) {
+      setState(() => _error = 'No se pudo reenviar el correo.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -146,7 +171,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     if (_error != null) ...[
-                      StatusNote(_error!, kind: NoteKind.error),
+                      StatusNote(
+                        _error!,
+                        kind: NoteKind.error,
+                        action: _unverified
+                            ? TextButton(
+                                onPressed: _busy ? null : _resend,
+                                child: const Text(
+                                    'Reenviar correo de confirmación'),
+                              )
+                            : null,
+                      ),
                       const SizedBox(height: Insets.md),
                     ],
                     FilledButton.icon(

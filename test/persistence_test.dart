@@ -9,6 +9,7 @@ import 'package:gestuvoz/application/interaction_service.dart';
 import 'package:gestuvoz/application/privacy_service.dart';
 import 'package:gestuvoz/application/profile_service.dart';
 import 'package:gestuvoz/application/settings_service.dart';
+import 'package:gestuvoz/domain/auth.dart';
 import 'package:gestuvoz/domain/child.dart';
 import 'package:gestuvoz/domain/consent.dart';
 import 'package:gestuvoz/domain/ml.dart';
@@ -44,6 +45,59 @@ class _App {
       await GestuVozDatabase.open(path: path, factory: databaseFactoryFfi));
 }
 
+class _FakeRemote implements RemoteAuthGateway {
+  final users = <String, (String, RemoteUser)>{};
+  RemoteUser? _current;
+  int verificationsSent = 0;
+
+  @override
+  RemoteUser? get currentUser => _current;
+
+  @override
+  Future<RemoteUser> register(String email, String password) async {
+    final user = RemoteUser(
+        uid: 'uid-$email',
+        email: email,
+        emailVerified: false,
+        createdAt: DateTime.utc(2026, 12, 1));
+    users[email] = (password, user);
+    return _current = user;
+  }
+
+  @override
+  Future<RemoteUser> signIn(String email, String password) async {
+    final entry = users[email];
+    if (entry == null || entry.$1 != password) {
+      throw const DomainException('No se pudo iniciar sesión.');
+    }
+    return _current = entry.$2;
+  }
+
+  @override
+  Future<void> signOut() async => _current = null;
+
+  @override
+  Future<void> sendPasswordReset(String email) async {}
+
+  @override
+  Future<void> sendEmailVerification() async => verificationsSent++;
+
+  @override
+  Future<String?> idToken({bool forceRefresh = false}) async => null;
+
+  void addUser(String email, String password,
+      {required bool verified, required DateTime createdAt}) {
+    users[email] = (
+      password,
+      RemoteUser(
+          uid: 'uid-$email',
+          email: email,
+          emailVerified: verified,
+          createdAt: createdAt)
+    );
+  }
+}
+
 void main() {
   sqfliteFfiInit();
   late Directory tmp;
@@ -59,10 +113,10 @@ void main() {
     final app = await _App.open(path);
     final tutor = await app.auth.register(const RegistrationForm(
         email: 'maria@email.com',
-        password: 'secreta123',
-        passwordConfirm: 'secreta123'));
+        password: 'Secreta123',
+        passwordConfirm: 'Secreta123'));
     final profile = await app.profiles.create(
-        tutor.id!,
+        tutor!.id!,
         ProfileForm(
             name: 'Valentina López', birthDate: DateTime(2019, 5, 14)));
     return (app, tutor.id!, profile.id!);
@@ -331,15 +385,93 @@ void main() {
         throwsA(isA<DomainException>()));
     await app.auth.register(const RegistrationForm(
         email: 'Maria@Email.com',
-        password: 'secreta123',
-        passwordConfirm: 'secreta123'));
-    final acc = await app.auth.login('maria@email.com', 'secreta123');
+        password: 'Secreta123',
+        passwordConfirm: 'Secreta123'));
+    final acc = await app.auth.login('maria@email.com', 'Secreta123');
     expect(acc.email.value, 'maria@email.com');
     expect(() => app.auth.login('maria@email.com', 'mala'),
         throwsA(isA<DomainException>()));
-    expect(await app.auth.verifyPassword(acc.id!, 'secreta123'), isTrue);
+    expect(await app.auth.verifyPassword(acc.id!, 'Secreta123'), isTrue);
     expect(await app.auth.verifyPassword(acc.id!, 'otra'), isFalse);
     await app.db.close();
+  });
+
+  test('La contraseña exige mayúscula, minúscula, número, 8 caracteres y no ser predecible', () {
+    expect(PasswordPolicy.isStrong('Secreta123'), isTrue);
+    for (final valida in ['Juan1245', 'Mateo2019sol', 'Casa7Verde', 'MiHijo08Leo']) {
+      expect(PasswordPolicy.isStrong(valida), isTrue, reason: valida);
+    }
+    for (final debil in [
+      '12345678',
+      'secreta123',
+      'SECRETA123',
+      'Secretas',
+      'Sec12',
+      'A222222n',
+      'Aaaaaaa1',
+      'Juan1234',
+      'Abcd5678',
+      'Qwer7a5B',
+      'A9876x5z',
+      'Password1',
+      'Gestuvoz1',
+    ]) {
+      expect(PasswordPolicy.isStrong(debil), isFalse, reason: debil);
+    }
+    expect(PasswordPolicy.check('secreta').map((r) => r.$2).toList(),
+        [false, false, true, false, true, true, true]);
+    expect(PasswordPolicy.check('').map((r) => r.$2).every((ok) => !ok),
+        isTrue);
+  });
+
+  test('El registro rechaza una contraseña débil', () async {
+    final app = await _App.open(path);
+    expect(
+        () => app.auth.register(const RegistrationForm(
+            email: 'maria@email.com',
+            password: '12345678',
+            passwordConfirm: '12345678')),
+        throwsA(isA<DomainException>()));
+    await app.db.close();
+  });
+
+  test('Una cuenta nueva debe confirmar el correo antes de iniciar sesión',
+      () async {
+    final db = await GestuVozDatabase.open(path: path, factory: databaseFactoryFfi);
+    final remote = _FakeRemote();
+    final auth =
+        AuthService(SqliteAuthRepository(db), Sha256SecretHasher(), remote);
+    final creada = await auth.register(const RegistrationForm(
+        email: 'maria@email.com',
+        password: 'Secreta123',
+        passwordConfirm: 'Secreta123'));
+    expect(creada, isNull);
+    expect(remote.verificationsSent, 1);
+    expect(remote.currentUser, isNull);
+    expect(() => auth.login('maria@email.com', 'Secreta123'),
+        throwsA(isA<EmailNotVerifiedException>()));
+    await auth.resendVerification('maria@email.com', 'Secreta123');
+    expect(remote.verificationsSent, 2);
+    expect(remote.currentUser, isNull);
+
+    remote.addUser('maria@email.com', 'Secreta123',
+        verified: true, createdAt: DateTime.utc(2026, 12, 1));
+    final acc = await auth.login('maria@email.com', 'Secreta123');
+    expect(acc.email.value, 'maria@email.com');
+    await db.close();
+  });
+
+  test('Una cuenta anterior sin confirmar puede seguir entrando', () async {
+    final db = await GestuVozDatabase.open(path: path, factory: databaseFactoryFfi);
+    final remote = _FakeRemote()
+      ..addUser('jose@email.com', 'clave1234',
+          verified: false, createdAt: DateTime.utc(2026, 10, 1));
+    final auth =
+        AuthService(SqliteAuthRepository(db), Sha256SecretHasher(), remote);
+    final acc = await auth.login('jose@email.com', 'clave1234');
+    expect(acc.email.value, 'jose@email.com');
+    expect(auth.currentEmailUnverified, isTrue);
+    await db.close();
   });
 
   test('Persistencia: perfil, pictograma, voz y consentimiento sobreviven '
@@ -481,9 +613,9 @@ void main() {
         tutorId, ProfileForm(name: 'Luis', birthDate: DateTime(2018, 1, 1)));
     final otherTutor = await app.auth.register(const RegistrationForm(
         email: 'jose@email.com',
-        password: 'secreta123',
-        passwordConfirm: 'secreta123'));
-    final stranger = await app.profiles.create(otherTutor.id!,
+        password: 'Secreta123',
+        passwordConfirm: 'Secreta123'));
+    final stranger = await app.profiles.create(otherTutor!.id!,
         ProfileForm(name: 'Ana', birthDate: DateTime(2017, 3, 3)));
     final cat = (await app.communication.categories()).first.id;
     final mine = await app.communication.addCustom(

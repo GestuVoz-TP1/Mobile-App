@@ -25,6 +25,72 @@ class Email {
   int get hashCode => value.hashCode;
 }
 
+abstract final class PasswordPolicy {
+  static const minLength = 8;
+
+  static final rules = <(String, bool Function(String))>[
+    ('Al menos $minLength caracteres', (p) => p.length >= minLength),
+    ('Una letra mayúscula', (p) => p.contains(RegExp(r'[A-ZÁÉÍÓÚÑ]'))),
+    ('Una letra minúscula', (p) => p.contains(RegExp(r'[a-záéíóúñ]'))),
+    ('Un número', (p) => p.contains(RegExp(r'[0-9]'))),
+    ('Sin el mismo carácter 3 veces seguidas',
+        (p) => p.isNotEmpty && !p.contains(RegExp(r'(.)\1\1'))),
+    ('Sin secuencias como 1234 o abcd',
+        (p) => p.isNotEmpty && !_hasSequence(p.toLowerCase())),
+    ('Que no sea una contraseña común',
+        (p) => p.isNotEmpty && !_isCommon(p.toLowerCase())),
+  ];
+
+  static const _keyboardRows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+
+  static const _common = [
+    'password',
+    'contrasena',
+    'contraseña',
+    'qwerty',
+    'gestuvoz',
+    'iloveyou',
+    'teamo',
+    'welcome',
+    'admin',
+    'letmein',
+  ];
+
+  static bool _hasSequence(String p) {
+    const length = 4;
+    for (var i = 0; i + length <= p.length; i++) {
+      final part = p.substring(i, i + length);
+      final codes = part.codeUnits;
+      final up = [for (var k = 1; k < length; k++) codes[k] - codes[k - 1]]
+          .every((d) => d == 1);
+      final down = [for (var k = 1; k < length; k++) codes[k] - codes[k - 1]]
+          .every((d) => d == -1);
+      if (up || down) return true;
+      for (final row in _keyboardRows) {
+        if (row.contains(part) ||
+            row.split('').reversed.join().contains(part)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  static bool _isCommon(String p) => _common.any(p.contains);
+
+  static List<(String, bool)> check(String password) =>
+      [for (final (label, test) in rules) (label, test(password))];
+
+  static bool isStrong(String password) =>
+      rules.every((r) => r.$2(password));
+}
+
+class EmailNotVerifiedException extends DomainException {
+  const EmailNotVerifiedException()
+      : super('Confirma tu correo antes de iniciar sesión. Revisa tu bandeja '
+            'de entrada y también la carpeta de spam.');
+}
+
 class SecretHash {
   final String hash;
   final String salt;
@@ -69,7 +135,14 @@ abstract interface class AuthRepository {
 class RemoteUser {
   final String uid;
   final String email;
-  const RemoteUser({required this.uid, required this.email});
+  final bool emailVerified;
+  final DateTime? createdAt;
+  const RemoteUser({
+    required this.uid,
+    required this.email,
+    this.emailVerified = true,
+    this.createdAt,
+  });
 }
 
 abstract interface class RemoteAuthGateway {
@@ -79,6 +152,8 @@ abstract interface class RemoteAuthGateway {
   Future<void> signOut();
 
   Future<void> sendPasswordReset(String email);
+
+  Future<void> sendEmailVerification();
 
   Future<String?> idToken({bool forceRefresh = false});
 }

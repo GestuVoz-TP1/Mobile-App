@@ -6,6 +6,7 @@ import '../../../domain/auth.dart';
 import '../../controllers/session_controller.dart';
 import '../../theme.dart';
 import '../../widgets/common.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -23,6 +24,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _pass.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     for (final c in [_email, _pass, _pass2]) {
       c.dispose();
@@ -36,12 +43,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _error = null;
     });
     try {
-      await context.read<SessionController>().register(RegistrationForm(
-            email: _email.text,
-            password: _pass.text,
-            passwordConfirm: _pass2.text,
-          ));
-      if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
+      final navigator = Navigator.of(context);
+      final signedIn =
+          await context.read<SessionController>().register(RegistrationForm(
+                email: _email.text,
+                password: _pass.text,
+                passwordConfirm: _pass2.text,
+              ));
+      if (!mounted) return;
+      if (signedIn) {
+        navigator.popUntil((r) => r.isFirst);
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.mark_email_read_outlined, size: 40),
+          title: const Text('Confirma tu correo'),
+          content: Text(
+              'Te enviamos un enlace a ${_email.text.trim()}. Ábrelo para '
+              'activar tu cuenta y luego inicia sesión. Si no lo ves, revisa '
+              'la carpeta de spam.'),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      navigator.pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()));
     } on DomainException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
@@ -92,8 +124,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
-                    helperText:
-                        'Al menos ${AuthService.minPasswordLength} caracteres.',
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
                       tooltip:
@@ -105,6 +135,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: Insets.sm),
+                _PasswordRules(_pass.text),
                 const SizedBox(height: Insets.md),
                 TextField(
                   controller: _pass2,
@@ -135,6 +167,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PasswordRules extends StatelessWidget {
+  final String password;
+  const _PasswordRules(this.password);
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Semantics(
+      label: 'Requisitos de la contraseña',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (label, ok) in PasswordPolicy.check(password))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Icon(
+                      ok
+                          ? Icons.check_circle_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                      size: 18,
+                      color: ok ? AppColors.success : muted),
+                  const SizedBox(width: Insets.xs),
+                  Text(label,
+                      style: TextStyle(
+                          fontSize: 13.5,
+                          color: ok ? AppColors.success : muted,
+                          fontWeight: ok ? FontWeight.w600 : FontWeight.w400)),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

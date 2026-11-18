@@ -95,12 +95,22 @@ class SessionController extends ChangeNotifier {
     wait ? await run() : unawaited(run());
   }
 
-  Future<void> register(RegistrationForm form) async {
-    _account = await _auth.register(form);
+  Future<bool> register(RegistrationForm form) async {
+    final account = await _auth.register(form);
+    if (account == null) return false;
+    _account = account;
     await _loadProfiles();
     notifyListeners();
-    await _runAfterSignIn(_account!, wait: true);
+    await _runAfterSignIn(account, wait: true);
+    return true;
   }
+
+  Future<void> resendVerification(String email, String password) =>
+      _auth.resendVerification(email, password);
+
+  bool get emailUnverified => _auth.currentEmailUnverified;
+
+  Future<void> sendVerificationEmail() => _auth.sendVerificationToCurrentUser();
 
   Future<void> login(String email, String password) async {
     final account = await _auth.login(email, password);
