@@ -4,6 +4,9 @@ import 'child.dart' show GestureCustomization;
 
 export 'shared.dart' show DomainException;
 
+/// Gesture of the repertoire that the recognition model can identify.
+///
+/// [recognitionClass] is the label produced by the model for this gesture.
 class Gesture {
   final int id;
   final String name;
@@ -36,6 +39,7 @@ class Gesture {
       .toList();
 }
 
+/// What the child wants to express with a gesture, and the message spoken.
 class CommunicativeIntention {
   final int id;
   final String name;
@@ -52,6 +56,7 @@ class CommunicativeIntention {
   });
 }
 
+/// Persistence of the gesture repertoire and of its customizations per profile.
 abstract interface class GestureRepository {
   Future<List<Gesture>> all();
   Future<Gesture?> byId(int id);

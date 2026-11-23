@@ -6,6 +6,7 @@ import 'shared.dart';
 
 export 'shared.dart' show DomainException;
 
+/// Group used to organize the pictograms of the board.
 class PictogramCategory {
   final int id;
   final String name;
@@ -24,6 +25,7 @@ abstract final class Availability {
   static const available = 'disponible';
 }
 
+/// Image and spoken message that represent one communicative intention.
 class Pictogram {
   final int? id;
   final String name;
@@ -47,6 +49,10 @@ class Pictogram {
 
   bool get isCustom => hasImage;
 
+  /// Creates a pictogram defined by the guardian.
+  ///
+  /// Throws a [DomainException] when the image, the message or the category is
+  /// missing, as required by the acceptance criteria of custom pictograms.
   factory Pictogram.custom({
     int? id,
     required String name,
@@ -90,6 +96,8 @@ class Pictogram {
       );
 }
 
+/// A pictogram together with how a profile uses it: visibility, order and
+/// category on the board.
 class ProfilePictogram {
   final Pictogram pictogram;
 
@@ -103,6 +111,7 @@ class ProfilePictogram {
   });
 }
 
+/// Persistence of the pictogram catalog and of each profile board.
 abstract interface class PictogramRepository {
   Future<List<PictogramCategory>> categories();
 
@@ -116,6 +125,8 @@ abstract interface class PictogramRepository {
   Future<Pictogram> insertCustom(Pictogram pictogram, int profileId);
   Future<void> update(Pictogram pictogram);
 
+  /// Names of the gestures of [profileId] whose message points to the pictogram,
+  /// used to warn the guardian before deleting it.
   Future<List<String>> gesturesUsing(int profileId, int pictogramId);
 
   Future<void> setProfileCategory(
@@ -125,5 +136,7 @@ abstract interface class PictogramRepository {
 
   Future<void> reorder(int profileId, List<int> orderedPictogramIds);
 
+  /// Deletes a custom pictogram only when no interaction references it, so the
+  /// history never loses information. Returns whether it was deleted.
   Future<bool> deleteCustomIfUnused(int pictogramId);
 }

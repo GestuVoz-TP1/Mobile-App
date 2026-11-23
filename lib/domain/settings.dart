@@ -4,6 +4,7 @@ import 'shared.dart';
 
 export 'shared.dart' show DomainException;
 
+/// Allowed ranges for the speech rate and volume.
 abstract final class VoiceLimits {
   static const minRate = 0.2;
   static const maxRate = 0.8;
@@ -17,6 +18,7 @@ abstract final class VoiceLimits {
 
 enum VoiceGender { female, male }
 
+/// Voice options available to the guardian.
 abstract final class VoiceTypes {
   static const automatic = 'automatica';
   static const female = 'femenina';
@@ -29,6 +31,7 @@ VoiceGender? voiceGenderForChild(String? childGender) => switch (childGender) {
       _ => null,
     };
 
+/// Speech settings of a child profile.
 class VoiceConfiguration {
   final int? id;
   final int profileId;
@@ -52,12 +55,17 @@ class VoiceConfiguration {
   bool get isAutomatic =>
       voiceType != VoiceTypes.female && voiceType != VoiceTypes.male;
 
+  /// Gender of the voice to use. The automatic option follows the gender of the
+  /// child so that the spoken message sounds like the child speaking.
   VoiceGender? genderFor(String? childGender) => switch (voiceType) {
         VoiceTypes.female => VoiceGender.female,
         VoiceTypes.male => VoiceGender.male,
         _ => voiceGenderForChild(childGender),
       };
 
+  /// Returns this configuration after checking its ranges.
+  ///
+  /// Throws a [DomainException] when a value is outside the allowed options.
   VoiceConfiguration validated() {
     if (rate < VoiceLimits.minRate || rate > VoiceLimits.maxRate) {
       throw const DomainException(
@@ -92,6 +100,7 @@ class VoiceConfiguration {
       );
 }
 
+/// Persistence of the voice settings of each profile.
 abstract interface class VoiceConfigurationRepository {
   Future<VoiceConfiguration> forProfile(int profileId);
   Future<void> save(VoiceConfiguration configuration);

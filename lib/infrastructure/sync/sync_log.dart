@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
+/// Kinds of local records that are synchronized with the backend.
 abstract final class SyncEntity {
   static const profile = 'perfil';
   static const consent = 'consentimiento';
@@ -10,11 +11,16 @@ abstract final class SyncEntity {
   static const pictogram = 'pictograma';
 }
 
+/// Operations that can be queued for synchronization.
 abstract final class SyncOp {
   static const upsert = 'upsert';
   static const delete = 'delete';
 }
 
+/// Queue of local changes waiting to be sent to the backend.
+///
+/// Every change is written in the same transaction as the data, so nothing is
+/// lost if the application closes before synchronizing.
 abstract final class SyncLog {
   static const _uuid = Uuid();
   static final _changes = StreamController<void>.broadcast();

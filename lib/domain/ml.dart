@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'shared.dart';
 
+/// Camera image, in its native format, analyzed by the recognizer.
 class GestureFrame {
   final Uint8List bytes;
   final int width;
@@ -35,12 +36,14 @@ class GestureFrame {
   bool get hasColor => uPlane != null && vPlane != null;
 }
 
+/// Consecutive frames analyzed together in a single recognition.
 class GestureSequence {
   final List<GestureFrame> frames;
   const GestureSequence(this.frames);
   bool get isEmpty => frames.isEmpty;
 }
 
+/// Description of the active recognizer shown in the capture screen.
 class RecognizerInfo {
   final String name;
 
@@ -54,6 +57,7 @@ class RecognizerInfo {
   });
 }
 
+/// Outcome of a recognition attempt and the time it took.
 class GestureRecognitionResult {
   final String? recognitionClass;
 
@@ -74,11 +78,14 @@ class GestureRecognitionResult {
   bool get recognized => recognitionClass != null;
 }
 
+/// Recognizer that classifies a sequence of frames into one gesture.
 abstract interface class GestureRecognitionService {
   RecognizerInfo get info;
   bool get isLoaded;
   Future<void> load();
 
+  /// Recognizes the gesture of [sequence], restricted to [candidateClasses]
+  /// so that gestures disabled for the profile are never reported.
   Future<GestureRecognitionResult> recognize(
     GestureSequence sequence, {
     required List<String> candidateClasses,
@@ -87,15 +94,19 @@ abstract interface class GestureRecognitionService {
   Future<void> dispose();
 }
 
+/// Recognizer that receives frames one by one while the camera is running.
 abstract interface class ContinuousGestureRecognition {
   void reset();
 
+  /// Adds [frame] to the sliding window and returns a result only when a gesture
+  /// has been accepted; returns null while more frames are needed.
   Future<GestureRecognitionResult?> addFrame(
     GestureFrame frame, {
     required List<String> candidateClasses,
   });
 }
 
+/// Recognizer whose result can be forced, used in automated tests and demos.
 abstract interface class TestOutcomeRecognition {
   void setTestOutcome(String? recognitionClass);
 }

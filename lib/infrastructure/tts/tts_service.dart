@@ -3,6 +3,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../domain/settings.dart';
 
+/// Speech voice installed on the device.
 class TtsVoice {
   final String name;
   final String locale;
@@ -12,6 +13,8 @@ class TtsVoice {
   VoiceGender? get gender => voiceGenderOf(name);
 }
 
+/// Voice selected for a gender, or a pitch to approximate it when the device
+/// has no voice of that gender.
 class VoiceChoice {
   final TtsVoice? voice;
   final double pitch;
@@ -43,6 +46,8 @@ VoiceGender? voiceGenderOf(String name) {
   return google == null ? null : _googleVoiceGenders[google.group(1)];
 }
 
+/// Chooses the voice for [gender], preferring voices that work without network
+/// and Spanish from Spain, which most devices provide with both genders.
 VoiceChoice chooseVoice(
     List<TtsVoice> voices, VoiceGender? gender, String language) {
   if (gender == null) return const VoiceChoice(null, 1.0);
@@ -60,6 +65,7 @@ VoiceChoice chooseVoice(
   return VoiceChoice(null, gender == VoiceGender.male ? 0.8 : 1.1);
 }
 
+/// Speaks the messages with the text-to-speech engine of the device.
 class TtsService {
   final FlutterTts _tts = FlutterTts();
   bool _ready = false;
@@ -145,6 +151,8 @@ class TtsService {
     }
   }
 
+  /// Speaks [text]. Returns false when the device could not play it, so the
+  /// screen can keep the message visible and inform the user.
   Future<bool> speak(String text) async {
     if (!_ready || text.trim().isEmpty) return false;
     try {

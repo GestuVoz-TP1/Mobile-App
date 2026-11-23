@@ -1,6 +1,7 @@
 import '../domain/interaction.dart';
 import '../domain/reporting.dart';
 
+/// History read from the local database, used when there is no backend.
 class LocalHistorySource implements HistorySource {
   LocalHistorySource(this._interactions,
       {ReportBuilder builder = const ReportBuilder()})
@@ -24,6 +25,7 @@ class LocalHistorySource implements HistorySource {
       _interactions.recordById(record.interaction.id!);
 }
 
+/// Use cases of the history, the usage summaries and the exported reports.
 class ReportingService {
   ReportingService(
     this._interactions,
@@ -73,6 +75,8 @@ class ReportingService {
     return summarize(await records(profileId, from: from, to: to));
   }
 
+  /// Summary of today. Uses the device data when the backend is unreachable or
+  /// has fewer interactions, because some may still be waiting to be synchronized.
   Future<UsageSummary> todaySummary(int profileId) async {
     final (from, to) = _today();
     final local = await todayLocalSummary(profileId);

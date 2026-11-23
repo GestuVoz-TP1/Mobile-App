@@ -11,6 +11,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../domain/interaction.dart';
 import '../../domain/reporting.dart';
 
+/// Writes the history as a CSV table or a PDF report with charts.
 class FileReportExporter implements ReportExporter {
   @override
   Future<String> exportCsv(String profileName, String periodLabel,

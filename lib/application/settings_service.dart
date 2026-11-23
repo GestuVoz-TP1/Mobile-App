@@ -1,5 +1,6 @@
 import '../domain/settings.dart';
 
+/// Use cases of the voice settings of each profile.
 class SettingsService {
   SettingsService(this._repo);
   final VoiceConfigurationRepository _repo;

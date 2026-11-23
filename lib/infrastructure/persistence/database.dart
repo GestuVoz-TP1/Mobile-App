@@ -8,6 +8,10 @@ import '../seed/gesture_seed.dart';
 import '../seed/pictogram_seed.dart';
 import '../sync/sync_log.dart';
 
+/// Local SQLite database of the application.
+///
+/// Schema changes are applied through versioned migrations so that devices
+/// with an older version keep their data after updating.
 class GestuVozDatabase {
   GestuVozDatabase._(this.db);
   final Database db;
@@ -152,6 +156,7 @@ class GestuVozDatabase {
     await batch.commit(noResult: true);
   }
 
+  /// Inserts the base categories, pictograms, gestures and intentions.
   static Future<void> _seed(Database db) async {
     await db.transaction((txn) async {
       final catIdByKey = <String, int>{};
@@ -319,6 +324,8 @@ class GestuVozDatabase {
     await db.execute('ALTER TABLE pictograma ADD COLUMN imagen_ref TEXT');
   }
 
+  /// Adds the gestures introduced with the current recognition model to
+  /// databases created before it.
   static Future<void> _migrateModelGestures(Database db) async {
     await db.transaction((txn) async {
       final added = <int>[];

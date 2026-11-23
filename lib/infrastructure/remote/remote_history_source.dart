@@ -5,6 +5,7 @@ import '../persistence/database.dart';
 import '../sync/sync_service.dart' show RemoteIds;
 import 'api_client.dart';
 
+/// History read from the backend, so it is available on any device.
 class RemoteHistorySource implements HistorySource {
   RemoteHistorySource(this._db, this._api, {this.beforeQuery});
 

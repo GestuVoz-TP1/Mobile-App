@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 
 import '../../domain/auth.dart';
 
+/// Salted SHA-256 hasher with a random 16-byte salt per secret.
 class Sha256SecretHasher implements SecretHasher {
   final Random _rnd = Random.secure();
 

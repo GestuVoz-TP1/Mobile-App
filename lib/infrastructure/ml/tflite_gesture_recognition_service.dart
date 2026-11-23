@@ -7,6 +7,11 @@ import '../../domain/ml.dart';
 import '../../domain/shared.dart';
 import 'hand_detection.dart';
 
+/// Recognizes gestures on the device with three TensorFlow Lite models.
+///
+/// For every frame, the palm detector locates the hands, the frame model
+/// extracts 128 features from the best hand crop, and the sequence model reads
+/// the last 16 steps to decide the gesture. No image leaves the device.
 class TensorFlowLiteGestureRecognitionService
     implements GestureRecognitionService, ContinuousGestureRecognition {
   TensorFlowLiteGestureRecognitionService({
@@ -16,6 +21,7 @@ class TensorFlowLiteGestureRecognitionService
 
   final String modelDir;
 
+  /// Minimum probability required to accept a gesture.
   final double minConfidence;
 
   static const _cropSize = 224;
@@ -47,6 +53,8 @@ class TensorFlowLiteGestureRecognitionService
   @override
   bool get isLoaded => _sequence != null;
 
+  /// Loads the models and their labels. The output order of the frame model is
+  /// detected at run time, so models exported with either order can be used.
   @override
   Future<void> load() async {
     if (isLoaded) return;
@@ -126,6 +134,8 @@ class TensorFlowLiteGestureRecognitionService
     }
     await _yieldToUi();
     final (label, confidence) = _decide(features, candidateClasses);
+    // A gesture is accepted only when two consecutive readings agree, which
+    // filters out casual movements that match a gesture for a single step.
     final stable = label != null && label == _previous;
     _previous = label;
     if (!stable) return null;
@@ -137,6 +147,8 @@ class TensorFlowLiteGestureRecognitionService
     );
   }
 
+  /// Runs the sequence model and returns the accepted label, or null when the
+  /// result is "no gesture", is below [minConfidence] or is not a candidate.
   (String?, double) _decide(Float32List features, List<String> candidates) {
     final probs = Float32List(_labels.length);
     _sequence!.run(features.buffer.asUint8List(), probs.buffer.asUint8List());
@@ -153,13 +165,18 @@ class TensorFlowLiteGestureRecognitionService
     return (label, probs[best]);
   }
 
+  /// Gives the event loop a chance to draw the camera preview between the
+  /// expensive steps, so the preview stays fluid while a frame is processed.
   static Future<void> _yieldToUi() => Future<void>.delayed(Duration.zero);
 
+  /// Builds one step of the sequence: the features of the most gesture-like hand
+  /// crop plus its position, size and whether a hand was detected.
   Future<Float32List> _frameFeatures(GestureFrame frame) async {
     final img = UprightImage(frame);
     final palms = _detectPalms(img);
     await _yieldToUi();
     final boxes = [for (final p in palms) p.handBox()];
+    // Two-handed gestures, such as "Por favor", need a crop covering both hands.
     if (boxes.length == 2) boxes.add(unionBox(boxes[0], boxes[1]));
     if (boxes.isEmpty) {
       final side = (img.width < img.height ? img.width : img.height)

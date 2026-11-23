@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../../domain/ml.dart';
 
+/// Reason why the camera cannot be used.
 enum CameraIssue { none, noCamera, permissionDenied, failure }
 
 extension CameraIssueX on CameraIssue {
@@ -32,6 +33,7 @@ int cameraRotation({
         ? (sensorOrientation + displayRotation) % 360
         : (sensorOrientation - displayRotation + 360) % 360;
 
+/// Front camera handling for the gesture mode.
 class CameraService {
   static const _pantalla = MethodChannel('gestuvoz/pantalla');
 
@@ -124,6 +126,8 @@ class CameraService {
     return GestureSequence(List.unmodifiable(frames));
   }
 
+  /// Streams camera frames to [onFrame], at most one every [step], which matches
+  /// the sampling rate used to train the sequence model.
   Future<bool> startFrames(
     void Function(GestureFrame frame) onFrame, {
     Duration step = const Duration(milliseconds: 150),

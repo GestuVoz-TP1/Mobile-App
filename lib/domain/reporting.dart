@@ -2,6 +2,7 @@ library;
 
 import 'interaction.dart';
 
+/// A resource used by the child and how many times it was used.
 class FrequentResource {
   final int pictogramId;
   final String name;
@@ -18,6 +19,9 @@ class FrequentResource {
   });
 }
 
+/// Descriptive summary of the use of the application in a period.
+///
+/// It only counts events; it does not make any clinical interpretation.
 class UsageSummary {
   final int totalInteractions;
   final int gestureInteractions;
@@ -41,6 +45,7 @@ class UsageSummary {
       totalInteractions >= minRecordsForFrequencies;
 }
 
+/// Builds a [UsageSummary] from interaction records.
 class ReportBuilder {
   const ReportBuilder();
 
@@ -86,6 +91,7 @@ class ReportBuilder {
   }
 }
 
+/// Source of the history: the local database or the backend API.
 abstract interface class HistorySource {
   Future<List<InteractionRecord>> records(int profileId,
       {DateTime? from, DateTime? to});
@@ -95,6 +101,7 @@ abstract interface class HistorySource {
   Future<InteractionRecord?> detail(int profileId, InteractionRecord record);
 }
 
+/// Exports the history to files that the guardian can share.
 abstract interface class ReportExporter {
   Future<String> exportCsv(
       String profileName, String periodLabel, List<InteractionRecord> records);

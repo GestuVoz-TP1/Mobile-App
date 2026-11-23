@@ -28,11 +28,13 @@ import 'presentation/controllers/communication_controller.dart';
 import 'presentation/controllers/reporting_controller.dart';
 import 'presentation/controllers/session_controller.dart';
 
+/// Builds and wires every dependency of the application.
 class Di {
   Di._(this._providers);
   final List<SingleChildWidget> _providers;
   List<SingleChildWidget> get providers => _providers;
 
+  /// Opens the local database and creates the local and remote services.
   static Future<Di> build() async {
     await removeLegacyTrainingImages();
 

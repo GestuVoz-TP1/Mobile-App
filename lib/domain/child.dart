@@ -6,6 +6,7 @@ import 'shared.dart';
 
 export 'shared.dart' show DomainException;
 
+/// Personal data of a child that uses the application.
 class Child {
   final int? id;
   final String name;
@@ -19,6 +20,10 @@ class Child {
     this.gender,
   });
 
+  /// Creates a validated child.
+  ///
+  /// Throws a [DomainException] when the name or birth date is missing, or
+  /// when the age falls outside the supported range of 2 to 17 years.
   factory Child.create({
     int? id,
     required String name,
@@ -55,6 +60,7 @@ class Child {
     return (first + second).toUpperCase();
   }
 
+  /// Age in complete years on [now] for someone born on [birth].
   static int ageAt(DateTime birth, DateTime now) {
     var age = now.year - birth.year;
     if (now.month < birth.month ||
@@ -71,6 +77,9 @@ extension on String {
 
 const kGenderOptions = ['Femenino', 'Masculino', 'Prefiero no indicar'];
 
+/// Message and pictogram chosen by the guardian for one gesture of a profile.
+///
+/// A null field means the default value of the gesture is used.
 class GestureCustomization {
   final String? message;
   final int? pictogramId;
@@ -92,6 +101,8 @@ const kPictogramSizeOptions = <int, String>{
   4: 'Pequeño',
 };
 
+/// Communication settings of a child profile: gesture mode, enabled gestures,
+/// board size, contrast and per gesture customizations.
 class CommunicationPreferences {
   final bool gesturesEnabled;
 
@@ -137,6 +148,7 @@ class CommunicationPreferences {
     );
   }
 
+  /// Serializes the preferences to the JSON column stored in SQLite.
   String toJson() => jsonEncode({
         'gestos_activados': gesturesEnabled,
         'gestos_habilitados': enabledGestureIds,
@@ -155,6 +167,8 @@ class CommunicationPreferences {
         },
       });
 
+  /// Restores the preferences from [raw], falling back to the defaults when
+  /// the stored value is missing or comes from an older version.
   factory CommunicationPreferences.fromJson(String? raw) {
     if (raw == null || raw.isEmpty) return const CommunicationPreferences();
     try {
@@ -193,6 +207,7 @@ abstract final class ProfileState {
   static const active = 'activo';
 }
 
+/// Communication profile of a child, owned by one guardian.
 class ChildProfile {
   final int? id;
   final int tutorId;
@@ -226,6 +241,7 @@ class ChildProfile {
       );
 }
 
+/// Persistence of child profiles.
 abstract interface class ChildProfileRepository {
   Future<List<ChildProfile>> forTutor(int tutorId);
   Future<ChildProfile?> byId(int profileId);

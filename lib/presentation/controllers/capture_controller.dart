@@ -10,6 +10,7 @@ import '../../infrastructure/camera/camera_service.dart';
 import '../../infrastructure/tts/tts_service.dart';
 import 'session_controller.dart';
 
+/// Steps of the gesture screen.
 enum GesturePhase {
   loading,
   unavailable,
@@ -23,8 +24,14 @@ enum GesturePhase {
   notRecognized,
 }
 
+/// Why the gesture mode cannot be used for the active profile.
 enum GestureUnavailableReason { disabled, noConsent, noGestures, error }
 
+/// Drives the gesture screen: camera, recognition, spoken answer and the
+/// registration of the interaction.
+///
+/// If no gesture is accepted within ten seconds, the screen offers to try again
+/// or to use the pictogram board.
 class CaptureController extends ChangeNotifier {
   CaptureController({
     required CameraService camera,
@@ -82,6 +89,8 @@ class CaptureController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  /// Checks that the gesture mode is enabled, consented and has gestures before
+  /// turning the camera on.
   Future<void> open() async {
     _outcome = null;
     _reason = null;
@@ -204,6 +213,7 @@ class CaptureController extends ChangeNotifier {
     await _finish(out);
   }
 
+  /// Shows the recognized message, speaks it and registers the interaction.
   Future<void> _finish(GestureOutcome? out) async {
     final profile = _session.activeProfile;
     if (_disposed) return;
@@ -238,6 +248,7 @@ class CaptureController extends ChangeNotifier {
     _set(GesturePhase.preparation);
   }
 
+  /// Turns the camera off, for example when the application goes to background.
   Future<void> releaseCamera() async {
     _stopSearch();
     await camera.dispose();

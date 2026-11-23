@@ -1,5 +1,7 @@
 import '../../domain/ml.dart';
 
+/// Recognizer that returns a result chosen beforehand, used by the automated
+/// tests and by the demo mode when the models are not available.
 class TestModeGestureRecognitionService
     implements GestureRecognitionService, TestOutcomeRecognition {
   bool _loaded = false;

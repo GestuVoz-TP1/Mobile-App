@@ -1,5 +1,6 @@
 import '../domain/consent.dart';
 
+/// Use cases of the consent given by the guardian.
 class PrivacyService {
   PrivacyService(this._consents);
   final ConsentRepository _consents;
@@ -13,6 +14,8 @@ class PrivacyService {
         registeredAt: DateTime.now(),
       ));
 
+  /// Withdraws the consent. From then on no new interaction is registered and
+  /// the camera is not used for this profile.
   Future<Consent> withdraw(int profileId) async {
     final current = await _consents.forProfile(profileId);
     if (current == null || current.state != ConsentState.granted) {
@@ -26,6 +29,7 @@ class PrivacyService {
     ));
   }
 
+  /// Whether the data of [profileId] can be processed.
   Future<bool> allowsProcessing(int profileId) async =>
       (await _consents.forProfile(profileId))?.allowsProcessing ?? false;
 }

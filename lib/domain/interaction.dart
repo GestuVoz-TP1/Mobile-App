@@ -1,5 +1,6 @@
 library;
 
+/// Channel used by the child to communicate.
 enum InteractionSource { pictogram, gesture }
 
 extension InteractionSourceX on InteractionSource {
@@ -9,6 +10,7 @@ extension InteractionSourceX on InteractionSource {
       };
 }
 
+/// Communication event registered for a profile.
 class Interaction {
   final int? id;
   final DateTime at;
@@ -36,6 +38,7 @@ class Interaction {
       gestureId != null ? InteractionSource.gesture : InteractionSource.pictogram;
 }
 
+/// Interaction enriched with the names needed by the history screens.
 class InteractionRecord {
   final Interaction interaction;
   final String pictogramName;
@@ -70,6 +73,7 @@ class InteractionRecord {
   }
 }
 
+/// Persistence of the interactions registered on the device.
 abstract interface class InteractionRepository {
   Future<Interaction> add(Interaction interaction);
 

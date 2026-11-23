@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../domain/communication.dart';
 
+/// Pictograms of a profile grouped by category, ready to be displayed.
 class Board {
   final List<PictogramCategory> categories;
   final Map<int, List<Pictogram>> byCategory;
@@ -13,6 +14,7 @@ class Board {
       byCategory.values.fold(0, (sum, l) => sum + l.length);
 }
 
+/// Use cases of the pictogram board and of the custom pictograms.
 class CommunicationService {
   CommunicationService(this._pictos);
   final PictogramRepository _pictos;
@@ -22,6 +24,7 @@ class CommunicationService {
           .where((c) => c.availability == Availability.available)
           .toList();
 
+  /// Builds the board of [profileId] with its visible pictograms only.
   Future<Board> buildBoard(int profileId) async {
     final cats = await categories();
     final board = await _pictos.boardForProfile(profileId);
@@ -41,6 +44,7 @@ class CommunicationService {
   Future<List<ProfilePictogram>> catalog(int profileId) =>
       _pictos.catalogForProfile(profileId);
 
+  /// Creates a custom pictogram for [profileId] and shows it on its board.
   Future<Pictogram> addCustom({
     required int profileId,
     required String name,

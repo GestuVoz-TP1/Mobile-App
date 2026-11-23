@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+/// Address of the backend, defined at build time with --dart-define.
 abstract final class ApiConfig {
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
@@ -12,6 +13,7 @@ abstract final class ApiConfig {
   );
 }
 
+/// Raised when the backend cannot be reached.
 class OfflineException implements Exception {
   const OfflineException([this.cause]);
   final Object? cause;
@@ -19,6 +21,7 @@ class OfflineException implements Exception {
   String toString() => 'Sin conexión con el servidor';
 }
 
+/// Error response returned by the backend.
 class ApiException implements Exception {
   ApiException(this.status, this.code, this.body);
   final int status;
@@ -33,11 +36,17 @@ class ApiException implements Exception {
 
 typedef TokenProvider = Future<String?> Function({bool forceRefresh});
 
+/// Client of the GestuVoz REST API.
+///
+/// Every request carries the Firebase token of the guardian. When the backend
+/// answers 401, the request is retried once with a refreshed token.
 class ApiClient {
   ApiClient({
     required TokenProvider token,
     String? baseUrl,
     http.Client? client,
+    // The free hosting plan suspends the backend when idle, and the first request
+    // may take about a minute to wake it up.
     this.timeout = const Duration(seconds: 75),
   })  : _token = token,
         _base = Uri.parse(baseUrl ?? ApiConfig.baseUrl),

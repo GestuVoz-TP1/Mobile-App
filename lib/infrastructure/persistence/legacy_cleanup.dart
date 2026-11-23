@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+/// Deletes the training_images folder left by early versions of the
+/// application; the current version does not store camera images.
 Future<void> removeLegacyTrainingImages() async {
   try {
     final base = await getApplicationDocumentsDirectory();

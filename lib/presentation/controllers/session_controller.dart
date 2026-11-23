@@ -12,8 +12,10 @@ import '../../domain/consent.dart';
 import '../../domain/settings.dart';
 import '../../infrastructure/tts/tts_service.dart';
 
+/// Panel currently shown: mode selection, child panel or caregiver panel.
 enum AppMode { none, child, caregiver }
 
+/// State of the session: signed in guardian, active profile, consent and voice.
 class SessionController extends ChangeNotifier {
   SessionController({
     required AuthService auth,
@@ -61,6 +63,7 @@ class SessionController extends ChangeNotifier {
   bool get highContrast =>
       _active?.preferences.highContrast ?? false;
 
+  /// Runs after signing in, used to start the synchronization.
   Future<void> Function(Account account)? afterSignIn;
 
   Future<void> Function()? afterSignOut;
@@ -95,6 +98,8 @@ class SessionController extends ChangeNotifier {
     wait ? await run() : unawaited(run());
   }
 
+  /// Registers a guardian. Returns false when the account must confirm its
+  /// e-mail before signing in.
   Future<bool> register(RegistrationForm form) async {
     final account = await _auth.register(form);
     if (account == null) return false;
@@ -125,6 +130,7 @@ class SessionController extends ChangeNotifier {
 
   bool get usesRemoteAuth => _auth.usesRemoteAuth;
 
+  /// Closes the session and clears the state of the active profile.
   Future<void> logout() async {
     await _tts.stop();
     await _auth.logout();
@@ -269,6 +275,7 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Checks the password needed to leave the child mode.
   Future<bool> verifyTutorPassword(String password) async {
     final acc = _account;
     if (acc == null) return false;

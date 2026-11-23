@@ -7,6 +7,7 @@ import '../../domain/interaction.dart';
 import '../../domain/reporting.dart';
 import 'session_controller.dart';
 
+/// Periods available to filter the history.
 enum HistoryPeriod { today, week, all, custom }
 
 extension HistoryPeriodX on HistoryPeriod {
@@ -18,6 +19,7 @@ extension HistoryPeriodX on HistoryPeriod {
       };
 }
 
+/// State of the history and reports screen.
 class ReportingController extends ChangeNotifier {
   ReportingController(this._service, this._session);
   final ReportingService _service;
@@ -115,6 +117,8 @@ class ReportingController extends ChangeNotifier {
     return _period.label;
   }
 
+  /// Exports the history of the selected period and returns the file path, or
+  /// null when the export failed.
   Future<String?> exportReport({required bool pdf}) async {
     final profile = _session.activeProfile;
     final summary = _summary;

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../../domain/ml.dart';
 
+/// Camera frame seen in its upright orientation, sampled without copying it.
 class UprightImage {
   UprightImage(this.frame)
       : width = frame.rotation % 180 == 0 ? frame.width : frame.height,
@@ -59,6 +60,8 @@ class UprightImage {
     out[offset + 2] = (lum + 1.772 * u).clamp(0.0, 255.0);
   }
 
+  /// Returns a [size] x [size] RGB crop centered on ([cx], [cy]) with side [side],
+  /// ready to be used as input of the frame model.
   Float32List squareCrop(double cx, double cy, double side, int size) {
     final out = Float32List(size * size * 3);
     final step = side / size;
@@ -75,6 +78,7 @@ class UprightImage {
   }
 }
 
+/// Palm found by the detector, with its box and key points.
 class Palm {
   const Palm({
     required this.cx,
@@ -100,6 +104,7 @@ class Palm {
   }
 }
 
+/// Decodes the raw output of the MediaPipe palm detection model.
 class PalmDecoder {
   PalmDecoder({this.minScore = 0.3, this.maxPalms = 2}) : _anchors = _build();
 
@@ -136,6 +141,8 @@ class PalmDecoder {
     return t;
   }
 
+  /// Converts the model output into palms, keeping at most [maxPalms] after
+  /// removing overlapping detections.
   List<Palm> decode(
       Float32List regressors, Float32List scores, UprightImage img) {
     final side = math.max(img.width, img.height).toDouble();

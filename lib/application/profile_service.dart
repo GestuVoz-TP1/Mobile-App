@@ -1,6 +1,7 @@
 import '../domain/child.dart';
 import '../domain/gesture.dart';
 
+/// Data entered by the guardian to create or edit a child profile.
 class ProfileForm {
   final String name;
   final DateTime? birthDate;
@@ -15,6 +16,7 @@ class ProfileForm {
   });
 }
 
+/// Use cases of the child profiles of a guardian.
 class ProfileService {
   ProfileService(this._profiles, this._gestures);
   final ChildProfileRepository _profiles;
@@ -25,6 +27,8 @@ class ProfileService {
 
   Future<ChildProfile?> byId(int id) => _profiles.byId(id);
 
+  /// Creates a profile for [tutorId] with every gesture of the repertoire
+  /// enabled, so the gesture mode works as soon as the guardian activates it.
   Future<ChildProfile> create(int tutorId, ProfileForm f) async {
     final child = Child.create(
         name: f.name, birthDate: f.birthDate, gender: f.gender);

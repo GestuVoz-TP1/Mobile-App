@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../domain/auth.dart';
 
+/// Remote authentication implemented with Firebase Authentication.
 class FirebaseAuthGateway implements RemoteAuthGateway {
   FirebaseAuthGateway([FirebaseAuth? auth])
       : _auth = auth ?? FirebaseAuth.instance;
@@ -51,6 +52,7 @@ class FirebaseAuthGateway implements RemoteAuthGateway {
       await _auth.setLanguageCode('es');
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
+      // Do not reveal whether an account exists for the address.
       if (e.code == 'user-not-found') return;
       throw DomainException(_message(e));
     }

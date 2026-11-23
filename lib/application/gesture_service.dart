@@ -3,6 +3,7 @@ import '../domain/communication.dart';
 import '../domain/gesture.dart';
 import '../domain/ml.dart';
 
+/// Message and pictogram that a gesture produces for a given profile.
 class GestureMessage {
   final Gesture gesture;
   final String originalMessage;
@@ -22,6 +23,8 @@ class GestureMessage {
       message != originalMessage || pictogram?.id != originalPictogram?.id;
 }
 
+/// Gesture accepted by the recognizer, already translated into the intention,
+/// message and pictogram configured for the profile.
 class GestureOutcome {
   final Gesture gesture;
   final CommunicativeIntention intention;
@@ -36,6 +39,7 @@ class GestureOutcome {
   });
 }
 
+/// Connects the recognizer with the gesture repertoire of each profile.
 class GestureService {
   GestureService(this._recognizer, this._gestures, this._pictos);
   final GestureRecognitionService _recognizer;
@@ -55,6 +59,7 @@ class GestureService {
   Future<CommunicativeIntention?> intentionFor(Gesture g) =>
       _gestures.intentionForGesture(g.id);
 
+  /// Gestures enabled by the guardian for [profile].
   Future<List<Gesture>> enabledFor(ChildProfile profile) async {
     final ids = profile.preferences.enabledGestureIds.toSet();
     return (await _gestures.all())
@@ -63,6 +68,8 @@ class GestureService {
         .toList();
   }
 
+  /// Message and pictogram of [g] for [profileId], applying the customization of
+  /// the guardian when there is one.
   Future<GestureMessage?> messageFor(int profileId, Gesture g) async {
     final intention = await _gestures.intentionForGesture(g.id);
     if (intention == null) return null;
@@ -124,6 +131,8 @@ class GestureService {
     }
   }
 
+  /// Feeds one camera frame to the continuous recognizer and returns the outcome
+  /// once a gesture of [enabled] is accepted.
   Future<GestureOutcome?> addFrame(
     GestureFrame frame,
     List<Gesture> enabled, {
@@ -153,6 +162,9 @@ class GestureService {
     return _outcomeFor(result, enabled, profileId);
   }
 
+  /// Translates a recognition result into an outcome. Returns null when the
+  /// gesture is not enabled or has no message, so nothing is ever spoken for a
+  /// gesture the profile does not use.
   Future<GestureOutcome?> _outcomeFor(
     GestureRecognitionResult result,
     List<Gesture> enabled,

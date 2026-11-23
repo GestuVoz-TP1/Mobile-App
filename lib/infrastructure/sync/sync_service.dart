@@ -10,6 +10,7 @@ import '../persistence/database.dart';
 import '../remote/api_client.dart';
 import 'sync_log.dart';
 
+/// Identifiers of the seeded records shared by every device.
 abstract final class RemoteIds {
   static String basePictogram(int id) => 'base-$id';
   static String gesture(int id) => 'gesto-$id';
@@ -21,6 +22,7 @@ abstract final class RemoteIds {
           : null;
 }
 
+/// Synchronization state shown in the caregiver panel.
 class SyncStatus {
   const SyncStatus({
     this.online = true,
@@ -48,6 +50,11 @@ class SyncStatus {
       );
 }
 
+/// Synchronizes the local SQLite database with the backend.
+///
+/// The application always works on the local data; this service sends the
+/// queued changes when there is connection and downloads the data of the
+/// guardian after signing in.
 class SyncService {
   SyncService(this._db, this._api, {Connectivity? connectivity})
       : _connectivity = connectivity;
@@ -67,6 +74,8 @@ class SyncService {
 
   Database get _sql => _db.db;
 
+  /// Starts synchronizing for [tutorId]: after every local change, when the
+  /// connection comes back, and every two minutes as a fallback.
   void start(int tutorId) {
     _tutorId = tutorId;
     _changesSub ??= SyncLog.changes.listen((_) => requestSync());
@@ -95,6 +104,8 @@ class SyncService {
     _debounce = Timer(delay, () => unawaited(pushPending()));
   }
 
+  // Order in which queued changes are sent, so that the records a change
+  // depends on reach the backend first and deletions are sent last.
   static const _order = {
     '${SyncEntity.consent}:${SyncOp.upsert}': 1,
     '${SyncEntity.profile}:${SyncOp.upsert}': 2,
@@ -104,6 +115,8 @@ class SyncService {
     '${SyncEntity.profile}:${SyncOp.delete}': 6,
   };
 
+  /// Sends the queued changes and the pending interactions. Returns whether the
+  /// backend was reachable.
   Future<bool> pushPending() async {
     while (_current != null) {
       await _current;
@@ -196,6 +209,9 @@ class SyncService {
     }
   }
 
+  /// Decides what to do with a queued change rejected by the backend: retry
+  /// later on network or server errors, keep it while consent is missing, and
+  /// download the server version on conflicts.
   _Outcome _fromError(ApiException e, String op) {
     if (e.status == 401) return _Outcome.offline;
     if (e.status == 403 && e.code == 'consentimiento_requerido') {
@@ -378,6 +394,7 @@ class SyncService {
         whereArgs: [pictogramId, image]);
   }
 
+  /// Sends the interactions registered on the device in batches of up to 500.
   Future<bool> _pushInteractions() async {
     final profiles = await _sql.rawQuery('''
       SELECT DISTINCT i.id_perfil, pn.uuid FROM interaccion i
@@ -429,6 +446,8 @@ class SyncService {
     return true;
   }
 
+  /// Downloads the profiles and pictograms of the guardian and merges them with
+  /// the local data, keeping local changes that are still pending.
   Future<void> pullAll(int tutorId) async {
     final pictograms = await _api.get('pictogramas') as List<dynamic>;
     final profiles = await _api.get('perfiles') as List<dynamic>;
@@ -488,6 +507,7 @@ class SyncService {
     }
   }
 
+  /// Whether the remote version is more recent than the local one.
   static bool _remoteIsNewer(Object? remoteTs, Object? localTs) =>
       localTs == null ||
       DateTime.parse(remoteTs as String)

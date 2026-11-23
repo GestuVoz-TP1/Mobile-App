@@ -1,5 +1,6 @@
 library;
 
+/// Decision of the guardian about the processing of the data of a child.
 enum ConsentState { granted, notGranted, withdrawn }
 
 extension ConsentStateX on ConsentState {
@@ -22,6 +23,7 @@ extension ConsentStateX on ConsentState {
       };
 }
 
+/// Consent registered for one child profile.
 class Consent {
   final int? id;
   final int profileId;
@@ -40,6 +42,7 @@ class Consent {
   bool get allowsProcessing => state == ConsentState.granted;
 }
 
+/// Persistence of the consent of each profile.
 abstract interface class ConsentRepository {
   Future<Consent?> forProfile(int profileId);
   Future<Consent> save(Consent consent);

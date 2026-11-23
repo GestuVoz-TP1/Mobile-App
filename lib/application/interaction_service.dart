@@ -3,6 +3,7 @@ import '../domain/consent.dart';
 import '../domain/gesture.dart';
 import '../domain/interaction.dart';
 
+/// Registers the interactions of the child in the history.
 class InteractionService {
   InteractionService(this._interactions, this._consents);
   final InteractionRepository _interactions;
@@ -34,6 +35,8 @@ class InteractionService {
         ),
       );
 
+  /// Stores [i] only when the profile has a valid consent, as required by
+  /// Law 29733. Returns whether the interaction was stored.
   Future<bool> _record(Interaction i) async {
     final consent = await _consents.forProfile(i.profileId);
     if (!(consent?.allowsProcessing ?? false)) return false;

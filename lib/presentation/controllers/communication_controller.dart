@@ -6,6 +6,7 @@ import '../../domain/communication.dart';
 import '../../infrastructure/tts/tts_service.dart';
 import 'session_controller.dart';
 
+/// State of the pictogram board of the child panel.
 class CommunicationController extends ChangeNotifier {
   CommunicationController({
     required CommunicationService communication,
@@ -68,6 +69,7 @@ class CommunicationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Shows and speaks the message of [p] and registers the interaction.
   Future<void> pick(Pictogram p) async {
     final profile = _session.activeProfile;
     if (profile == null) return;
