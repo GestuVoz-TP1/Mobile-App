@@ -11,7 +11,7 @@ class TensorFlowLiteGestureRecognitionService
     implements GestureRecognitionService, ContinuousGestureRecognition {
   TensorFlowLiteGestureRecognitionService({
     this.modelDir = 'assets/models',
-    this.minConfidence = 0.95,
+    this.minConfidence = 0.80,
   });
 
   final String modelDir;
