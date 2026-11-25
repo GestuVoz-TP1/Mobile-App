@@ -141,16 +141,17 @@ dispositivo (`lib/infrastructure/ml/`). Por cada fotograma de la secuencia:
    decide el gesto o "ninguno".
 
 El resultado solo se acepta si dos lecturas seguidas dan el mismo gesto con
-una confianza de al menos 95 % y si el gesto está habilitado en el perfil; si
+una confianza de al menos 80 % y si el gesto está habilitado en el perfil; si
 no, se muestra "No reconocido".
 
 Los modelos están en `assets/models/` y se entrenan en el repositorio
 [ML](https://github.com/GestuVoz-TP1/ML) con
-[HaGRIDv2](https://github.com/hukenovs/hagrid) (CC BY-SA 4.0) y con 1116
-videos propios de 6 personas. Al evaluar dejando fuera a una persona cada
-vez, el 78 % de los gestos se reconoce bien, el 4 % se confunde con otro y el
-19 % de los videos sin gesto produce una detección. **Falta medir la latencia
-en el teléfono.**
+[HaGRIDv2](https://github.com/hukenovs/hagrid) (CC BY-SA 4.0) y con 1512
+videos propios de 4 personas en 8 grupos de grabación. Al evaluar dejando
+fuera un grupo cada vez, la exactitud es de 89 %, la precisión de 96 % y la
+sensibilidad de 90 %; el 2 % de los gestos se confunde con otro y el 13 % de
+los videos sin gesto produce una detección. En un teléfono Android, cada
+imagen se procesa en 164 ms de media.
 
 Para medir la latencia en el teléfono, se compila una versión que la muestra
 en la pantalla del resultado:
@@ -367,7 +368,7 @@ Incluye la aplicación móvil conectada al backend Django desplegado en Render
 (Cloud Firestore y Cloud Storage), Firebase Authentication y el modelo de
 reconocimiento de gestos en el dispositivo. Queda pendiente:
 
-- Validar el modelo con videos propios y medir la latencia en el teléfono.
+- Validar el modelo con niños y medir la latencia en teléfonos de gama media y tablets.
 - Gestos con movimiento (Agua, Me duele, Comer, Beber).
 
 ---
