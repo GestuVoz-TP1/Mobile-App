@@ -1,0 +1,70 @@
+name: gestuvoz
+description: "GestuVoz - Prototipo SAAC (DDD) basado en pictogramas, gestos y ML para la comunicacion no verbal de ninos con TEA"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  flutter_tts: ^4.2.0
+  fl_chart: ^0.69.2
+  intl: ^0.20.2
+  path_provider: ^2.1.4
+  camera: ^0.11.0+2
+  crypto: ^3.0.6
+  image_picker: ^1.1.2
+  sqflite: ^2.4.4+1
+  path: ^1.9.1
+  flutter_localizations:
+    sdk: flutter
+  firebase_core: ^5.0.0
+  firebase_auth: ^7.0.0
+  http: ^1.6.0
+  uuid: ^4.6.0
+  connectivity_plus: ^7.3.2
+  tflite_flutter: ^0.12.1
+  pdf: ^3.13.1
+  share_plus: ^13.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  sqflite_common_ffi: ^2.4.3
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/brand/
+    - assets/fonts/
+    - assets/models/
+
+  fonts:
+    - family: Baloo2
+      fonts:
+        - asset: assets/fonts/Baloo2-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Baloo2-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Baloo2-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Baloo2-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Baloo2-ExtraBold.ttf
+          weight: 800
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Fredoka-Regular.ttf
+          weight: 500
+        - asset: assets/fonts/Fredoka-Regular.ttf
+          weight: 600

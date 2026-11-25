@@ -1,0 +1,95 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
+
+import '../infrastructure/sync/sync_service.dart';
+import 'controllers/session_controller.dart';
+import 'screens/auth/welcome_screen.dart';
+import 'screens/caregiver/caregiver_hub.dart';
+import 'screens/caregiver/consent_screen.dart';
+import 'screens/caregiver/profiles_screen.dart';
+import 'screens/child/child_shell.dart';
+import 'screens/session/mode_selection_screen.dart';
+import 'responsive.dart';
+import 'theme.dart';
+
+bool _orientationApplied = false;
+
+void _applyOrientation(Size size) {
+  if (_orientationApplied || size.isEmpty) return;
+  _orientationApplied = true;
+  if (!isTabletSize(size)) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+}
+
+class GestuVozApp extends StatelessWidget {
+  const GestuVozApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final highContrast = context.select<SessionController, bool>(
+        (s) => s.ready && s.highContrast);
+    return MaterialApp(
+      title: 'GestuVoz',
+      debugShowCheckedModeBanner: false,
+      theme: buildTheme(highContrast: highContrast),
+      locale: const Locale('es'),
+      supportedLocales: const [Locale('es')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        _applyOrientation(mq.size);
+        final scale = (mq.textScaler.scale(1) * 1.04).clamp(1.0, 1.5);
+        return MediaQuery(
+          data: mq.copyWith(textScaler: TextScaler.linear(scale)),
+          child: child!,
+        );
+      },
+      home: const _Router(),
+    );
+  }
+}
+
+class _Router extends StatefulWidget {
+  const _Router();
+
+  @override
+  State<_Router> createState() => _RouterState();
+}
+
+class _RouterState extends State<_Router> {
+  late final AppLifecycleListener _lifecycle;
+
+  void _syncNow() =>
+      context.read<SyncService>().requestSync(delay: Duration.zero);
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _syncNow, onPause: _syncNow);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<SessionController>();
+    if (!s.ready) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (!s.isLoggedIn) return const WelcomeScreen();
+    if (s.activeProfile == null) return const ProfilesScreen(isRoot: true);
+    if (s.consent == null) return const ConsentScreen(onboarding: true);
+    return switch (s.mode) {
+      AppMode.child => const ChildShell(),
+      AppMode.caregiver => const CaregiverHub(),
+      AppMode.none => const ModeSelectionScreen(),
+    };
+  }
+}

@@ -1,0 +1,87 @@
+library;
+
+/// Channel used by the child to communicate.
+enum InteractionSource { pictogram, gesture }
+
+extension InteractionSourceX on InteractionSource {
+  String get label => switch (this) {
+        InteractionSource.pictogram => 'Pictograma',
+        InteractionSource.gesture => 'Gesto',
+      };
+}
+
+/// Communication event registered for a profile.
+class Interaction {
+  final int? id;
+  final DateTime at;
+  final String? detail;
+  final int profileId;
+  final int pictogramId;
+
+  final int? gestureId;
+  final int? intentionId;
+
+  final String? remoteId;
+
+  const Interaction({
+    this.id,
+    this.remoteId,
+    required this.at,
+    this.detail,
+    required this.profileId,
+    required this.pictogramId,
+    this.gestureId,
+    this.intentionId,
+  });
+
+  InteractionSource get source =>
+      gestureId != null ? InteractionSource.gesture : InteractionSource.pictogram;
+}
+
+/// Interaction enriched with the names needed by the history screens.
+class InteractionRecord {
+  final Interaction interaction;
+  final String pictogramName;
+  final String pictogramMessage;
+  final String? pictogramEmoji;
+  final bool pictogramHasImage;
+  final int categoryId;
+  final String? gestureName;
+  final String? intentionName;
+
+  const InteractionRecord({
+    required this.interaction,
+    required this.pictogramName,
+    required this.pictogramMessage,
+    this.pictogramEmoji,
+    required this.pictogramHasImage,
+    required this.categoryId,
+    this.gestureName,
+    this.intentionName,
+  });
+
+  static const _legacyDetails = {
+    'Gesto reconocido',
+    'Pictograma seleccionado en el tablero',
+  };
+
+  String get message {
+    final detail = interaction.detail;
+    return detail == null || _legacyDetails.contains(detail)
+        ? pictogramMessage
+        : detail;
+  }
+}
+
+/// Persistence of the interactions registered on the device.
+abstract interface class InteractionRepository {
+  Future<Interaction> add(Interaction interaction);
+
+  Future<List<InteractionRecord>> recordsForProfile(
+    int profileId, {
+    DateTime? from,
+    DateTime? to,
+  });
+
+  Future<InteractionRecord?> recordById(int id);
+}

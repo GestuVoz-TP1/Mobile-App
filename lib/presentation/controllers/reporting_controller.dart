@@ -1,0 +1,141 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show DateTimeRange;
+
+import '../../application/reporting_service.dart';
+import '../../domain/auth.dart' show DomainException;
+import '../../domain/interaction.dart';
+import '../../domain/reporting.dart';
+import 'session_controller.dart';
+
+/// Periods available to filter the history.
+enum HistoryPeriod { today, week, all, custom }
+
+extension HistoryPeriodX on HistoryPeriod {
+  String get label => switch (this) {
+        HistoryPeriod.today => 'Hoy',
+        HistoryPeriod.week => 'Últimos 7 días',
+        HistoryPeriod.all => 'Todo',
+        HistoryPeriod.custom => 'Fechas',
+      };
+}
+
+/// State of the history and reports screen.
+class ReportingController extends ChangeNotifier {
+  ReportingController(this._service, this._session);
+  final ReportingService _service;
+  final SessionController _session;
+
+  HistoryPeriod _period = HistoryPeriod.week;
+  HistoryPeriod get period => _period;
+
+  DateTimeRange? _range;
+  DateTimeRange? get customRange => _range;
+
+  List<InteractionRecord> _records = const [];
+  List<InteractionRecord> get records => _records;
+
+  UsageSummary? _summary;
+  UsageSummary? get summary => _summary;
+
+  UsageSummary? _week;
+  UsageSummary? get week => _week;
+
+  bool _busy = false;
+  bool get busy => _busy;
+
+  String? _error;
+  String? get error => _error;
+
+  (DateTime?, DateTime?) _bounds() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    return switch (_period) {
+      HistoryPeriod.today => (today, tomorrow),
+      HistoryPeriod.week => (today.subtract(const Duration(days: 6)), tomorrow),
+      HistoryPeriod.all => (null, null),
+      HistoryPeriod.custom => _range == null
+          ? (null, null)
+          : (
+              DateTime(_range!.start.year, _range!.start.month,
+                  _range!.start.day),
+              DateTime(_range!.end.year, _range!.end.month, _range!.end.day)
+                  .add(const Duration(days: 1)),
+            ),
+    };
+  }
+
+  Future<void> refresh() async {
+    final profile = _session.activeProfile;
+    if (profile == null) return;
+    _busy = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final (from, to) = _bounds();
+      _records =
+          await _service.historyRecords(profile.id!, from: from, to: to);
+      _summary =
+          await _service.historySummary(profile.id!, from: from, to: to);
+      _week = await _service.weekSummary(profile.id!);
+    } on DomainException catch (e) {
+      _failed(e.message);
+    } catch (_) {
+      _failed('No se pudo cargar el historial.');
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
+  void _failed(String message) {
+    _error = message;
+    _records = const [];
+    _summary = null;
+    _week = null;
+  }
+
+  Future<void> setPeriod(HistoryPeriod p, {DateTimeRange? range}) async {
+    _period = p;
+    if (p == HistoryPeriod.custom) _range = range;
+    await refresh();
+  }
+
+  Future<InteractionRecord?> detail(InteractionRecord record) async {
+    final profile = _session.activeProfile;
+    if (profile == null) return null;
+    return _service.detail(profile.id!, record);
+  }
+
+  String get periodLabel {
+    final range = _range;
+    if (_period == HistoryPeriod.custom && range != null) {
+      String f(DateTime d) => '${d.day.toString().padLeft(2, '0')}/'
+          '${d.month.toString().padLeft(2, '0')}/${d.year}';
+      return '${f(range.start)} al ${f(range.end)}';
+    }
+    return _period.label;
+  }
+
+  /// Exports the history of the selected period and returns the file path, or
+  /// null when the export failed.
+  Future<String?> exportReport({required bool pdf}) async {
+    final profile = _session.activeProfile;
+    final summary = _summary;
+    if (profile == null || summary == null) return null;
+    _busy = true;
+    notifyListeners();
+    try {
+      return pdf
+          ? await _service.exportPdf(
+              profile.child.name, periodLabel, _records, summary)
+          : await _service.exportCsv(profile.child.name, periodLabel, _records);
+    } catch (e) {
+      debugPrint('No se pudo generar el reporte: $e');
+      return null;
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+}
